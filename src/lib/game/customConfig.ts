@@ -114,3 +114,72 @@ export function deleteCustomPreset(name: string): void {
 export function getPresetNames(): string[] {
   return Object.keys(loadCustomPresets());
 }
+
+// Share code encoding/decoding
+import { encode as base64Encode, decode as base64Decode } from 'js-base64';
+
+export function encodeConfigToShareCode(config: CustomGameConfig): string {
+  try {
+    const compact = {
+      p: config.pingsMode === 'unlimited' ? -1 : config.pingsCount,
+      t: config.timerEnabled ? 1 : 0,
+      m: config.movementMode === 'static' ? 0 : config.movementTrigger,
+      a: config.arenaSize === 'small' ? 0 : config.arenaSize === 'medium' ? 1 : 2,
+      s: config.targetSize,
+      mr: config.multiRound ? 1 : 0,
+      n: config.numberOfRounds,
+      h: config.hintsEnabled ? 1 : 0,
+      hl: config.hintLevel === 'basic' ? 0 : 1,
+      wc: config.winCondition?.type || 'none',
+      wt: config.winCondition?.proximityThreshold || 80,
+      d: config.decoys ? 1 : 0,
+      nl: config.noiseLevel,
+      th: config.theme,
+    };
+    
+    const json = JSON.stringify(compact);
+    const encoded = base64Encode(json);
+    return `ECHO-${encoded}`;
+  } catch (e) {
+    console.error('Failed to encode config:', e);
+    return '';
+  }
+}
+
+export function decodeShareCodeToConfig(shareCode: string): CustomGameConfig | null {
+  try {
+    if (!shareCode.startsWith('ECHO-')) {
+      throw new Error('Invalid share code format');
+    }
+    
+    const encoded = shareCode.substring(5);
+    const json = base64Decode(encoded);
+    const compact = JSON.parse(json);
+    
+    const config: CustomGameConfig = {
+      pingsMode: compact.p === -1 ? 'unlimited' : 'limited',
+      pingsCount: compact.p === -1 ? DEFAULT_CUSTOM_CONFIG.pingsCount : compact.p,
+      timerEnabled: compact.t === 1,
+      movementMode: compact.m === 0 ? 'static' : 'after-pings',
+      movementTrigger: compact.m === 0 ? DEFAULT_CUSTOM_CONFIG.movementTrigger : compact.m,
+      arenaSize: compact.a === 0 ? 'small' : compact.a === 1 ? 'medium' : 'large',
+      targetSize: compact.s,
+      multiRound: compact.mr === 1,
+      numberOfRounds: compact.n,
+      hintsEnabled: compact.h === 1,
+      hintLevel: compact.hl === 0 ? 'basic' : 'detailed',
+      winCondition: compact.wc === 'none' ? { type: 'none' } : {
+        type: compact.wc,
+        proximityThreshold: compact.wt,
+      },
+      decoys: compact.d === 1,
+      noiseLevel: compact.nl,
+      theme: compact.th,
+    };
+    
+    return validateCustomConfig(config);
+  } catch (e) {
+    console.error('Failed to decode share code:', e);
+    return null;
+  }
+}

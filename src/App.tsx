@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound";
 import { ClassicGame } from "./components/ClassicGame";
 import { CustomMode } from "./components/CustomMode";
 import { CustomGame } from "./components/CustomGame";
+import { CustomStats } from "./components/CustomStats";
 import { Settings } from "./components/Settings";
 import { Credits } from "./components/Credits";
 
@@ -26,6 +27,7 @@ const App = () => (
             <Route path="/classic" element={<ClassicGame />} />
             <Route path="/custom" element={<CustomMode />} />
             <Route path="/custom-game" element={<CustomGame />} />
+            <Route path="/custom-stats" element={<CustomStats />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/credits" element={<Credits />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

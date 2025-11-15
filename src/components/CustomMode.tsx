@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Play, Save, Trash2, Lightbulb } from 'lucide-react';
+import { ArrowLeft, Play, Save, Trash2, Lightbulb, Download, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AUDIO_THEMES } from '@/lib/audio/engine';
-import { CustomGameConfig, validateCustomConfig, ARENA_PRESETS, loadCustomPresets, saveCustomPreset, deleteCustomPreset, CustomPreset } from '@/lib/game/customConfig';
+import { CustomGameConfig, validateCustomConfig, ARENA_PRESETS, loadCustomPresets, saveCustomPreset, deleteCustomPreset, CustomPreset, decodeShareCodeToConfig } from '@/lib/game/customConfig';
+import { toast } from '@/hooks/use-toast';
 
 export function CustomMode() {
   const navigate = useNavigate();
@@ -32,6 +33,13 @@ export function CustomMode() {
   const [presets, setPresets] = useState<Record<string, CustomPreset>>({});
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [presetName, setPresetName] = useState('');
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [importCode, setImportCode] = useState('');
+  const [importError, setImportError] = useState('');
+  
+  // Win condition
+  const [winConditionType, setWinConditionType] = useState<'none' | 'proximity'>('none');
+  const [proximityThreshold, setProximityThreshold] = useState(80);
 
   useEffect(() => {
     setPresets(loadCustomPresets());
@@ -53,6 +61,10 @@ export function CustomMode() {
       numberOfRounds,
       hintsEnabled,
       hintLevel,
+      winCondition: winConditionType === 'none' ? { type: 'none' } : {
+        type: winConditionType,
+        proximityThreshold,
+      },
     };
 
     const validatedConfig = validateCustomConfig(config);
@@ -77,6 +89,10 @@ export function CustomMode() {
       numberOfRounds,
       hintsEnabled,
       hintLevel,
+      winCondition: winConditionType === 'none' ? { type: 'none' } : {
+        type: winConditionType,
+        proximityThreshold,
+      },
     };
     
     saveCustomPreset(presetName.trim(), config);
@@ -101,11 +117,42 @@ export function CustomMode() {
     setNumberOfRounds(config.numberOfRounds);
     setHintsEnabled(config.hintsEnabled);
     setHintLevel(config.hintLevel);
+    setWinConditionType(config.winCondition?.type || 'none');
+    setProximityThreshold(config.winCondition?.proximityThreshold || 80);
   };
 
   const handleDeletePreset = (name: string) => {
     deleteCustomPreset(name);
     setPresets(loadCustomPresets());
+  };
+
+  const handleImportConfig = () => {
+    const decoded = decodeShareCodeToConfig(importCode);
+    if (decoded) {
+      setPingsMode(decoded.pingsMode);
+      setPingsCount(decoded.pingsCount);
+      setTargetSize([decoded.targetSize]);
+      setMovementMode(decoded.movementMode);
+      setMovementTrigger(decoded.movementTrigger || 3);
+      setTimerEnabled(decoded.timerEnabled);
+      setTheme(decoded.theme);
+      setNoiseLevel([decoded.noiseLevel]);
+      setDecoys(decoded.decoys);
+      setArenaSize(decoded.arenaSize);
+      setMultiRound(decoded.multiRound);
+      setNumberOfRounds(decoded.numberOfRounds);
+      setHintsEnabled(decoded.hintsEnabled);
+      setHintLevel(decoded.hintLevel);
+      setWinConditionType(decoded.winCondition?.type || 'none');
+      setProximityThreshold(decoded.winCondition?.proximityThreshold || 80);
+      
+      setShowImportDialog(false);
+      setImportCode('');
+      setImportError('');
+      toast({ title: 'Configuration imported successfully!' });
+    } else {
+      setImportError('Invalid share code. Please check and try again.');
+    }
   };
 
   return (
@@ -123,7 +170,15 @@ export function CustomMode() {
             Menu
           </Button>
           <h1 className="text-heading-2">Custom Mode</h1>
-          <div className="w-20" />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/custom-stats')}
+            className="hover-lift"
+          >
+            <BarChart3 className="w-4 h-4 mr-2" />
+            Stats
+          </Button>
         </div>
       </header>
 
@@ -507,6 +562,70 @@ export function CustomMode() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Import Dialog */}
+      {showImportDialog && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+          <div className="frosted-modal max-w-md w-full space-y-6 animate-scale-in">
+            <div className="flex items-center justify-between">
+              <h3 className="text-heading-2">Import Configuration</h3>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  setShowImportDialog(false);
+                  setImportCode('');
+                  setImportError('');
+                }}
+              >
+                ×
+              </Button>
+            </div>
+            
+            <div className="space-y-3">
+              <p className="text-small text-muted-foreground">
+                Paste a share code to load its configuration:
+              </p>
+              
+              <input
+                type="text"
+                value={importCode}
+                onChange={(e) => {
+                  setImportCode(e.target.value);
+                  setImportError('');
+                }}
+                placeholder="ECHO-xxxxx..."
+                className="w-full px-4 py-3 bg-card border border-border rounded-lg text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary font-mono text-tiny"
+              />
+              
+              {importError && (
+                <p className="text-tiny text-destructive">{importError}</p>
+              )}
+            </div>
+            
+            <div className="flex gap-3">
+              <Button
+                variant="secondary"
+                className="flex-1"
+                onClick={() => {
+                  setShowImportDialog(false);
+                  setImportCode('');
+                  setImportError('');
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="flex-1"
+                onClick={handleImportConfig}
+                disabled={!importCode.trim()}
+              >
+                Import
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
