@@ -164,7 +164,7 @@
   }
   
   .hover-lift {
-    transition: transform var(--motion-snap) ease-in-out;
+    transition: transform 90ms ease-in-out;
   }
   
   .hover-lift:hover {
@@ -174,7 +174,7 @@
   .ghost-button {
     @apply inline-flex items-center justify-center rounded-full px-6 py-2.5 text-sm font-medium;
     @apply border-2 border-border bg-transparent;
-    @apply transition-all duration-[var(--motion-snap)];
+    transition: all 90ms ease-in-out;
     @apply hover:border-foreground hover:bg-foreground/5;
     @apply active:scale-[0.98];
   }
@@ -182,7 +182,7 @@
   .capsule-input {
     @apply w-full rounded-full border-2 border-input bg-background px-4 py-2.5;
     @apply text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20;
-    @apply transition-all duration-[var(--motion-smooth)];
+    transition: all 150ms ease-in-out;
   }
   
   .flat-card {
@@ -210,19 +210,17 @@
   }
 }
 
-@layer utilities {
-  /* Motion Utilities */
-  .motion-snap {
-    transition-duration: var(--motion-snap);
-  }
-  
-  .motion-smooth {
-    transition-duration: var(--motion-smooth);
-  }
-  
-  .motion-fluid {
-    transition-duration: var(--motion-fluid);
-  }
+/* Motion utilities defined as plain CSS - can't use @apply with CSS variable arbitrary values */
+.motion-snap {
+  transition-duration: 90ms;
+}
+
+.motion-smooth {
+  transition-duration: 150ms;
+}
+
+.motion-fluid {
+  transition-duration: 220ms;
 }
 
 /* Keyframes */
