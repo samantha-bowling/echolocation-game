@@ -1,8 +1,24 @@
 import { Link } from 'react-router-dom';
 import { Play, Wand2, Settings, Heart, Headphones } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useState, useEffect } from 'react';
 
 export function MainMenu() {
+  const [hasSave, setHasSave] = useState(false);
+
+  useEffect(() => {
+    // Check localStorage for existing save (temporary until Supabase is connected)
+    const savedProgress = localStorage.getItem('echo_classic_progress');
+    if (savedProgress) {
+      try {
+        const progress = JSON.parse(savedProgress);
+        setHasSave(progress.level > 1);
+      } catch {
+        setHasSave(false);
+      }
+    }
+  }, []);
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 echo-dots">
       <div className="max-w-2xl w-full space-y-12 animate-fade-in">
@@ -25,14 +41,14 @@ export function MainMenu() {
         </div>
 
         {/* Main Actions */}
-        <div className="space-y-4">
+        <div className="space-y-6">
           <Link to="/classic">
             <Button 
               size="lg" 
               className="w-full h-14 text-base font-semibold hover-lift"
             >
               <Play className="w-5 h-5 mr-2" />
-              Continue Classic
+              {hasSave ? 'Continue Classic' : 'Start Classic'}
             </Button>
           </Link>
 

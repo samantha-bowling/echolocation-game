@@ -37,6 +37,19 @@ export function Credits() {
 
         <div className="flat-card space-y-6">
           <div className="space-y-2">
+            <h3 className="text-heading-3">Game Concept and Design</h3>
+            <a 
+              href="https://samantha-bowling.com/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-small text-primary hover:text-primary/80 transition-colors inline-flex items-center gap-1"
+            >
+              Samantha Bowling
+              <span className="text-xs">↗</span>
+            </a>
+          </div>
+
+          <div className="space-y-2">
             <h3 className="text-heading-3">Built With</h3>
             <ul className="text-small text-muted-foreground space-y-1">
               <li>• React 18 + TypeScript</li>
@@ -44,14 +57,8 @@ export function Credits() {
               <li>• shadcn/ui + Radix UI</li>
               <li>• Web Audio API</li>
               <li>• Framer Motion</li>
+              <li>• ChatGPT</li>
             </ul>
-          </div>
-
-          <div className="space-y-2">
-            <h3 className="text-heading-3">Design</h3>
-            <p className="text-small text-muted-foreground">
-              Following the ECHOLOCATION design system with geometric minimalism and echo-inspired interactions
-            </p>
           </div>
 
           <div className="space-y-2">
@@ -67,6 +74,16 @@ export function Credits() {
             <Heart className="w-4 h-4 text-accent" />
             <p className="text-small">Made with Lovable</p>
           </div>
+
+          <a 
+            href="https://funcool.games/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-small text-foreground/80 hover:text-foreground transition-colors inline-flex items-center gap-1"
+          >
+            A funcool games project
+            <span className="text-xs">↗</span>
+          </a>
           
           <div className="flex items-center justify-center gap-4">
             <button className="ghost-button p-2">
