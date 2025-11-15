@@ -71,18 +71,35 @@ export function Settings() {
             <Label className="text-base">Sound Theme</Label>
             <div className="grid grid-cols-2 gap-2">
               {AUDIO_THEMES.map(t => (
-                <button
+                <div
                   key={t.id}
-                  onClick={() => setAudioTheme(t.id)}
-                  className={`p-3 rounded-xl border-2 transition-all text-left ${
+                  className={`relative p-3 rounded-xl border-2 transition-all ${
                     audioTheme === t.id
                       ? 'border-primary bg-primary/10'
                       : 'border-border hover:border-foreground/20'
                   }`}
                 >
-                  <p className="text-small font-semibold">{t.name}</p>
-                  <p className="text-tiny text-muted-foreground">{t.description}</p>
-                </button>
+                  <button
+                    onClick={() => setAudioTheme(t.id)}
+                    className="w-full text-left pr-10"
+                  >
+                    <p className="text-small font-semibold">{t.name}</p>
+                    <p className="text-tiny text-muted-foreground">{t.description}</p>
+                  </button>
+                  
+                  {/* Preview button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      audioEngine.initialize();
+                      audioEngine.playPreview(t.id);
+                    }}
+                    className="absolute top-2 right-2 w-8 h-8 rounded-lg bg-primary/20 hover:bg-primary/40 flex items-center justify-center text-primary transition-all hover-lift"
+                    aria-label={`Preview ${t.name}`}
+                  >
+                    <Volume2 className="w-4 h-4" />
+                  </button>
+                </div>
               ))}
             </div>
           </div>
