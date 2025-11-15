@@ -1,13 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Play } from 'lucide-react';
+import { ArrowLeft, Play, Save, Trash2, Lightbulb } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AUDIO_THEMES } from '@/lib/audio/engine';
-import { CustomGameConfig, validateCustomConfig } from '@/lib/game/customConfig';
+import { CustomGameConfig, validateCustomConfig, ARENA_PRESETS, loadCustomPresets, saveCustomPreset, deleteCustomPreset, CustomPreset } from '@/lib/game/customConfig';
 
 export function CustomMode() {
   const navigate = useNavigate();
@@ -21,6 +22,20 @@ export function CustomMode() {
   const [noiseLevel, setNoiseLevel] = useState([0]);
   const [decoys, setDecoys] = useState(false);
   const [theme, setTheme] = useState('sonar');
+  const [arenaSize, setArenaSize] = useState<'small' | 'medium' | 'large'>('medium');
+  const [multiRound, setMultiRound] = useState(false);
+  const [numberOfRounds, setNumberOfRounds] = useState(3);
+  const [hintsEnabled, setHintsEnabled] = useState(false);
+  const [hintLevel, setHintLevel] = useState<'basic' | 'detailed'>('basic');
+  
+  // Preset management
+  const [presets, setPresets] = useState<Record<string, CustomPreset>>({});
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [presetName, setPresetName] = useState('');
+
+  useEffect(() => {
+    setPresets(loadCustomPresets());
+  }, []);
 
   const handleBegin = () => {
     const config: CustomGameConfig = {
@@ -33,11 +48,64 @@ export function CustomMode() {
       theme,
       noiseLevel: noiseLevel[0],
       decoys,
-      arenaSize: 'medium',
+      arenaSize,
+      multiRound,
+      numberOfRounds,
+      hintsEnabled,
+      hintLevel,
     };
 
     const validatedConfig = validateCustomConfig(config);
     navigate('/custom-game', { state: { config: validatedConfig } });
+  };
+
+  const handleSavePreset = () => {
+    if (!presetName.trim()) return;
+    
+    const config: CustomGameConfig = {
+      pingsMode,
+      pingsCount,
+      targetSize: targetSize[0],
+      movementMode,
+      movementTrigger,
+      timerEnabled,
+      theme,
+      noiseLevel: noiseLevel[0],
+      decoys,
+      arenaSize,
+      multiRound,
+      numberOfRounds,
+      hintsEnabled,
+      hintLevel,
+    };
+    
+    saveCustomPreset(presetName.trim(), config);
+    setPresets(loadCustomPresets());
+    setShowSaveDialog(false);
+    setPresetName('');
+  };
+
+  const loadPreset = (preset: CustomPreset) => {
+    const config = preset.config;
+    setPingsMode(config.pingsMode);
+    setPingsCount(config.pingsCount);
+    setTargetSize([config.targetSize]);
+    setMovementMode(config.movementMode);
+    setMovementTrigger(config.movementTrigger || 3);
+    setTimerEnabled(config.timerEnabled);
+    setTheme(config.theme);
+    setNoiseLevel([config.noiseLevel]);
+    setDecoys(config.decoys);
+    setArenaSize(config.arenaSize);
+    setMultiRound(config.multiRound);
+    setNumberOfRounds(config.numberOfRounds);
+    setHintsEnabled(config.hintsEnabled);
+    setHintLevel(config.hintLevel);
+  };
+
+  const handleDeletePreset = (name: string) => {
+    deleteCustomPreset(name);
+    setPresets(loadCustomPresets());
   };
 
   return (
@@ -61,6 +129,45 @@ export function CustomMode() {
 
       {/* Config */}
       <div className="max-w-2xl mx-auto p-6 space-y-8 py-12">
+        {/* Presets Section */}
+        {Object.keys(presets).length > 0 && (
+          <div className="flat-card space-y-4">
+            <div className="flex items-center justify-between">
+              <Label className="text-base">Saved Presets</Label>
+              <Button variant="outline" size="sm" onClick={() => setShowSaveDialog(true)}>
+                <Save className="w-4 h-4 mr-2" />
+                Save Current
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              {Object.entries(presets).map(([name, preset]) => (
+                <div
+                  key={name}
+                  className="group relative flat-card bg-card/50 hover:bg-card transition-colors cursor-pointer p-3"
+                  onClick={() => loadPreset(preset)}
+                >
+                  <p className="text-small font-medium mb-1">{name}</p>
+                  <p className="text-tiny text-muted-foreground">
+                    {preset.config.pingsMode === 'unlimited' ? '∞' : preset.config.pingsCount} pings • 
+                    {preset.config.targetSize}px target
+                  </p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity w-7 h-7 p-0"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeletePreset(name);
+                    }}
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="space-y-6">
           {/* Pings */}
           <div className="flat-card space-y-4">
@@ -148,6 +255,67 @@ export function CustomMode() {
             <Switch checked={timerEnabled} onCheckedChange={setTimerEnabled} />
           </div>
 
+          {/* Hints Toggle */}
+          <div className="flat-card space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Lightbulb className="w-4 h-4 text-primary" />
+                  <Label className="text-base">Hints</Label>
+                </div>
+                <p className="text-small text-muted-foreground">
+                  {hintsEnabled 
+                    ? `Get ${hintLevel} hints after using 60% of pings`
+                    : 'No hints - pure skill mode'
+                  }
+                </p>
+              </div>
+              <Switch checked={hintsEnabled} onCheckedChange={setHintsEnabled} />
+            </div>
+            
+            {hintsEnabled && (
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  variant={hintLevel === 'basic' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setHintLevel('basic')}
+                  className="w-full"
+                >
+                  Basic
+                </Button>
+                <Button
+                  variant={hintLevel === 'detailed' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setHintLevel('detailed')}
+                  className="w-full"
+                >
+                  Detailed
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* Arena Size */}
+          <div className="flat-card space-y-4">
+            <Label className="text-base">Arena Size</Label>
+            <div className="grid grid-cols-3 gap-2">
+              {(Object.entries(ARENA_PRESETS) as [keyof typeof ARENA_PRESETS, typeof ARENA_PRESETS[keyof typeof ARENA_PRESETS]][]).map(([size, preset]) => (
+                <button
+                  key={size}
+                  onClick={() => setArenaSize(size)}
+                  className={`p-3 rounded-xl border-2 transition-all text-center ${
+                    arenaSize === size
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border hover:border-foreground/20'
+                  }`}
+                >
+                  <p className="text-small font-semibold capitalize">{size}</p>
+                  <p className="text-tiny text-muted-foreground">{preset.label}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Movement */}
           <div className="flat-card space-y-4">
             <Label className="text-base">Target Movement</Label>
@@ -228,6 +396,52 @@ export function CustomMode() {
             <Switch checked={decoys} onCheckedChange={setDecoys} />
           </div>
 
+          {/* Multi-Round Mode */}
+          <div className="flat-card space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label className="text-base">Multi-Round Mode</Label>
+                <p className="text-small text-muted-foreground">
+                  {multiRound 
+                    ? `Play ${numberOfRounds} rounds with cumulative scoring`
+                    : 'Single round mode'
+                  }
+                </p>
+              </div>
+              <Switch checked={multiRound} onCheckedChange={setMultiRound} />
+            </div>
+            
+            {multiRound && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-small">Number of Rounds</Label>
+                  <span className="text-heading-3 font-mono">{numberOfRounds}</span>
+                </div>
+                <Slider
+                  value={[numberOfRounds]}
+                  onValueChange={(v) => setNumberOfRounds(v[0])}
+                  min={2}
+                  max={10}
+                  step={1}
+                  className="w-full"
+                />
+                <div className="flex gap-2">
+                  {[2, 3, 5, 7, 10].map(n => (
+                    <Button
+                      key={n}
+                      variant={numberOfRounds === n ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setNumberOfRounds(n)}
+                      className="flex-1"
+                    >
+                      {n}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Theme */}
           <div className="flat-card space-y-4">
             <Label className="text-base">Sound Theme</Label>
@@ -260,6 +474,39 @@ export function CustomMode() {
           Begin Custom Round
         </Button>
       </div>
+
+      {/* Save Preset Dialog */}
+      <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Save Preset</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="preset-name">Preset Name</Label>
+              <Input
+                id="preset-name"
+                value={presetName}
+                onChange={(e) => setPresetName(e.target.value)}
+                placeholder="e.g., Expert Challenge"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSavePreset();
+                  if (e.key === 'Escape') setShowSaveDialog(false);
+                }}
+                autoFocus
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSaveDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSavePreset} disabled={!presetName.trim()}>
+              Save Preset
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
