@@ -301,6 +301,10 @@ export function CustomGame() {
             pingsUsed={scoreResult.pingsUsed}
             totalPings={scoreResult.totalPings === '∞' ? Infinity : scoreResult.totalPings}
             timeElapsed={scoreResult.timeElapsed}
+            isCustomGame={true}
+            winCondition={config.winCondition}
+            passedCondition={scoreResult.passedCondition}
+            config={config}
             onNext={() => navigate('/custom')}
             onRetry={() => {
               setGameState('playing');
