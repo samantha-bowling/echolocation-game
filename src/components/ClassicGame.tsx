@@ -38,18 +38,21 @@ export function ClassicGame() {
   }, []);
 
   useEffect(() => {
+    // Don't run timer if finalTime is already set
+    if (finalTime !== null) return;
+    
     const interval = setInterval(() => {
       setElapsedTime((Date.now() - startTime) / 1000);
     }, 100);
     return () => clearInterval(interval);
-  }, [startTime]);
+  }, [startTime, finalTime]);
 
   // Freeze timer when final guess is placed
   useEffect(() => {
     if (gamePhase === 'confirming' && finalTime === null) {
       setFinalTime(elapsedTime);
     }
-  }, [gamePhase, finalTime]);
+  }, [gamePhase, finalTime, elapsedTime]);
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (gameState === 'summary') return;
@@ -369,43 +372,6 @@ export function ClassicGame() {
             )}
           </div>
 
-          {/* Live Proximity Indicator */}
-          {gamePhase === 'confirming' && finalGuess && (() => {
-            const targetCenter = getTargetCenter(target);
-            const currentProximity = calculateProximity(finalGuess, targetCenter, 800);
-            
-            return (
-              <div className="flat-card text-center py-4 space-y-3">
-                <p className="text-tiny text-muted-foreground uppercase tracking-wider">Your Proximity</p>
-                <div className="flex items-center justify-center gap-3">
-                  <div className="h-2 w-48 bg-border rounded-full overflow-hidden">
-                    <div 
-                      className={`h-full transition-all ${
-                        currentProximity >= 80 ? 'bg-echo-success' : 'bg-destructive'
-                      }`}
-                      style={{ width: `${currentProximity}%` }}
-                    />
-                  </div>
-                  <span className={`text-heading-2 font-mono font-semibold ${
-                    currentProximity >= 80 ? 'text-echo-success' : 'text-destructive'
-                  }`}>
-                    {currentProximity}%
-                  </span>
-                </div>
-                <p className="text-small">
-                  {currentProximity >= 80 ? (
-                    <span className="text-echo-success font-semibold">✓ Within range to advance!</span>
-                  ) : (
-                    <>
-                      <span className="text-muted-foreground">Need </span>
-                      <span className="text-destructive font-semibold">{(80 - currentProximity).toFixed(0)}%</span>
-                      <span className="text-muted-foreground"> closer</span>
-                    </>
-                  )}
-                </p>
-              </div>
-            );
-          })()}
 
           {/* Actions */}
           <div className="flex gap-4">
