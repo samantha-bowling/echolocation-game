@@ -5,14 +5,18 @@ import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { AUDIO_THEMES } from '@/lib/audio/engine';
 
 export function CustomMode() {
   const navigate = useNavigate();
   
-  const [pings, setPings] = useState([5]);
+  const [pingsMode, setPingsMode] = useState<'limited' | 'unlimited'>('limited');
+  const [pingsCount, setPingsCount] = useState(5);
   const [targetSize, setTargetSize] = useState([100]);
-  const [movement, setMovement] = useState(false);
+  const [movementMode, setMovementMode] = useState<'static' | 'after-pings'>('static');
+  const [movementTrigger, setMovementTrigger] = useState(3);
+  const [timerEnabled, setTimerEnabled] = useState(true);
   const [noiseLevel, setNoiseLevel] = useState([0]);
   const [decoys, setDecoys] = useState(false);
   const [theme, setTheme] = useState('sonar');
@@ -49,16 +53,34 @@ export function CustomMode() {
           <div className="flat-card space-y-4">
             <div className="flex items-center justify-between">
               <Label className="text-base">Number of Pings</Label>
-              <span className="text-heading-3 font-mono">{pings[0]}</span>
+              <div className="flex items-center gap-3">
+                <Input
+                  type="number"
+                  min={1}
+                  max={999}
+                  value={pingsMode === 'unlimited' ? '' : pingsCount}
+                  onChange={(e) => setPingsCount(Math.max(1, parseInt(e.target.value) || 1))}
+                  disabled={pingsMode === 'unlimited'}
+                  className="w-20 h-9 text-center font-mono"
+                  placeholder="∞"
+                />
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={pingsMode === 'unlimited'}
+                    onCheckedChange={(checked) => setPingsMode(checked ? 'unlimited' : 'limited')}
+                  />
+                  <Label className="text-small text-muted-foreground cursor-pointer" onClick={() => setPingsMode(pingsMode === 'unlimited' ? 'limited' : 'unlimited')}>
+                    Unlimited
+                  </Label>
+                </div>
+              </div>
             </div>
-            <Slider
-              value={pings}
-              onValueChange={setPings}
-              min={3}
-              max={10}
-              step={1}
-              className="w-full"
-            />
+            <p className="text-tiny text-muted-foreground">
+              {pingsMode === 'unlimited' 
+                ? 'Use as many pings as you need - no ping efficiency bonus'
+                : 'Ping efficiency bonus: earn points for unused pings'
+              }
+            </p>
           </div>
 
           {/* Target Size */}
@@ -67,25 +89,100 @@ export function CustomMode() {
               <Label className="text-base">Target Size</Label>
               <span className="text-heading-3 font-mono">{targetSize[0]}px</span>
             </div>
+            
             <Slider
               value={targetSize}
               onValueChange={setTargetSize}
-              min={50}
+              min={30}
               max={200}
-              step={10}
+              step={5}
               className="w-full"
             />
+            
+            {/* Visual Preview */}
+            <div className="flex items-center justify-center py-6 bg-muted/30 rounded-lg border border-border relative">
+              <div className="absolute top-2 left-3 text-tiny text-muted-foreground">
+                Preview (actual size)
+              </div>
+              <div 
+                className="rounded-full border-2 border-primary/50 bg-primary/10 transition-all duration-300"
+                style={{
+                  width: `${targetSize[0]}px`,
+                  height: `${targetSize[0]}px`,
+                }}
+              />
+            </div>
+            
+            <p className="text-tiny text-muted-foreground text-center">
+              {targetSize[0] < 60 && '🔥 Expert: Very small target!'}
+              {targetSize[0] >= 60 && targetSize[0] < 100 && '💪 Hard: Challenging size'}
+              {targetSize[0] >= 100 && targetSize[0] < 140 && '👌 Medium: Balanced difficulty'}
+              {targetSize[0] >= 140 && '🌱 Easy: Large target'}
+            </p>
+          </div>
+
+          {/* Timer Toggle */}
+          <div className="flat-card flex items-center justify-between">
+            <div className="space-y-1">
+              <Label className="text-base">Timer</Label>
+              <p className="text-small text-muted-foreground">
+                {timerEnabled 
+                  ? 'Time penalty applies (-2 pts/sec, max -500)'
+                  : 'Casual mode - take your time!'
+                }
+              </p>
+            </div>
+            <Switch checked={timerEnabled} onCheckedChange={setTimerEnabled} />
           </div>
 
           {/* Movement */}
-          <div className="flat-card flex items-center justify-between">
-            <div className="space-y-1">
-              <Label className="text-base">Target Movement</Label>
-              <p className="text-small text-muted-foreground">
-                Target slowly drifts during round
-              </p>
+          <div className="flat-card space-y-4">
+            <Label className="text-base">Target Movement</Label>
+            
+            <div className="grid grid-cols-1 gap-2">
+              <button
+                onClick={() => setMovementMode('static')}
+                className={`p-3 rounded-xl border-2 transition-all text-left ${
+                  movementMode === 'static'
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border hover:border-foreground/20'
+                }`}
+              >
+                <p className="text-small font-semibold">Static Target</p>
+                <p className="text-tiny text-muted-foreground">Target stays in one place</p>
+              </button>
+              
+              <button
+                onClick={() => setMovementMode('after-pings')}
+                className={`p-3 rounded-xl border-2 transition-all text-left ${
+                  movementMode === 'after-pings'
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border hover:border-foreground/20'
+                }`}
+              >
+                <p className="text-small font-semibold">Move After Pings</p>
+                <p className="text-tiny text-muted-foreground">
+                  Target relocates after you've used {movementTrigger} pings
+                </p>
+              </button>
             </div>
-            <Switch checked={movement} onCheckedChange={setMovement} />
+            
+            {movementMode === 'after-pings' && (
+              <div className="pt-2 space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-small">Move after</Label>
+                  <span className="text-small font-mono">{movementTrigger} pings</span>
+                </div>
+                <Slider
+                  value={[movementTrigger]}
+                  onValueChange={(v) => setMovementTrigger(v[0])}
+                  min={2}
+                  max={pingsMode === 'unlimited' ? 10 : Math.max(2, pingsCount - 1)}
+                  step={1}
+                  className="w-full"
+                />
+              </div>
+            )}
           </div>
 
           {/* Noise */}
