@@ -15,6 +15,7 @@ export interface AudioTheme {
   tremoloEnabled?: boolean;
   tremoloRate?: number;
   noiseAmount?: number;
+  frequencySweepMultiplier?: number; // For dolphin chirp effect
 }
 
 export const AUDIO_THEMES: AudioTheme[] = [
@@ -29,13 +30,14 @@ export const AUDIO_THEMES: AudioTheme[] = [
     filterSweep: 400,
   },
   {
-    id: 'arcade',
-    name: 'Arcade Beep',
-    baseFrequency: 880,
-    waveform: 'square',
-    description: 'Retro vibrato',
-    tremoloEnabled: true,
-    tremoloRate: 8,
+    id: 'submarine',
+    name: 'Submarine Sonar',
+    baseFrequency: 220,
+    waveform: 'sine',
+    description: 'Deep ocean pulse',
+    filterEnabled: true,
+    filterFrequency: 600,
+    filterSweep: 300,
   },
   {
     id: 'scifi',
@@ -46,12 +48,12 @@ export const AUDIO_THEMES: AudioTheme[] = [
     detuneAmount: 15,
   },
   {
-    id: 'natural',
-    name: 'Natural Click',
-    baseFrequency: 1200,
-    waveform: 'triangle',
-    description: 'Percussive burst',
-    noiseAmount: 0.3,
+    id: 'dolphin',
+    name: 'Dolphin Chirp',
+    baseFrequency: 800,
+    waveform: 'sine',
+    description: 'Smooth frequency sweep',
+    frequencySweepMultiplier: 1.5, // Sweeps from 800Hz to 1200Hz
   },
 ];
 
@@ -108,7 +110,18 @@ export class AudioEngine {
     
     // Pitch varies slightly with vertical position
     const pitchModifier = 1 + (direction.verticalRatio * 0.1);
-    oscillator.frequency.value = this.currentTheme.baseFrequency * pitchModifier;
+    const baseFreq = this.currentTheme.baseFrequency * pitchModifier;
+    oscillator.frequency.value = baseFreq;
+    
+    // Apply frequency sweep for dolphin theme
+    if (this.currentTheme.frequencySweepMultiplier) {
+      const now = this.context.currentTime;
+      oscillator.frequency.setValueAtTime(baseFreq, now);
+      oscillator.frequency.exponentialRampToValueAtTime(
+        baseFreq * this.currentTheme.frequencySweepMultiplier,
+        now + 0.5
+      );
+    }
     
     // Apply detune if theme supports it
     if (this.currentTheme.detuneAmount) {
@@ -248,10 +261,22 @@ export class AudioEngine {
       ? AUDIO_THEMES.find(t => t.id === themeId) || this.currentTheme
       : this.currentTheme;
     
+    const baseDuration = 0.8; // Extended from 0.4s
+    const now = this.context.currentTime;
+    
     // Create main oscillator
     const oscillator = this.context.createOscillator();
     oscillator.type = theme.waveform;
     oscillator.frequency.value = theme.baseFrequency;
+    
+    // Apply frequency sweep for dolphin theme
+    if (theme.frequencySweepMultiplier) {
+      oscillator.frequency.setValueAtTime(theme.baseFrequency, now);
+      oscillator.frequency.exponentialRampToValueAtTime(
+        theme.baseFrequency * theme.frequencySweepMultiplier,
+        now + baseDuration * 0.6
+      );
+    }
     
     // Apply detune if theme supports it
     if (theme.detuneAmount) {
@@ -260,18 +285,6 @@ export class AudioEngine {
     
     const gainNode = this.context.createGain();
     
-    // Apply tremolo if theme supports it
-    if (theme.tremoloEnabled && theme.tremoloRate) {
-      const tremolo = this.context.createOscillator();
-      const tremoloGain = this.context.createGain();
-      tremolo.frequency.value = theme.tremoloRate;
-      tremoloGain.gain.value = 0.3;
-      tremolo.connect(tremoloGain);
-      tremoloGain.connect(gainNode.gain);
-      tremolo.start();
-      tremolo.stop(this.context.currentTime + 0.4);
-    }
-    
     // Create filter if theme supports it
     let filterNode: BiquadFilterNode | null = null;
     if (theme.filterEnabled && theme.filterFrequency) {
@@ -279,40 +292,21 @@ export class AudioEngine {
       filterNode.type = 'lowpass';
       filterNode.frequency.value = theme.filterFrequency;
       filterNode.Q.value = 5;
-    }
-    
-    // Create noise if theme supports it
-    let noiseSource: AudioBufferSourceNode | null = null;
-    if (theme.noiseAmount) {
-      const bufferSize = this.context.sampleRate * 0.05;
-      const buffer = this.context.createBuffer(1, bufferSize, this.context.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) {
-        data[i] = (Math.random() * 2 - 1) * theme.noiseAmount;
-      }
-      noiseSource = this.context.createBufferSource();
-      noiseSource.buffer = buffer;
       
-      const noiseGain = this.context.createGain();
-      noiseGain.gain.value = 0.4;
-      noiseSource.connect(noiseGain);
-      noiseGain.connect(this.masterGain);
+      // Apply filter sweep if theme supports it
+      if (theme.filterSweep) {
+        filterNode.frequency.setValueAtTime(theme.filterFrequency, now);
+        filterNode.frequency.exponentialRampToValueAtTime(
+          theme.filterFrequency - theme.filterSweep,
+          now + baseDuration
+        );
+      }
     }
     
-    const now = this.context.currentTime;
-    
-    // Apply filter sweep if theme supports it
-    if (filterNode && theme.filterSweep) {
-      filterNode.frequency.setValueAtTime(theme.filterFrequency!, now);
-      filterNode.frequency.exponentialRampToValueAtTime(
-        theme.filterFrequency! - theme.filterSweep,
-        now + 0.4
-      );
-    }
-    
-    // Simple envelope
+    // Multi-stage decay envelope for more natural reverb tail
     gainNode.gain.setValueAtTime(0.5, now);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+    gainNode.gain.exponentialRampToValueAtTime(0.2, now + baseDuration * 0.4);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, now + baseDuration);
     
     // Connect nodes
     oscillator.connect(gainNode);
@@ -324,9 +318,59 @@ export class AudioEngine {
     }
     
     oscillator.start(now);
-    if (noiseSource) noiseSource.start(now);
-    oscillator.stop(now + 0.4);
-    if (noiseSource) noiseSource.stop(now + 0.05);
+    oscillator.stop(now + baseDuration);
+    
+    // Add echo repetitions for more realistic sonar feel
+    const echoCount = 3;
+    const echoDelay = 0.15;
+    const echoDecay = 0.6;
+    
+    for (let i = 1; i <= echoCount; i++) {
+      const echoOsc = this.context.createOscillator();
+      const echoGain = this.context.createGain();
+      
+      echoOsc.type = theme.waveform;
+      // Slightly lower pitch for each echo (Doppler effect)
+      const echoFreq = theme.baseFrequency * (1 - i * 0.02);
+      echoOsc.frequency.value = echoFreq;
+      
+      // Apply frequency sweep to echo if dolphin theme
+      if (theme.frequencySweepMultiplier) {
+        const echoStart = now + (echoDelay * i);
+        echoOsc.frequency.setValueAtTime(echoFreq, echoStart);
+        echoOsc.frequency.exponentialRampToValueAtTime(
+          echoFreq * theme.frequencySweepMultiplier,
+          echoStart + baseDuration * 0.5
+        );
+      }
+      
+      const echoVolume = 0.5 * Math.pow(echoDecay, i);
+      echoGain.gain.setValueAtTime(echoVolume, now + (echoDelay * i));
+      
+      // Echo filter
+      let echoFilter: BiquadFilterNode | null = null;
+      if (theme.filterEnabled && theme.filterFrequency) {
+        echoFilter = this.context.createBiquadFilter();
+        echoFilter.type = 'lowpass';
+        echoFilter.frequency.value = theme.filterFrequency;
+        echoFilter.Q.value = 5;
+      }
+      
+      echoOsc.connect(echoGain);
+      if (echoFilter) {
+        echoGain.connect(echoFilter);
+        echoFilter.connect(this.masterGain);
+      } else {
+        echoGain.connect(this.masterGain);
+      }
+      
+      const echoStart = now + (echoDelay * i);
+      const echoDuration = baseDuration * 0.7;
+      
+      echoOsc.start(echoStart);
+      echoGain.gain.exponentialRampToValueAtTime(0.01, echoStart + echoDuration);
+      echoOsc.stop(echoStart + echoDuration);
+    }
   }
 
   /**
