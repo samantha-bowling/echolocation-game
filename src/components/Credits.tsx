@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Heart, Github, Twitter } from 'lucide-react';
+import { ArrowLeft, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export function Credits() {
@@ -67,31 +67,24 @@ export function Credits() {
               Procedurally generated audio using oscillators with spatial positioning
             </p>
           </div>
+
+          <div className="space-y-2">
+            <a 
+              href="https://funcool.games/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-small text-primary hover:text-primary/80 transition-colors inline-flex items-center gap-1"
+            >
+              A funcool games project
+              <span className="text-xs">↗</span>
+            </a>
+          </div>
         </div>
 
         <div className="text-center space-y-4">
           <div className="flex items-center justify-center gap-2 text-muted-foreground">
             <Heart className="w-4 h-4 text-accent" />
             <p className="text-small">Made with Lovable</p>
-          </div>
-
-          <a 
-            href="https://funcool.games/" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-small text-foreground/80 hover:text-foreground transition-colors inline-flex items-center gap-1"
-          >
-            A funcool games project
-            <span className="text-xs">↗</span>
-          </a>
-          
-          <div className="flex items-center justify-center gap-4">
-            <button className="ghost-button p-2">
-              <Github className="w-5 h-5" />
-            </button>
-            <button className="ghost-button p-2">
-              <Twitter className="w-5 h-5" />
-            </button>
           </div>
         </div>
 
