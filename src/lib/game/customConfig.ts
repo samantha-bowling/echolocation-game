@@ -18,6 +18,12 @@ export interface CustomGameConfig {
   
   // Arena (for future use)
   arenaSize: 'small' | 'medium' | 'large';
+
+  // Win Condition
+  winCondition?: {
+    type: 'none' | 'proximity';
+    proximityThreshold?: number;
+  };
 }
 
 export const DEFAULT_CUSTOM_CONFIG: CustomGameConfig = {
@@ -31,6 +37,9 @@ export const DEFAULT_CUSTOM_CONFIG: CustomGameConfig = {
   noiseLevel: 0,
   decoys: false,
   arenaSize: 'medium',
+  winCondition: {
+    type: 'none',
+  },
 };
 
 export const ARENA_PRESETS = {
