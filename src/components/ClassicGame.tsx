@@ -22,8 +22,11 @@ export function ClassicGame() {
   );
   const [pingsRemaining, setPingsRemaining] = useState(5);
   const [pingsUsed, setPingsUsed] = useState(0);
-  const [startTime] = useState(Date.now());
-  const [guessPosition, setGuessPosition] = useState<Position | null>(null);
+  const [startTime, setStartTime] = useState(Date.now());
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [pingHistory, setPingHistory] = useState<Position[]>([]);
+  const [gamePhase, setGamePhase] = useState<'pinging' | 'placing' | 'confirming'>('pinging');
+  const [finalGuess, setFinalGuess] = useState<Position | null>(null);
   const [scoreResult, setScoreResult] = useState<any>(null);
   const [showHint, setShowHint] = useState(false);
 
@@ -33,8 +36,15 @@ export function ClassicGame() {
     audioEngine.initialize();
   }, []);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setElapsedTime((Date.now() - startTime) / 1000);
+    }, 100);
+    return () => clearInterval(interval);
+  }, [startTime]);
+
   const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (pingsRemaining <= 0 || gameState === 'summary') return;
+    if (gameState === 'summary') return;
 
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -44,28 +54,46 @@ export function ClassicGame() {
       y: e.clientY - rect.top,
     };
 
-    setGuessPosition(clickPos);
+    if (gamePhase === 'pinging') {
+      if (pingsRemaining <= 0) return;
+      
+      // Add to ping history
+      setPingHistory(prev => [...prev, clickPos]);
 
-    // Play ping sound
-    const boxCenter = getBoxCenter(box);
-    audioEngine.playPing(clickPos, boxCenter, 800);
+      // Play ping sound
+      const boxCenter = getBoxCenter(box);
+      audioEngine.playPing(clickPos, boxCenter, 800);
 
-    setPingsRemaining(prev => prev - 1);
-    setPingsUsed(prev => prev + 1);
+      setPingsRemaining(prev => prev - 1);
+      setPingsUsed(prev => prev + 1);
+    } else if (gamePhase === 'placing') {
+      // Set final guess position
+      setFinalGuess(clickPos);
+      setGamePhase('confirming');
+    }
+  };
+
+  const handlePlaceFinalGuess = () => {
+    if (pingHistory.length === 0) return;
+    setGamePhase('placing');
+  };
+
+  const handleRepositionGuess = () => {
+    setFinalGuess(null);
+    setGamePhase('placing');
   };
 
   const handleSubmitGuess = () => {
-    if (!guessPosition) return;
+    if (!finalGuess) return;
 
     const boxCenter = getBoxCenter(box);
-    const proximity = calculateProximity(guessPosition, boxCenter, 800);
-    const timeElapsed = (Date.now() - startTime) / 1000;
+    const proximity = calculateProximity(finalGuess, boxCenter, 800);
     
     const score = calculateScore(
       proximity,
       pingsUsed,
       levelConfig.pings,
-      timeElapsed
+      elapsedTime
     );
 
     setScoreResult(score);
@@ -84,35 +112,56 @@ export function ClassicGame() {
     setBox(generateBoxPosition({ width: 800, height: 600 }, levelConfig.boxSize));
     setPingsRemaining(levelConfig.pings);
     setPingsUsed(0);
-    setGuessPosition(null);
+    setPingHistory([]);
+    setFinalGuess(null);
+    setGamePhase('pinging');
     setScoreResult(null);
     setGameState('playing');
     setShowHint(false);
+    setStartTime(Date.now());
+    setElapsedTime(0);
   };
 
   const handleRetry = () => {
     setBox(generateBoxPosition({ width: 800, height: 600 }, levelConfig.boxSize));
     setPingsRemaining(levelConfig.pings);
     setPingsUsed(0);
-    setGuessPosition(null);
+    setPingHistory([]);
+    setFinalGuess(null);
+    setGamePhase('pinging');
     setScoreResult(null);
     setGameState('playing');
     setShowHint(false);
+    setStartTime(Date.now());
+    setElapsedTime(0);
   };
 
   if (gameState === 'summary' && scoreResult) {
     return (
       <PostRoundSummary
         score={scoreResult}
-        proximity={calculateProximity(guessPosition!, getBoxCenter(box), 800)}
+        proximity={calculateProximity(finalGuess!, getBoxCenter(box), 800)}
         pingsUsed={pingsUsed}
-        timeElapsed={(Date.now() - startTime) / 1000}
+        timeElapsed={elapsedTime}
         onNext={handleNextLevel}
         onRetry={handleRetry}
         onMenu={() => navigate('/')}
       />
     );
   }
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    const tenths = Math.floor((seconds % 1) * 10);
+    return `${mins}:${secs.toString().padStart(2, '0')}.${tenths}`;
+  };
+
+  const getTimeColor = () => {
+    if (elapsedTime < 30) return 'text-green-500';
+    if (elapsedTime < 60) return 'text-yellow-500';
+    return 'text-red-500';
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -157,8 +206,25 @@ export function ClassicGame() {
               </div>
               <div className="h-10 w-px bg-border" />
               <div>
-                <p className="text-tiny text-muted-foreground">Box Size</p>
-                <p className="text-heading-3 font-mono">{levelConfig.boxSize}px</p>
+                <p className="text-tiny text-muted-foreground">Time</p>
+                <p className={`text-heading-3 font-mono ${getTimeColor()}`}>
+                  {formatTime(elapsedTime)}
+                </p>
+              </div>
+              <div className="h-10 w-px bg-border" />
+              <div className="flex items-center gap-3">
+                <div>
+                  <p className="text-tiny text-muted-foreground">Box Size</p>
+                  <p className="text-heading-3 font-mono">{levelConfig.boxSize}px</p>
+                </div>
+                <div 
+                  className="border-2 border-primary/30 bg-primary/5"
+                  style={{ 
+                    width: `${levelConfig.boxSize / 4}px`, 
+                    height: `${levelConfig.boxSize / 4}px` 
+                  }}
+                  title={`Visual reference: ${levelConfig.boxSize}px box`}
+                />
               </div>
             </div>
 
@@ -179,42 +245,129 @@ export function ClassicGame() {
           <div 
             ref={canvasRef}
             onClick={handleCanvasClick}
-            className="flat-card relative overflow-hidden cursor-crosshair"
+            className={`flat-card relative overflow-hidden ${
+              gamePhase === 'placing' ? 'cursor-crosshair' : 'cursor-pointer'
+            }`}
             style={{ height: '500px' }}
           >
             <div className="absolute inset-0 echo-grid opacity-30" />
             
-            {/* Guess marker */}
-            {guessPosition && (
+            {/* Ping history markers */}
+            {pingHistory.map((ping, index) => (
               <div
-                className="absolute w-4 h-4 -ml-2 -mt-2 rounded-full bg-primary animate-ping-pulse"
+                key={index}
+                className="absolute w-3 h-3 -ml-1.5 -mt-1.5 rounded-full bg-primary/60 border border-primary flex items-center justify-center"
                 style={{
-                  left: guessPosition.x,
-                  top: guessPosition.y,
+                  left: ping.x,
+                  top: ping.y,
+                  opacity: 0.4 + (index / pingHistory.length) * 0.6,
                 }}
-              />
+              >
+                <span className="text-[8px] font-mono text-white font-bold">
+                  {index + 1}
+                </span>
+              </div>
+            ))}
+
+            {/* Connecting lines between pings */}
+            {pingHistory.length > 1 && (
+              <svg className="absolute inset-0 pointer-events-none" style={{ width: '100%', height: '100%' }}>
+                {pingHistory.slice(0, -1).map((ping, index) => {
+                  const nextPing = pingHistory[index + 1];
+                  return (
+                    <line
+                      key={index}
+                      x1={ping.x}
+                      y1={ping.y}
+                      x2={nextPing.x}
+                      y2={nextPing.y}
+                      stroke="hsl(var(--primary))"
+                      strokeWidth="1"
+                      strokeOpacity="0.3"
+                      strokeDasharray="2,2"
+                    />
+                  );
+                })}
+              </svg>
+            )}
+
+            {/* Final guess marker */}
+            {finalGuess && (
+              <div
+                className="absolute w-8 h-8 -ml-4 -mt-4"
+                style={{
+                  left: finalGuess.x,
+                  top: finalGuess.y,
+                }}
+              >
+                <div className="absolute inset-0 rounded-full bg-accent animate-ping" />
+                <div className="absolute inset-0 rounded-full bg-accent border-2 border-accent-foreground flex items-center justify-center">
+                  <div className="w-2 h-2 rounded-full bg-accent-foreground" />
+                </div>
+              </div>
             )}
 
             {/* Center instruction */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="text-center space-y-2 opacity-50">
-                <Radio className="w-8 h-8 mx-auto text-muted-foreground" />
-                <p className="text-small text-muted-foreground">
-                  Click to ping
-                </p>
+            {pingHistory.length === 0 && gamePhase === 'pinging' && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="text-center space-y-2 opacity-50">
+                  <Radio className="w-8 h-8 mx-auto text-muted-foreground" />
+                  <p className="text-small text-muted-foreground">
+                    Click to ping
+                  </p>
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* Placement mode instruction */}
+            {gamePhase === 'placing' && (
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                <div className="text-center space-y-2 bg-background/90 p-4 rounded-lg border border-border">
+                  <p className="text-small font-semibold text-foreground">
+                    Click to place your final guess
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Actions */}
           <div className="flex gap-4">
-            <Button
-              onClick={handleSubmitGuess}
-              disabled={!guessPosition || pingsRemaining === levelConfig.pings}
-              className="flex-1 h-12"
-            >
-              Submit Guess
-            </Button>
+            {gamePhase === 'pinging' && (
+              <Button
+                onClick={handlePlaceFinalGuess}
+                disabled={pingHistory.length === 0}
+                className="flex-1 h-12"
+              >
+                Place Final Guess
+              </Button>
+            )}
+            {gamePhase === 'placing' && (
+              <Button
+                variant="outline"
+                onClick={() => setGamePhase('pinging')}
+                className="flex-1 h-12"
+              >
+                Back to Pinging
+              </Button>
+            )}
+            {gamePhase === 'confirming' && (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={handleRepositionGuess}
+                  className="flex-1 h-12"
+                >
+                  Reposition
+                </Button>
+                <Button
+                  onClick={handleSubmitGuess}
+                  className="flex-1 h-12"
+                >
+                  Confirm & Submit
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </div>
