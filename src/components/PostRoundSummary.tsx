@@ -1,10 +1,13 @@
-import { Trophy, Clock, Target, Zap } from 'lucide-react';
+import { Trophy, Clock, Target, Zap, Lightbulb } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { InfoTooltip } from '@/components/InfoTooltip';
+import { getNextRankInfo, getPointsToNextRank, getProgressToNextRank, generateStrategicTips } from '@/lib/game/scoring';
 
 interface PostRoundSummaryProps {
   score: any;
   proximity: number;
   pingsUsed: number;
+  totalPings: number;
   timeElapsed: number;
   onNext: () => void;
   onRetry: () => void;
@@ -15,6 +18,7 @@ export function PostRoundSummary({
   score,
   proximity,
   pingsUsed,
+  totalPings,
   timeElapsed,
   onNext,
   onRetry,
@@ -41,6 +45,43 @@ export function PostRoundSummary({
               : `${proximity}% Proximity - Need 80% to advance`
             }
           </p>
+        </div>
+
+        {/* Rank Progression */}
+        <div className="flat-card space-y-3">
+          <div className="flex items-center justify-between text-tiny text-muted-foreground">
+            <span>CURRENT RANK</span>
+            <span>NEXT RANK</span>
+          </div>
+          
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 text-xl font-display font-bold text-primary">
+              {score.rank}
+            </div>
+            
+            <div className="flex-1 space-y-1">
+              <div className="h-2 bg-border rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-500"
+                  style={{ width: `${getProgressToNextRank(score.total, score.rank)}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-tiny">
+                <span className="text-foreground font-mono">{score.total}</span>
+                {getNextRankInfo(score.rank) && (
+                  <span className="text-muted-foreground">
+                    {getNextRankInfo(score.rank)!.threshold} for {getNextRankInfo(score.rank)!.rank}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+          
+          {getPointsToNextRank(score.total, score.rank) > 0 && (
+            <p className="text-tiny text-center text-muted-foreground">
+              <span className="text-accent font-semibold">+{getPointsToNextRank(score.total, score.rank)}</span> points to rank up
+            </p>
+          )}
         </div>
 
         {/* Score */}
@@ -82,24 +123,94 @@ export function PostRoundSummary({
         <div className="flat-card space-y-3">
           <p className="text-small font-semibold">Score Breakdown</p>
           <div className="space-y-2 text-small font-mono">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Base Score</span>
+            {/* Base Score */}
+            <div className="flex justify-between items-center group">
+              <span className="text-muted-foreground flex items-center gap-2">
+                Base Score
+                <InfoTooltip content="Every round starts with 1,000 base points" />
+              </span>
               <span>+{score.components.base}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Proximity Bonus</span>
+
+            {/* Proximity Bonus with Formula */}
+            <div className="flex justify-between items-center group">
+              <span className="text-muted-foreground flex items-center gap-2">
+                Proximity ({proximity}% × 4)
+                <InfoTooltip content="Earn 4 points for each percent of proximity. Max 400 points at 100%." />
+              </span>
               <span className="text-accent">+{score.components.proximityBonus}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Unused Pings</span>
-              <span className="text-accent">+{score.components.unusedPingBonus}</span>
+
+            {/* Ping Efficiency with Formula */}
+            <div className="flex justify-between items-center group">
+              <span className="text-muted-foreground flex items-center gap-2">
+                Ping Efficiency ({totalPings - pingsUsed}/{totalPings} unused)
+                <InfoTooltip content="Save pings to earn bonus points! Max 300 points for perfect efficiency." />
+              </span>
+              <span className="text-accent">+{score.components.pingEfficiencyBonus}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Time Penalty</span>
+
+            {/* Time Penalty with Formula */}
+            <div className="flex justify-between items-center group">
+              <span className="text-muted-foreground flex items-center gap-2">
+                Time Penalty ({timeElapsed.toFixed(1)}s × -2)
+                <InfoTooltip content="You lose 2 points per second. Max penalty: -500 points." />
+              </span>
               <span className="text-destructive">-{score.components.timePenalty}</span>
             </div>
+
+            {/* Speed Bonus (if earned) */}
+            {score.components.speedBonus > 0 && (
+              <div className="flex justify-between items-center group">
+                <span className="text-muted-foreground flex items-center gap-2">
+                  ⚡ Speed Bonus
+                  <InfoTooltip content="Complete in under 15 seconds for bonus points!" />
+                </span>
+                <span className="text-echo-success">+{score.components.speedBonus}</span>
+              </div>
+            )}
+
+            {/* Perfect Target Bonus (if earned) */}
+            {score.components.perfectTargetBonus > 0 && (
+              <div className="flex justify-between items-center group">
+                <span className="text-muted-foreground flex items-center gap-2">
+                  🎯 Perfect Target!
+                  <InfoTooltip content="100% proximity accuracy bonus!" />
+                </span>
+                <span className="text-echo-success">+{score.components.perfectTargetBonus}</span>
+              </div>
+            )}
+
+            {/* Difficulty Multiplier */}
+            {score.components.difficultyMultiplier !== 1.0 && (
+              <div className="flex justify-between items-center group border-t border-border pt-2 mt-2">
+                <span className="text-muted-foreground flex items-center gap-2">
+                  Difficulty (×{score.components.difficultyMultiplier})
+                  <InfoTooltip content="Higher difficulty levels multiply your score!" />
+                </span>
+                <span className="text-accent font-semibold">×{score.components.difficultyMultiplier}</span>
+              </div>
+            )}
           </div>
         </div>
+
+        {/* Strategic Tips */}
+        {(() => {
+          const tips = generateStrategicTips(score, proximity, pingsUsed, totalPings, timeElapsed);
+          return tips.length > 0 ? (
+            <div className="flat-card bg-muted/30 space-y-2">
+              <p className="text-tiny text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                <Lightbulb className="w-3.5 h-3.5" />
+                Tips for Improvement
+              </p>
+              <div className="space-y-1 text-small">
+                {tips.map((tip, i) => (
+                  <p key={i} className="text-foreground/80">• {tip}</p>
+                ))}
+              </div>
+            </div>
+          ) : null;
+        })()}
 
         {/* Actions */}
         <div className="flex flex-col gap-3">
