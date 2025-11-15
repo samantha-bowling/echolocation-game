@@ -33,15 +33,15 @@ export function MainMenu() {
         </div>
 
         {/* Headphones Banner */}
-        <div className="flat-card bg-accent/10 border-accent/20">
-          <div className="flex items-center gap-3 text-accent-foreground">
+        <div className="flat-card bg-accent/30 border-accent/30 backdrop-blur-sm">
+          <div className="flex items-center justify-center gap-3 text-accent-foreground">
             <Headphones className="w-5 h-5 text-accent" />
             <p className="text-small font-medium">Headphones recommended for best experience</p>
           </div>
         </div>
 
         {/* Main Actions */}
-        <div className="space-y-6">
+        <div className="space-y-8">
           <Link to="/classic">
             <Button 
               size="lg" 
