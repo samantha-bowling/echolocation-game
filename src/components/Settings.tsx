@@ -15,8 +15,6 @@ export function Settings() {
   const [volume, setVolume] = useState([70]);
   const [audioTheme, setAudioTheme] = useState('sonar');
   const [reduceMotion, setReduceMotion] = useState(false);
-  const [showHints, setShowHints] = useState(true);
-  const [hardMode, setHardMode] = useState(false);
 
   useEffect(() => {
     audioEngine.setVolume(volume[0] / 100);
@@ -124,36 +122,6 @@ export function Settings() {
           </div>
         </section>
 
-        {/* Gameplay */}
-        <section className="space-y-4">
-          <h2 className="text-heading-3">Gameplay</h2>
-          
-          <div className="flat-card flex items-center justify-between">
-            <div className="space-y-1">
-              <Label className="text-base">Show Hints</Label>
-              <p className="text-small text-muted-foreground">
-                Display helpful visual cues
-              </p>
-            </div>
-            <Switch
-              checked={showHints}
-              onCheckedChange={setShowHints}
-            />
-          </div>
-
-          <div className="flat-card flex items-center justify-between">
-            <div className="space-y-1">
-              <Label className="text-base">Hard Mode</Label>
-              <p className="text-small text-muted-foreground">
-                Smaller success radius, no hints
-              </p>
-            </div>
-            <Switch
-              checked={hardMode}
-              onCheckedChange={setHardMode}
-            />
-          </div>
-        </section>
       </div>
     </div>
   );

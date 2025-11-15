@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { AUDIO_THEMES } from '@/lib/audio/engine';
 import { CustomGameConfig, validateCustomConfig, ARENA_PRESETS, loadCustomPresets, saveCustomPreset, deleteCustomPreset, CustomPreset, decodeShareCodeToConfig } from '@/lib/game/customConfig';
 import { toast } from '@/hooks/use-toast';
+import { InfoTooltip } from '@/components/InfoTooltip';
 
 export function CustomMode() {
   const navigate = useNavigate();
@@ -155,6 +156,71 @@ export function CustomMode() {
     }
   };
 
+  const loadPresetConfig = (preset: 'easy' | 'normal' | 'hard') => {
+    switch (preset) {
+      case 'easy':
+        setPingsMode('unlimited');
+        setPingsCount(10);
+        setTargetSize([120]);
+        setTimerEnabled(false);
+        setHintsEnabled(true);
+        setHintLevel('detailed');
+        setArenaSize('medium');
+        setMovementMode('static');
+        setMovementTrigger(3);
+        setDecoys(false);
+        setNoiseLevel([0]);
+        setMultiRound(false);
+        setWinConditionType('none');
+        toast({
+          title: "Easy Mode Loaded",
+          description: "Settings configured for learning and practice",
+        });
+        break;
+        
+      case 'normal':
+        setPingsMode('limited');
+        setPingsCount(5);
+        setTargetSize([100]);
+        setTimerEnabled(true);
+        setHintsEnabled(true);
+        setHintLevel('basic');
+        setArenaSize('medium');
+        setMovementMode('static');
+        setMovementTrigger(3);
+        setDecoys(false);
+        setNoiseLevel([0]);
+        setMultiRound(false);
+        setWinConditionType('none');
+        toast({
+          title: "Normal Mode Loaded",
+          description: "Balanced difficulty settings",
+        });
+        break;
+        
+      case 'hard':
+        setPingsMode('limited');
+        setPingsCount(3);
+        setTargetSize([60]);
+        setTimerEnabled(true);
+        setHintsEnabled(false);
+        setHintLevel('basic');
+        setArenaSize('large');
+        setMovementMode('after-pings');
+        setMovementTrigger(2);
+        setDecoys(false);
+        setNoiseLevel([20]);
+        setMultiRound(false);
+        setWinConditionType('proximity');
+        setProximityThreshold(90);
+        toast({
+          title: "Hard Mode Loaded",
+          description: "Challenge mode for experienced players",
+        });
+        break;
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -184,6 +250,94 @@ export function CustomMode() {
 
       {/* Config */}
       <div className="max-w-2xl mx-auto p-6 space-y-8 py-12">
+        {/* Quick Presets Section */}
+        <section className="flat-card space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-heading-3">Quick Presets</h3>
+            <InfoTooltip content="Choose a preset difficulty or customize your own settings below" />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {/* Easy Mode */}
+            <button
+              onClick={() => loadPresetConfig('easy')}
+              className="p-4 rounded-xl border-2 border-border hover:border-green-500/50 hover:bg-green-500/5 transition-all text-left space-y-2 group"
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-green-500/20 text-green-400 flex items-center justify-center text-lg">
+                  😊
+                </div>
+                <h4 className="text-base font-semibold group-hover:text-green-400 transition-colors">Easy Mode</h4>
+              </div>
+              <ul className="text-tiny text-muted-foreground space-y-1">
+                <li>• Unlimited pings</li>
+                <li>• Large target (120px)</li>
+                <li>• No timer pressure</li>
+                <li>• Hints enabled</li>
+                <li>• Medium arena</li>
+              </ul>
+              <p className="text-tiny text-muted-foreground italic">Perfect for learning the game</p>
+            </button>
+
+            {/* Normal Mode */}
+            <button
+              onClick={() => loadPresetConfig('normal')}
+              className="p-4 rounded-xl border-2 border-primary bg-primary/5 hover:bg-primary/10 transition-all text-left space-y-2 group"
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center text-lg">
+                  🎯
+                </div>
+                <h4 className="text-base font-semibold group-hover:text-primary transition-colors">Normal Mode</h4>
+              </div>
+              <ul className="text-tiny text-muted-foreground space-y-1">
+                <li>• 5 pings available</li>
+                <li>• Medium target (100px)</li>
+                <li>• Timer enabled</li>
+                <li>• Basic hints</li>
+                <li>• Medium arena</li>
+              </ul>
+              <p className="text-tiny text-muted-foreground italic">Balanced challenge</p>
+            </button>
+
+            {/* Hard Mode */}
+            <button
+              onClick={() => loadPresetConfig('hard')}
+              className="p-4 rounded-xl border-2 border-border hover:border-red-500/50 hover:bg-red-500/5 transition-all text-left space-y-2 group"
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center text-lg">
+                  🔥
+                </div>
+                <h4 className="text-base font-semibold group-hover:text-red-400 transition-colors">Hard Mode</h4>
+              </div>
+              <ul className="text-tiny text-muted-foreground space-y-1">
+                <li>• Only 3 pings</li>
+                <li>• Small target (60px)</li>
+                <li>• Timer enabled</li>
+                <li>• No hints</li>
+                <li>• Large arena</li>
+              </ul>
+              <p className="text-tiny text-muted-foreground italic">For experienced players</p>
+            </button>
+          </div>
+          
+          <div className="flex items-center gap-2 text-tiny text-muted-foreground">
+            <Lightbulb className="w-4 h-4" />
+            <span>Presets load instantly. Adjust any setting below to customize further.</span>
+          </div>
+        </section>
+
+        {/* Divider */}
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-border"></div>
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-background px-2 text-muted-foreground">Or Customize</span>
+          </div>
+        </div>
+
         {/* Presets Section */}
         {Object.keys(presets).length > 0 && (
           <div className="flat-card space-y-4">
