@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Radio, ArrowLeft, Lightbulb } from 'lucide-react';
+import { Radio, ArrowLeft, Lightbulb, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { generateBoxPosition, getBoxCenter, Position } from '@/lib/game/coords';
 import { calculateDistance, calculateProximity } from '@/lib/game/distance';
@@ -134,7 +134,14 @@ export function ClassicGame() {
             <p className="text-heading-3">Level {level}</p>
           </div>
 
-          <div className="w-20" />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/settings')}
+            className="hover-lift"
+          >
+            <Settings className="w-4 h-4" />
+          </Button>
         </div>
       </header>
 

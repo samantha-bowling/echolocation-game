@@ -173,9 +173,9 @@
   
   .ghost-button {
     @apply inline-flex items-center justify-center rounded-full px-6 py-2.5 text-sm font-medium;
-    @apply border-2 border-border bg-transparent;
+    @apply border-2 border-border bg-card/80 backdrop-blur-sm;
     transition: all 90ms ease-in-out;
-    @apply hover:border-foreground hover:bg-foreground/5;
+    @apply hover:border-foreground hover:bg-card;
     @apply active:scale-[0.98];
   }
   
