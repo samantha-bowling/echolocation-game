@@ -13,6 +13,11 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ['Space Grotesk', 'sans-serif'],
+        mono: ['IBM Plex Mono', 'monospace'],
+        display: ['Space Grotesk', 'sans-serif'],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -47,15 +52,12 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        sidebar: {
-          DEFAULT: "hsl(var(--sidebar-background))",
-          foreground: "hsl(var(--sidebar-foreground))",
-          primary: "hsl(var(--sidebar-primary))",
-          "primary-foreground": "hsl(var(--sidebar-primary-foreground))",
-          accent: "hsl(var(--sidebar-accent))",
-          "accent-foreground": "hsl(var(--sidebar-accent-foreground))",
-          border: "hsl(var(--sidebar-border))",
-          ring: "hsl(var(--sidebar-ring))",
+        echo: {
+          ping: "hsl(var(--echo-ping))",
+          success: "hsl(var(--echo-success))",
+          warning: "hsl(var(--echo-warning))",
+          faint: "hsl(var(--echo-faint))",
+          ghost: "hsl(var(--echo-ghost))",
         },
       },
       borderRadius: {
@@ -84,6 +86,15 @@ export default {
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "ping-pulse": "ping-pulse 0.6s cubic-bezier(0.4, 0, 0.6, 1)",
+        "ripple": "ripple 0.4s ease-out",
+        "fade-in": "fade-in 0.15s ease-out",
+        "scale-in": "scale-in 0.09s ease-out",
+      },
+      transitionDuration: {
+        'snap': '90ms',
+        'smooth': '150ms',
+        'fluid': '220ms',
       },
     },
   },

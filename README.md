@@ -1,73 +1,57 @@
-# Welcome to your Lovable project
+# echo)))location
 
-## Project info
+An audio-first minimal browser game where you find hidden boxes using only sound.
 
-**URL**: https://lovable.dev/projects/bed91249-aedf-4e70-a05e-8cac1851a1a9
+## 🎮 Gameplay
 
-## How can I edit this code?
+- **Classic Mode**: Progress through levels with increasing difficulty
+- **Custom Mode**: Configure your own challenge settings
+- **Spatial Audio**: Uses Web Audio API for 3D sound positioning
+- **Boon System**: Unlock and use power-ups to help your echolocation
+- **Score & Rank**: Transparent scoring based on accuracy, speed, and efficiency
 
-There are several ways of editing your application.
+## 🎧 Best Experienced With Headphones
 
-**Use Lovable**
+The game uses stereo panning and volume falloff to help you locate the hidden box. Headphones provide the best spatial audio experience.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/bed91249-aedf-4e70-a05e-8cac1851a1a9) and start prompting.
+## 🎨 Design System
 
-Changes made via Lovable will be committed automatically to this repo.
+Built on the **ECHOLOCATION** design system featuring:
+- Minimal geometric aesthetic
+- Echo-inspired microinteractions (90ms/150ms/220ms timings)
+- Space Grotesk (display) + IBM Plex Mono (body)
+- Ghost buttons, capsule inputs, flat cards, frosted modals
+- Full light/dark theme support
 
-**Use your preferred IDE**
+## 🛠️ Tech Stack
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- React 18 + TypeScript
+- Vite
+- TailwindCSS + shadcn/ui
+- Web Audio API
+- Framer Motion
+- React Router
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 🎵 Sound Themes
 
-Follow these steps:
+- Classic Sonar (sine wave)
+- Arcade Beep (square wave)
+- Sci-Fi Pulse (sawtooth wave)
+- Natural Click (triangle wave)
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## 🚀 Development
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```bash
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## 📝 Future Features
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+- Supabase integration for save persistence
+- Endless mode
+- More boons and chapters
+- Multiplayer races
+- Leaderboards
 
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/bed91249-aedf-4e70-a05e-8cac1851a1a9) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Built with [Lovable](https://lovable.dev)
