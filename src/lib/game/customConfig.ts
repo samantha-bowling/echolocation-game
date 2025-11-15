@@ -16,7 +16,7 @@ export interface CustomGameConfig {
   noiseLevel: number;
   decoys: boolean;
   
-  // Arena (for future use)
+  // Arena
   arenaSize: 'small' | 'medium' | 'large';
 
   // Win Condition
@@ -24,6 +24,14 @@ export interface CustomGameConfig {
     type: 'none' | 'proximity';
     proximityThreshold?: number;
   };
+
+  // Multi-Round
+  multiRound: boolean;
+  numberOfRounds: number;
+
+  // Hints
+  hintsEnabled: boolean;
+  hintLevel: 'basic' | 'detailed';
 }
 
 export const DEFAULT_CUSTOM_CONFIG: CustomGameConfig = {
@@ -40,6 +48,10 @@ export const DEFAULT_CUSTOM_CONFIG: CustomGameConfig = {
   winCondition: {
     type: 'none',
   },
+  multiRound: false,
+  numberOfRounds: 3,
+  hintsEnabled: false,
+  hintLevel: 'basic',
 };
 
 export const ARENA_PRESETS = {
