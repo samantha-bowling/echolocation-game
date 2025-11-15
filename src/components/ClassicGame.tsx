@@ -14,7 +14,19 @@ export function ClassicGame() {
   const canvasRef = useRef<HTMLDivElement>(null);
   
   const [chapter] = useState(1);
-  const [level, setLevel] = useState(1);
+  const [level, setLevel] = useState(() => {
+    // Try to load saved progress
+    const saved = localStorage.getItem('echo_classic_progress');
+    if (saved) {
+      try {
+        const progress = JSON.parse(saved);
+        return progress.level || 1;
+      } catch {
+        return 1;
+      }
+    }
+    return 1;
+  });
   const [gameState, setGameState] = useState<'playing' | 'summary'>('playing');
   
   const [target, setTarget] = useState(() => 
@@ -35,6 +47,16 @@ export function ClassicGame() {
 
   useEffect(() => {
     audioEngine.initialize();
+  }, []);
+
+  // Handle reset flag for "New Classic Run"
+  useEffect(() => {
+    const shouldReset = localStorage.getItem('echo_reset_classic');
+    if (shouldReset === 'true') {
+      setLevel(1);
+      localStorage.removeItem('echo_classic_progress');
+      localStorage.removeItem('echo_reset_classic');
+    }
   }, []);
 
   useEffect(() => {
@@ -133,7 +155,17 @@ export function ClassicGame() {
   };
 
   const handleNextLevel = () => {
-    setLevel(prev => prev + 1);
+    const newLevel = level + 1;
+    
+    // Save progress
+    const progress = {
+      level: newLevel,
+      chapter: chapter,
+      lastPlayed: Date.now(),
+    };
+    localStorage.setItem('echo_classic_progress', JSON.stringify(progress));
+    
+    setLevel(newLevel);
     setTarget(generateTargetPosition({ width: 800, height: 600 }, levelConfig.targetSize));
     setPingsRemaining(levelConfig.pings);
     setPingsUsed(0);
