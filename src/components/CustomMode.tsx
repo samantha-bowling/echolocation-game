@@ -11,7 +11,7 @@ export function CustomMode() {
   const navigate = useNavigate();
   
   const [pings, setPings] = useState([5]);
-  const [boxSize, setBoxSize] = useState([100]);
+  const [targetSize, setTargetSize] = useState([100]);
   const [movement, setMovement] = useState(false);
   const [noiseLevel, setNoiseLevel] = useState([0]);
   const [decoys, setDecoys] = useState(false);
@@ -61,15 +61,15 @@ export function CustomMode() {
             />
           </div>
 
-          {/* Box Size */}
+          {/* Target Size */}
           <div className="flat-card space-y-4">
             <div className="flex items-center justify-between">
-              <Label className="text-base">Box Size</Label>
-              <span className="text-heading-3 font-mono">{boxSize[0]}px</span>
+              <Label className="text-base">Target Size</Label>
+              <span className="text-heading-3 font-mono">{targetSize[0]}px</span>
             </div>
             <Slider
-              value={boxSize}
-              onValueChange={setBoxSize}
+              value={targetSize}
+              onValueChange={setTargetSize}
               min={50}
               max={200}
               step={10}
@@ -80,9 +80,9 @@ export function CustomMode() {
           {/* Movement */}
           <div className="flat-card flex items-center justify-between">
             <div className="space-y-1">
-              <Label className="text-base">Box Movement</Label>
+              <Label className="text-base">Target Movement</Label>
               <p className="text-small text-muted-foreground">
-                Box slowly drifts during round
+                Target slowly drifts during round
               </p>
             </div>
             <Switch checked={movement} onCheckedChange={setMovement} />
