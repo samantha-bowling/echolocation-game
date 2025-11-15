@@ -4,7 +4,7 @@ import { Radio, ArrowLeft, Lightbulb, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { generateBoxPosition, getBoxCenter, Position } from '@/lib/game/coords';
 import { calculateDistance, calculateProximity } from '@/lib/game/distance';
-import { calculateScore } from '@/lib/game/scoring';
+import { calculateScore, getRankFlavor } from '@/lib/game/scoring';
 import { getLevelConfig } from '@/lib/game/chapters';
 import { audioEngine } from '@/lib/audio/engine';
 import { PostRoundSummary } from './PostRoundSummary';
@@ -24,6 +24,7 @@ export function ClassicGame() {
   const [pingsUsed, setPingsUsed] = useState(0);
   const [startTime, setStartTime] = useState(Date.now());
   const [elapsedTime, setElapsedTime] = useState(0);
+  const [finalTime, setFinalTime] = useState<number | null>(null);
   const [pingHistory, setPingHistory] = useState<Position[]>([]);
   const [gamePhase, setGamePhase] = useState<'pinging' | 'placing' | 'confirming'>('pinging');
   const [finalGuess, setFinalGuess] = useState<Position | null>(null);
@@ -42,6 +43,13 @@ export function ClassicGame() {
     }, 100);
     return () => clearInterval(interval);
   }, [startTime]);
+
+  // Freeze timer when final guess is placed
+  useEffect(() => {
+    if (gamePhase === 'confirming' && finalTime === null) {
+      setFinalTime(elapsedTime);
+    }
+  }, [gamePhase, elapsedTime, finalTime]);
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (gameState === 'summary') return;
@@ -89,14 +97,22 @@ export function ClassicGame() {
     const boxCenter = getBoxCenter(box);
     const proximity = calculateProximity(finalGuess, boxCenter, 800);
     
+    const timeToScore = finalTime ?? elapsedTime;
+    
     const score = calculateScore(
       proximity,
       pingsUsed,
       levelConfig.pings,
-      elapsedTime
+      timeToScore
     );
 
-    setScoreResult(score);
+    // Calculate flavor text once and store it
+    const scoreWithFlavor = {
+      ...score,
+      flavorText: getRankFlavor(score.rank)
+    };
+
+    setScoreResult(scoreWithFlavor);
 
     if (proximity >= 80) {
       audioEngine.playSuccess();
@@ -114,6 +130,7 @@ export function ClassicGame() {
     setPingsUsed(0);
     setPingHistory([]);
     setFinalGuess(null);
+    setFinalTime(null);
     setGamePhase('pinging');
     setScoreResult(null);
     setGameState('playing');
@@ -128,6 +145,7 @@ export function ClassicGame() {
     setPingsUsed(0);
     setPingHistory([]);
     setFinalGuess(null);
+    setFinalTime(null);
     setGamePhase('pinging');
     setScoreResult(null);
     setGameState('playing');
@@ -208,7 +226,7 @@ export function ClassicGame() {
               <div>
                 <p className="text-tiny text-muted-foreground">Time</p>
                 <p className={`text-heading-3 font-mono ${getTimeColor()}`}>
-                  {formatTime(elapsedTime)}
+                  {formatTime(finalTime ?? elapsedTime)}
                 </p>
               </div>
               <div className="h-10 w-px bg-border" />
@@ -248,9 +266,15 @@ export function ClassicGame() {
             className={`flat-card relative overflow-hidden ${
               gamePhase === 'placing' ? 'cursor-crosshair' : 'cursor-pointer'
             }`}
-            style={{ height: '500px' }}
+            style={{ 
+              height: '500px',
+              backgroundImage: `
+                linear-gradient(to right, hsl(var(--border)) 1px, transparent 1px),
+                linear-gradient(to bottom, hsl(var(--border)) 1px, transparent 1px)
+              `,
+              backgroundSize: `${levelConfig.boxSize}px ${levelConfig.boxSize}px`
+            }}
           >
-            <div className="absolute inset-0 echo-grid opacity-30" />
             
             {/* Ping history markers */}
             {pingHistory.map((ping, index) => (

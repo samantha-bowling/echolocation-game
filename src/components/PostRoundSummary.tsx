@@ -1,6 +1,5 @@
 import { Trophy, Clock, Target, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { getRankFlavor } from '@/lib/game/scoring';
 
 interface PostRoundSummaryProps {
   score: any;
@@ -35,7 +34,7 @@ export function PostRoundSummary({
           >
             {score.rank}
           </div>
-          <p className="text-heading-2">{getRankFlavor(score.rank)}</p>
+          <p className="text-heading-2">{score.flavorText}</p>
           <p className="text-muted-foreground">{success ? 'Round Complete!' : 'Try Again'}</p>
         </div>
 
