@@ -105,7 +105,9 @@ export function ClassicGame() {
       proximity,
       pingsUsed,
       levelConfig.pings,
-      timeToScore
+      timeToScore,
+      levelConfig.difficulty,
+      []
     );
 
     // Calculate flavor text once and store it
@@ -114,7 +116,12 @@ export function ClassicGame() {
       flavorText: getRankFlavor(score.rank)
     };
 
-    setScoreResult(scoreWithFlavor);
+    setScoreResult({
+      ...scoreWithFlavor,
+      pingsUsed,
+      totalPings: levelConfig.pings,
+      timeElapsed: timeToScore,
+    });
 
     if (proximity >= 80) {
       audioEngine.playSuccess();
@@ -161,8 +168,9 @@ export function ClassicGame() {
       <PostRoundSummary
         score={scoreResult}
         proximity={calculateProximity(finalGuess!, getTargetCenter(target), 800)}
-        pingsUsed={pingsUsed}
-        timeElapsed={elapsedTime}
+        pingsUsed={scoreResult.pingsUsed}
+        totalPings={scoreResult.totalPings}
+        timeElapsed={scoreResult.timeElapsed}
         onNext={handleNextLevel}
         onRetry={handleRetry}
         onMenu={() => navigate('/')}
