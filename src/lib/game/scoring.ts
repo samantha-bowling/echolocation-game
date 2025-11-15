@@ -216,3 +216,84 @@ export function generateStrategicTips(
   
   return tips.slice(0, 2); // Show max 2 tips
 }
+
+/**
+ * Calculate score for custom games with config adjustments
+ */
+export function calculateCustomScore(
+  proximity: number,
+  pingsUsed: number,
+  totalPings: number | typeof Infinity,
+  timeSeconds: number,
+  timerEnabled: boolean
+): ScoreResult {
+  const unusedPings = totalPings === Infinity ? 0 : totalPings - pingsUsed;
+  const pingEfficiency = totalPings === Infinity ? 0 : unusedPings / (totalPings as number);
+  
+  // Calculate components
+  const proximityBonus = Math.round(proximity * PROXIMITY_POINTS_PER_PERCENT);
+  
+  // Ping efficiency: 0 if unlimited
+  const pingEfficiencyBonus = totalPings === Infinity 
+    ? 0 
+    : Math.round(pingEfficiency * PING_EFFICIENCY_MAX);
+  
+  // Time penalty: 0 if timer disabled
+  const timePenalty = timerEnabled
+    ? Math.min(MAX_TIME_PENALTY, Math.round(timeSeconds * TIME_PENALTY_PER_SECOND))
+    : 0;
+  
+  // Speed bonus: 0 if timer disabled
+  const speedBonus = timerEnabled && timeSeconds < SPEED_BONUS_THRESHOLD
+    ? Math.round(((SPEED_BONUS_THRESHOLD - timeSeconds) / SPEED_BONUS_THRESHOLD) * SPEED_BONUS_MAX)
+    : 0;
+  
+  // Perfect target bonus
+  const perfectTargetBonus = proximity === 100 ? PERFECT_TARGET_BONUS : 0;
+  
+  // Calculate total (no difficulty multiplier for custom games)
+  const total = Math.max(
+    0,
+    BASE_SCORE +
+    proximityBonus +
+    pingEfficiencyBonus +
+    speedBonus +
+    perfectTargetBonus -
+    timePenalty
+  );
+  
+  const components: ScoreComponents = {
+    base: BASE_SCORE,
+    proximityBonus,
+    pingEfficiencyBonus,
+    timePenalty,
+    speedBonus,
+    perfectTargetBonus,
+    difficultyMultiplier: 1.0, // No multiplier for custom
+    boonBonus: 0,
+  };
+  
+  return {
+    total,
+    components,
+    rank: getRank(total),
+  };
+}
+
+/**
+ * Check if player met the win condition
+ */
+export function checkWinCondition(
+  proximity: number,
+  winCondition?: { type: 'none' | 'proximity'; proximityThreshold?: number }
+): boolean {
+  if (!winCondition || winCondition.type === 'none') {
+    return true; // Free play - always pass
+  }
+  
+  if (winCondition.type === 'proximity') {
+    return proximity >= (winCondition.proximityThreshold || 80);
+  }
+  
+  return true;
+}
