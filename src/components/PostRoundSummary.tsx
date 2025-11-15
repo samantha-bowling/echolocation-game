@@ -1,7 +1,9 @@
-import { Trophy, Clock, Target, Zap, Lightbulb } from 'lucide-react';
+import { Trophy, Clock, Target, Zap, Lightbulb, Share2, Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { InfoTooltip } from '@/components/InfoTooltip';
 import { getNextRankInfo, getPointsToNextRank, getProgressToNextRank, generateStrategicTips } from '@/lib/game/scoring';
+import { CustomGameConfig, encodeConfigToShareCode } from '@/lib/game/customConfig';
+import { useState } from 'react';
 
 interface PostRoundSummaryProps {
   score: any;
@@ -12,6 +14,10 @@ interface PostRoundSummaryProps {
   onNext: () => void;
   onRetry: () => void;
   onMenu: () => void;
+  isCustomGame?: boolean;
+  winCondition?: CustomGameConfig['winCondition'];
+  passedCondition?: boolean;
+  config?: CustomGameConfig;
 }
 
 export function PostRoundSummary({
@@ -23,12 +29,86 @@ export function PostRoundSummary({
   onNext,
   onRetry,
   onMenu,
+  isCustomGame,
+  winCondition,
+  passedCondition,
+  config,
 }: PostRoundSummaryProps) {
   const success = proximity >= 80;
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
+
+  const shareCode = isCustomGame && config ? encodeConfigToShareCode(config) : '';
+
+  const handleCopyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(shareCode);
+      setCopiedCode(true);
+      setTimeout(() => setCopiedCode(false), 2000);
+    } catch (e) {
+      console.error('Failed to copy:', e);
+    }
+  };
+
+  const getFailureMotivation = () => {
+    if (!winCondition) return "Try again!";
+    
+    const messages = [
+      "So close! You'll get it next time.",
+      "Practice makes perfect. Try again!",
+      "Every attempt brings you closer to success.",
+      "Don't give up! You're improving.",
+      "Learn from this round and come back stronger!",
+    ];
+    
+    if (winCondition.type === 'proximity' && proximity >= (winCondition.proximityThreshold || 80) - 10) {
+      return "You were so close! Just a bit more accuracy needed.";
+    }
+    
+    return messages[Math.floor(Math.random() * messages.length)];
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-6 echo-dots">
       <div className="frosted-modal max-w-2xl w-full space-y-8 animate-scale-in">
+        {/* Win/Fail Banner for Custom Games */}
+        {isCustomGame && passedCondition !== undefined && (
+          <div className={`flat-card text-center space-y-3 p-8 animate-scale-in ${
+            passedCondition 
+              ? 'bg-gradient-to-br from-echo-success/10 to-emerald-500/10 border-echo-success/30' 
+              : 'bg-gradient-to-br from-destructive/10 to-rose-500/10 border-destructive/30'
+          }`}>
+            <div className={`text-6xl ${passedCondition ? 'animate-bounce' : ''}`}>
+              {passedCondition ? '🎉' : '💔'}
+            </div>
+            <h2 className={`text-heading-1 ${
+              passedCondition ? 'text-echo-success' : 'text-destructive'
+            }`}>
+              {passedCondition ? 'Challenge Complete!' : 'Challenge Failed'}
+            </h2>
+            
+            {winCondition && winCondition.type !== 'none' && (
+              <div className="text-small text-muted-foreground space-y-1">
+                {winCondition.type === 'proximity' && (
+                  <>
+                    <p>Required: {winCondition.proximityThreshold}% proximity or better</p>
+                    <p className={passedCondition ? 'text-echo-success' : 'text-destructive'}>
+                      Achieved: {proximity}% proximity
+                      {passedCondition && ' ✓'}
+                    </p>
+                  </>
+                )}
+              </div>
+            )}
+            
+            {!passedCondition && (
+              <p className="text-small text-foreground/80 italic">
+                {getFailureMotivation()}
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Rank */}
         <div className="text-center space-y-2">
           <div 
@@ -214,7 +294,7 @@ export function PostRoundSummary({
 
         {/* Actions */}
         <div className="flex flex-col gap-3">
-          {success && (
+          {success && !isCustomGame && (
             <Button 
               onClick={onNext} 
               size="lg"
@@ -231,8 +311,91 @@ export function PostRoundSummary({
           <button onClick={onMenu} className="ghost-button w-full h-12">
             Back to Menu
           </button>
+          
+          {isCustomGame && (
+            <Button
+              variant="outline"
+              onClick={() => setShowShareDialog(true)}
+              className="gap-2 w-full h-12"
+            >
+              <Share2 className="w-4 h-4" />
+              Share Config
+            </Button>
+          )}
         </div>
       </div>
+
+      {/* Share Dialog */}
+      {showShareDialog && (
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+          <div className="frosted-modal max-w-md w-full space-y-6 animate-scale-in">
+            <div className="flex items-center justify-between">
+              <h3 className="text-heading-2">Share Configuration</h3>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowShareDialog(false)}
+              >
+                ×
+              </Button>
+            </div>
+            
+            <div className="space-y-3">
+              <p className="text-small text-muted-foreground">
+                Copy this code to share your custom game configuration with others:
+              </p>
+              
+              <div className="flat-card flex items-center justify-between gap-3 p-4 bg-card/50">
+                <code className="text-tiny font-mono break-all flex-1 text-foreground">
+                  {shareCode}
+                </code>
+                <Button
+                  size="sm"
+                  variant={copiedCode ? "default" : "outline"}
+                  onClick={handleCopyCode}
+                  className="shrink-0"
+                >
+                  {copiedCode ? (
+                    <>
+                      <Check className="w-4 h-4 mr-2" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4 mr-2" />
+                      Copy
+                    </>
+                  )}
+                </Button>
+              </div>
+              
+              {config && (
+                <div className="flat-card bg-primary/5 p-4 space-y-2">
+                  <p className="text-tiny font-semibold">Configuration Summary:</p>
+                  <div className="text-tiny text-muted-foreground space-y-1">
+                    <p>• Pings: {config.pingsMode === 'unlimited' ? '∞' : config.pingsCount}</p>
+                    <p>• Timer: {config.timerEnabled ? 'Enabled' : 'Disabled'}</p>
+                    <p>• Arena: {config.arenaSize}</p>
+                    <p>• Target: {config.targetSize}px</p>
+                    {config.multiRound && <p>• Rounds: {config.numberOfRounds}</p>}
+                    {config.winCondition && config.winCondition.type !== 'none' && (
+                      <p>• Challenge: {config.winCondition.type} ({config.winCondition.proximityThreshold}%)</p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <Button
+              variant="secondary"
+              className="w-full"
+              onClick={() => setShowShareDialog(false)}
+            >
+              Close
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

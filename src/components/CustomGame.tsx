@@ -9,6 +9,7 @@ import { calculateCustomScore, checkWinCondition, getRankFlavor } from '@/lib/ga
 import { generateHint, shouldShowHint, Hint } from '@/lib/game/hints';
 import { audioEngine } from '@/lib/audio/engine';
 import { PostRoundSummary } from './PostRoundSummary';
+import { recordCustomGame } from '@/lib/game/customStats';
 
 export function CustomGame() {
   const location = useLocation();
@@ -184,12 +185,33 @@ export function CustomGame() {
       // Save round score and transition to next round
       setRoundScores(prev => [...prev, roundResult]);
       setScoreResult(roundResult);
+      
+      // Record stats
+      recordCustomGame(
+        config,
+        roundResult.total,
+        roundResult.proximity,
+        roundResult.pingsUsed,
+        roundResult.timeElapsed,
+        roundResult.passedCondition
+      );
+      
       setGameState('round-transition');
     } else {
       // Final round or single round mode
       const allScores = config.multiRound ? [...roundScores, roundResult] : [roundResult];
       setRoundScores(allScores);
       setScoreResult(roundResult);
+      
+      // Record stats
+      recordCustomGame(
+        config,
+        roundResult.total,
+        roundResult.proximity,
+        roundResult.pingsUsed,
+        roundResult.timeElapsed,
+        roundResult.passedCondition
+      );
       
       // Play sound based on win condition
       if (passedCondition) {
