@@ -31,7 +31,7 @@ export function Credits() {
             echo<span className="text-primary">)))</span>location
           </h2>
           <p className="text-muted-foreground">
-            An audio-first browser game about finding hidden boxes using sound
+            An audio-first browser game about finding hidden targets using sound
           </p>
         </div>
 

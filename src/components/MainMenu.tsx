@@ -28,7 +28,7 @@ export function MainMenu() {
             echo<span className="text-primary">)))</span>location
           </h1>
           <p className="text-muted-foreground text-small">
-            Find the hidden box using only sound
+            Find the hidden target using only sound
           </p>
         </div>
 

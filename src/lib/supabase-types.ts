@@ -26,7 +26,7 @@ export interface CustomPreset {
   preset_name: string;
   settings: {
     pings: number;
-    boxSize: number;
+    targetSize: number;
     movement: boolean;
     noiseLevel: number;
     decoys: boolean;
