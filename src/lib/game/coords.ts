@@ -3,9 +3,9 @@ export interface Position {
   y: number;
 }
 
-export interface Box {
+export interface Target {
   position: Position;
-  size: number;
+  size: number; // diameter of the circle
 }
 
 export interface GameBounds {
@@ -14,43 +14,43 @@ export interface GameBounds {
 }
 
 /**
- * Generate a random hidden box position within bounds
+ * Generate a random hidden target position within bounds
  */
-export function generateBoxPosition(
+export function generateTargetPosition(
   bounds: GameBounds,
-  boxSize: number,
+  targetSize: number,
   margin: number = 50
-): Box {
-  const maxX = bounds.width - boxSize - margin;
-  const maxY = bounds.height - boxSize - margin;
+): Target {
+  const maxX = bounds.width - targetSize - margin;
+  const maxY = bounds.height - targetSize - margin;
   
   return {
     position: {
       x: margin + Math.random() * maxX,
       y: margin + Math.random() * maxY,
     },
-    size: boxSize,
+    size: targetSize,
   };
 }
 
 /**
- * Check if a guess position is within the box bounds
+ * Check if a guess position is within the target (circular bounds)
  */
-export function isWithinBox(guess: Position, box: Box): boolean {
-  return (
-    guess.x >= box.position.x &&
-    guess.x <= box.position.x + box.size &&
-    guess.y >= box.position.y &&
-    guess.y <= box.position.y + box.size
-  );
+export function isWithinTarget(guess: Position, target: Target): boolean {
+  const center = getTargetCenter(target);
+  const dx = guess.x - center.x;
+  const dy = guess.y - center.y;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+  const radius = target.size / 2;
+  return distance <= radius;
 }
 
 /**
- * Get the center point of a box
+ * Get the center point of a target
  */
-export function getBoxCenter(box: Box): Position {
+export function getTargetCenter(target: Target): Position {
   return {
-    x: box.position.x + box.size / 2,
-    y: box.position.y + box.size / 2,
+    x: target.position.x + target.size / 2,
+    y: target.position.y + target.size / 2,
   };
 }

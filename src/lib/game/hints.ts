@@ -1,4 +1,4 @@
-import { Position, Box } from './coords';
+import { Position, Target } from './coords';
 import { calculateDistance } from './distance';
 
 export interface Hint {
@@ -15,17 +15,17 @@ export interface Hint {
  */
 export function generateHint(
   guess: Position,
-  box: Box,
+  target: Target,
   bounds: { width: number; height: number }
 ): Hint {
-  const boxCenter = {
-    x: box.position.x + box.size / 2,
-    y: box.position.y + box.size / 2,
+  const targetCenter = {
+    x: target.position.x + target.size / 2,
+    y: target.position.y + target.size / 2,
   };
   
-  const distance = calculateDistance(guess, boxCenter);
-  const dx = boxCenter.x - guess.x;
-  const dy = boxCenter.y - guess.y;
+  const distance = calculateDistance(guess, targetCenter);
+  const dx = targetCenter.x - guess.x;
+  const dy = targetCenter.y - guess.y;
   
   // Proximity hint
   if (distance < 150) {

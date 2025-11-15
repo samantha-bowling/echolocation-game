@@ -35,7 +35,12 @@ export function PostRoundSummary({
             {score.rank}
           </div>
           <p className="text-heading-2">{score.flavorText}</p>
-          <p className="text-muted-foreground">{success ? 'Round Complete!' : 'Try Again'}</p>
+          <p className="text-muted-foreground">
+            {success 
+              ? `Proximity ≥80% - Level Complete!` 
+              : `${proximity}% Proximity - Need 80% to advance`
+            }
+          </p>
         </div>
 
         {/* Score */}
@@ -50,7 +55,7 @@ export function PostRoundSummary({
         <div className="grid grid-cols-2 gap-4">
           <div className="flat-card text-center space-y-2">
             <Target className="w-6 h-6 mx-auto text-muted-foreground" />
-            <p className="text-tiny text-muted-foreground">Accuracy</p>
+            <p className="text-tiny text-muted-foreground">Proximity</p>
             <p className="text-heading-2 font-mono">{proximity}%</p>
           </div>
 
