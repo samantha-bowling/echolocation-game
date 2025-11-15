@@ -7,6 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { AUDIO_THEMES } from '@/lib/audio/engine';
+import { CustomGameConfig, validateCustomConfig } from '@/lib/game/customConfig';
 
 export function CustomMode() {
   const navigate = useNavigate();
@@ -22,9 +23,21 @@ export function CustomMode() {
   const [theme, setTheme] = useState('sonar');
 
   const handleBegin = () => {
-    // For MVP, navigate to classic game with custom settings
-    // In future, this would navigate to a custom game screen
-    navigate('/classic');
+    const config: CustomGameConfig = {
+      pingsMode,
+      pingsCount,
+      targetSize: targetSize[0],
+      movementMode,
+      movementTrigger,
+      timerEnabled,
+      theme,
+      noiseLevel: noiseLevel[0],
+      decoys,
+      arenaSize: 'medium',
+    };
+
+    const validatedConfig = validateCustomConfig(config);
+    navigate('/custom-game', { state: { config: validatedConfig } });
   };
 
   return (
