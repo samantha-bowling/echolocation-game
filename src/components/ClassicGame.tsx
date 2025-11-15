@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Radio, ArrowLeft, Lightbulb, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { generateBoxPosition, getBoxCenter, Position } from '@/lib/game/coords';
+import { generateTargetPosition, getTargetCenter, Position } from '@/lib/game/coords';
 import { calculateDistance, calculateProximity } from '@/lib/game/distance';
 import { calculateScore, getRankFlavor } from '@/lib/game/scoring';
 import { getLevelConfig } from '@/lib/game/chapters';
@@ -17,8 +17,8 @@ export function ClassicGame() {
   const [level, setLevel] = useState(1);
   const [gameState, setGameState] = useState<'playing' | 'summary'>('playing');
   
-  const [box, setBox] = useState(() => 
-    generateBoxPosition({ width: 800, height: 600 }, 100)
+  const [target, setTarget] = useState(() => 
+    generateTargetPosition({ width: 800, height: 600 }, 100)
   );
   const [pingsRemaining, setPingsRemaining] = useState(5);
   const [pingsUsed, setPingsUsed] = useState(0);
@@ -49,7 +49,7 @@ export function ClassicGame() {
     if (gamePhase === 'confirming' && finalTime === null) {
       setFinalTime(elapsedTime);
     }
-  }, [gamePhase, elapsedTime, finalTime]);
+  }, [gamePhase, finalTime]);
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (gameState === 'summary') return;
@@ -69,8 +69,8 @@ export function ClassicGame() {
       setPingHistory(prev => [...prev, clickPos]);
 
       // Play ping sound
-      const boxCenter = getBoxCenter(box);
-      audioEngine.playPing(clickPos, boxCenter, 800);
+      const targetCenter = getTargetCenter(target);
+      audioEngine.playPing(clickPos, targetCenter, 800);
 
       setPingsRemaining(prev => prev - 1);
       setPingsUsed(prev => prev + 1);
@@ -82,7 +82,6 @@ export function ClassicGame() {
   };
 
   const handlePlaceFinalGuess = () => {
-    if (pingHistory.length === 0) return;
     setGamePhase('placing');
   };
 
@@ -94,8 +93,8 @@ export function ClassicGame() {
   const handleSubmitGuess = () => {
     if (!finalGuess) return;
 
-    const boxCenter = getBoxCenter(box);
-    const proximity = calculateProximity(finalGuess, boxCenter, 800);
+    const targetCenter = getTargetCenter(target);
+    const proximity = calculateProximity(finalGuess, targetCenter, 800);
     
     const timeToScore = finalTime ?? elapsedTime;
     
@@ -125,7 +124,7 @@ export function ClassicGame() {
 
   const handleNextLevel = () => {
     setLevel(prev => prev + 1);
-    setBox(generateBoxPosition({ width: 800, height: 600 }, levelConfig.boxSize));
+    setTarget(generateTargetPosition({ width: 800, height: 600 }, levelConfig.targetSize));
     setPingsRemaining(levelConfig.pings);
     setPingsUsed(0);
     setPingHistory([]);
@@ -140,7 +139,7 @@ export function ClassicGame() {
   };
 
   const handleRetry = () => {
-    setBox(generateBoxPosition({ width: 800, height: 600 }, levelConfig.boxSize));
+    setTarget(generateTargetPosition({ width: 800, height: 600 }, levelConfig.targetSize));
     setPingsRemaining(levelConfig.pings);
     setPingsUsed(0);
     setPingHistory([]);
@@ -158,7 +157,7 @@ export function ClassicGame() {
     return (
       <PostRoundSummary
         score={scoreResult}
-        proximity={calculateProximity(finalGuess!, getBoxCenter(box), 800)}
+        proximity={calculateProximity(finalGuess!, getTargetCenter(target), 800)}
         pingsUsed={pingsUsed}
         timeElapsed={elapsedTime}
         onNext={handleNextLevel}
@@ -221,6 +220,16 @@ export function ClassicGame() {
               <div>
                 <p className="text-tiny text-muted-foreground">Pings Left</p>
                 <p className="text-heading-2 font-mono">{pingsRemaining}</p>
+                {pingsRemaining === levelConfig.pings && (
+                  <p className="text-tiny text-accent mt-1">
+                    Max bonus: +{levelConfig.pings * 50}
+                  </p>
+                )}
+                {pingsRemaining > 0 && pingsRemaining < levelConfig.pings && (
+                  <p className="text-tiny text-accent mt-1">
+                    Unused: +{pingsRemaining * 50}
+                  </p>
+                )}
               </div>
               <div className="h-10 w-px bg-border" />
               <div>
@@ -232,16 +241,16 @@ export function ClassicGame() {
               <div className="h-10 w-px bg-border" />
               <div className="flex items-center gap-3">
                 <div>
-                  <p className="text-tiny text-muted-foreground">Box Size</p>
-                  <p className="text-heading-3 font-mono">{levelConfig.boxSize}px</p>
+                  <p className="text-tiny text-muted-foreground">Target</p>
+                  <p className="text-heading-3 font-mono">{levelConfig.targetSize}px ø</p>
                 </div>
                 <div 
-                  className="border-2 border-primary/30 bg-primary/5"
+                  className="border-2 border-primary rounded-full mx-auto"
                   style={{ 
-                    width: `${levelConfig.boxSize / 4}px`, 
-                    height: `${levelConfig.boxSize / 4}px` 
+                    width: `${Math.min(levelConfig.targetSize, 40)}px`, 
+                    height: `${Math.min(levelConfig.targetSize, 40)}px` 
                   }}
-                  title={`Visual reference: ${levelConfig.boxSize}px box`}
+                  title={`Visual reference: ${levelConfig.targetSize}px diameter target`}
                 />
               </div>
             </div>
@@ -259,6 +268,15 @@ export function ClassicGame() {
             )}
           </div>
 
+          {/* Win Condition Banner */}
+          <div className="flat-card bg-primary/5 border-primary/20 text-center py-3">
+            <p className="text-small">
+              <span className="text-muted-foreground">Goal: </span>
+              <span className="font-semibold text-primary">80%+ Proximity</span>
+              <span className="text-muted-foreground"> to advance</span>
+            </p>
+          </div>
+
           {/* Canvas */}
           <div 
             ref={canvasRef}
@@ -266,14 +284,7 @@ export function ClassicGame() {
             className={`flat-card relative overflow-hidden ${
               gamePhase === 'placing' ? 'cursor-crosshair' : 'cursor-pointer'
             }`}
-            style={{ 
-              height: '500px',
-              backgroundImage: `
-                linear-gradient(to right, hsl(var(--border)) 1px, transparent 1px),
-                linear-gradient(to bottom, hsl(var(--border)) 1px, transparent 1px)
-              `,
-              backgroundSize: `${levelConfig.boxSize}px ${levelConfig.boxSize}px`
-            }}
+            style={{ height: '500px' }}
           >
             
             {/* Ping history markers */}
@@ -337,7 +348,10 @@ export function ClassicGame() {
                 <div className="text-center space-y-2 opacity-50">
                   <Radio className="w-8 h-8 mx-auto text-muted-foreground" />
                   <p className="text-small text-muted-foreground">
-                    Click to ping
+                    {pingHistory.length === 0 
+                      ? 'Click to ping, or place your guess directly'
+                      : 'Click to ping'
+                    }
                   </p>
                 </div>
               </div>
@@ -355,15 +369,55 @@ export function ClassicGame() {
             )}
           </div>
 
+          {/* Live Proximity Indicator */}
+          {gamePhase === 'confirming' && finalGuess && (() => {
+            const targetCenter = getTargetCenter(target);
+            const currentProximity = calculateProximity(finalGuess, targetCenter, 800);
+            
+            return (
+              <div className="flat-card text-center py-4 space-y-3">
+                <p className="text-tiny text-muted-foreground uppercase tracking-wider">Your Proximity</p>
+                <div className="flex items-center justify-center gap-3">
+                  <div className="h-2 w-48 bg-border rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full transition-all ${
+                        currentProximity >= 80 ? 'bg-echo-success' : 'bg-destructive'
+                      }`}
+                      style={{ width: `${currentProximity}%` }}
+                    />
+                  </div>
+                  <span className={`text-heading-2 font-mono font-semibold ${
+                    currentProximity >= 80 ? 'text-echo-success' : 'text-destructive'
+                  }`}>
+                    {currentProximity}%
+                  </span>
+                </div>
+                <p className="text-small">
+                  {currentProximity >= 80 ? (
+                    <span className="text-echo-success font-semibold">✓ Within range to advance!</span>
+                  ) : (
+                    <>
+                      <span className="text-muted-foreground">Need </span>
+                      <span className="text-destructive font-semibold">{(80 - currentProximity).toFixed(0)}%</span>
+                      <span className="text-muted-foreground"> closer</span>
+                    </>
+                  )}
+                </p>
+              </div>
+            );
+          })()}
+
           {/* Actions */}
           <div className="flex gap-4">
             {gamePhase === 'pinging' && (
               <Button
                 onClick={handlePlaceFinalGuess}
-                disabled={pingHistory.length === 0}
                 className="flex-1 h-12"
               >
-                Place Final Guess
+                {pingsRemaining === levelConfig.pings 
+                  ? 'Place Guess (No Pings!)' 
+                  : 'Place Final Guess'
+                }
               </Button>
             )}
             {gamePhase === 'placing' && (
