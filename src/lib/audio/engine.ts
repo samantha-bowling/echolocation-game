@@ -7,6 +7,14 @@ export interface AudioTheme {
   baseFrequency: number;
   waveform: OscillatorType;
   description: string;
+  // Enhancement properties
+  filterEnabled?: boolean;
+  filterFrequency?: number;
+  filterSweep?: number;
+  detuneAmount?: number;
+  tremoloEnabled?: boolean;
+  tremoloRate?: number;
+  noiseAmount?: number;
 }
 
 export const AUDIO_THEMES: AudioTheme[] = [
@@ -15,28 +23,35 @@ export const AUDIO_THEMES: AudioTheme[] = [
     name: 'Classic Sonar',
     baseFrequency: 440,
     waveform: 'sine',
-    description: 'Clean sine wave ping',
+    description: 'Underwater sweep',
+    filterEnabled: true,
+    filterFrequency: 800,
+    filterSweep: 400,
   },
   {
     id: 'arcade',
     name: 'Arcade Beep',
     baseFrequency: 880,
     waveform: 'square',
-    description: 'Retro square wave',
+    description: 'Retro vibrato',
+    tremoloEnabled: true,
+    tremoloRate: 8,
   },
   {
     id: 'scifi',
     name: 'Sci-Fi Pulse',
     baseFrequency: 330,
     waveform: 'sawtooth',
-    description: 'Futuristic sawtooth',
+    description: 'Detuned shimmer',
+    detuneAmount: 15,
   },
   {
     id: 'natural',
     name: 'Natural Click',
     baseFrequency: 1200,
     waveform: 'triangle',
-    description: 'Organic triangle wave',
+    description: 'Percussive burst',
+    noiseAmount: 0.3,
   },
 ];
 
@@ -95,30 +110,90 @@ export class AudioEngine {
     const pitchModifier = 1 + (direction.verticalRatio * 0.1);
     oscillator.frequency.value = this.currentTheme.baseFrequency * pitchModifier;
     
+    // Apply detune if theme supports it
+    if (this.currentTheme.detuneAmount) {
+      oscillator.detune.value = this.currentTheme.detuneAmount;
+    }
+    
     // Create gain for volume based on distance
     const gainNode = this.context.createGain();
     const volumeByDistance = Math.max(0.1, 1 - normalizedDistance * 0.7);
     gainNode.gain.value = volumeByDistance * (isEcho ? 0.3 : 0.6);
     
+    // Apply tremolo if theme supports it
+    if (this.currentTheme.tremoloEnabled && this.currentTheme.tremoloRate) {
+      const tremolo = this.context.createOscillator();
+      const tremoloGain = this.context.createGain();
+      tremolo.frequency.value = this.currentTheme.tremoloRate;
+      tremoloGain.gain.value = 0.3;
+      tremolo.connect(tremoloGain);
+      tremoloGain.connect(gainNode.gain);
+      tremolo.start();
+      tremolo.stop(this.context.currentTime + 0.6);
+    }
+    
+    // Create filter if theme supports it
+    let filterNode: BiquadFilterNode | null = null;
+    if (this.currentTheme.filterEnabled && this.currentTheme.filterFrequency) {
+      filterNode = this.context.createBiquadFilter();
+      filterNode.type = 'lowpass';
+      filterNode.frequency.value = this.currentTheme.filterFrequency;
+      filterNode.Q.value = 5;
+    }
+    
     // Create panner for stereo positioning
     const panner = this.context.createStereoPanner();
     panner.pan.value = direction.horizontalRatio; // -1 (left) to 1 (right)
     
+    // Create noise if theme supports it
+    let noiseSource: AudioBufferSourceNode | null = null;
+    if (this.currentTheme.noiseAmount && !isEcho) {
+      const bufferSize = this.context.sampleRate * 0.05;
+      const buffer = this.context.createBuffer(1, bufferSize, this.context.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * this.currentTheme.noiseAmount;
+      }
+      noiseSource = this.context.createBufferSource();
+      noiseSource.buffer = buffer;
+      
+      const noiseGain = this.context.createGain();
+      noiseGain.gain.value = volumeByDistance * 0.5;
+      noiseSource.connect(noiseGain);
+      noiseGain.connect(panner);
+    }
+    
     // Connect nodes
     oscillator.connect(gainNode);
-    gainNode.connect(panner);
+    if (filterNode) {
+      gainNode.connect(filterNode);
+      filterNode.connect(panner);
+    } else {
+      gainNode.connect(panner);
+    }
     panner.connect(this.masterGain);
     
     // Play sound with extended duration and natural decay
     const now = this.context.currentTime;
     const baseDuration = isEcho ? 0.4 : 0.6;
     
+    // Apply filter sweep if theme supports it
+    if (filterNode && this.currentTheme.filterSweep) {
+      filterNode.frequency.setValueAtTime(this.currentTheme.filterFrequency!, now);
+      filterNode.frequency.exponentialRampToValueAtTime(
+        this.currentTheme.filterFrequency! - this.currentTheme.filterSweep,
+        now + baseDuration
+      );
+    }
+    
     // Multi-stage decay for natural reverb tail
     oscillator.start(now);
+    if (noiseSource) noiseSource.start(now);
     gainNode.gain.setValueAtTime(volumeByDistance * (isEcho ? 0.3 : 0.6), now);
     gainNode.gain.exponentialRampToValueAtTime(0.15, now + baseDuration * 0.3);
     gainNode.gain.exponentialRampToValueAtTime(0.01, now + baseDuration);
     oscillator.stop(now + baseDuration);
+    if (noiseSource) noiseSource.stop(now + 0.05);
     
     // Add echo repetitions for realistic reverberation
     if (!isEcho) {
@@ -157,6 +232,101 @@ export class AudioEngine {
         echoOsc.stop(echoStart + echoDuration);
       }
     }
+  }
+
+  /**
+   * Play preview of current theme
+   */
+  playPreview(themeId?: string) {
+    if (!this.context || !this.masterGain) {
+      this.initialize();
+    }
+    
+    if (!this.context || !this.masterGain) return;
+
+    const theme = themeId 
+      ? AUDIO_THEMES.find(t => t.id === themeId) || this.currentTheme
+      : this.currentTheme;
+    
+    // Create main oscillator
+    const oscillator = this.context.createOscillator();
+    oscillator.type = theme.waveform;
+    oscillator.frequency.value = theme.baseFrequency;
+    
+    // Apply detune if theme supports it
+    if (theme.detuneAmount) {
+      oscillator.detune.value = theme.detuneAmount;
+    }
+    
+    const gainNode = this.context.createGain();
+    
+    // Apply tremolo if theme supports it
+    if (theme.tremoloEnabled && theme.tremoloRate) {
+      const tremolo = this.context.createOscillator();
+      const tremoloGain = this.context.createGain();
+      tremolo.frequency.value = theme.tremoloRate;
+      tremoloGain.gain.value = 0.3;
+      tremolo.connect(tremoloGain);
+      tremoloGain.connect(gainNode.gain);
+      tremolo.start();
+      tremolo.stop(this.context.currentTime + 0.4);
+    }
+    
+    // Create filter if theme supports it
+    let filterNode: BiquadFilterNode | null = null;
+    if (theme.filterEnabled && theme.filterFrequency) {
+      filterNode = this.context.createBiquadFilter();
+      filterNode.type = 'lowpass';
+      filterNode.frequency.value = theme.filterFrequency;
+      filterNode.Q.value = 5;
+    }
+    
+    // Create noise if theme supports it
+    let noiseSource: AudioBufferSourceNode | null = null;
+    if (theme.noiseAmount) {
+      const bufferSize = this.context.sampleRate * 0.05;
+      const buffer = this.context.createBuffer(1, bufferSize, this.context.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * theme.noiseAmount;
+      }
+      noiseSource = this.context.createBufferSource();
+      noiseSource.buffer = buffer;
+      
+      const noiseGain = this.context.createGain();
+      noiseGain.gain.value = 0.4;
+      noiseSource.connect(noiseGain);
+      noiseGain.connect(this.masterGain);
+    }
+    
+    const now = this.context.currentTime;
+    
+    // Apply filter sweep if theme supports it
+    if (filterNode && theme.filterSweep) {
+      filterNode.frequency.setValueAtTime(theme.filterFrequency!, now);
+      filterNode.frequency.exponentialRampToValueAtTime(
+        theme.filterFrequency! - theme.filterSweep,
+        now + 0.4
+      );
+    }
+    
+    // Simple envelope
+    gainNode.gain.setValueAtTime(0.5, now);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+    
+    // Connect nodes
+    oscillator.connect(gainNode);
+    if (filterNode) {
+      gainNode.connect(filterNode);
+      filterNode.connect(this.masterGain);
+    } else {
+      gainNode.connect(this.masterGain);
+    }
+    
+    oscillator.start(now);
+    if (noiseSource) noiseSource.start(now);
+    oscillator.stop(now + 0.4);
+    if (noiseSource) noiseSource.stop(now + 0.05);
   }
 
   /**
