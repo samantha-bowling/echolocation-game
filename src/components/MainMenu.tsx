@@ -42,7 +42,7 @@ export function MainMenu() {
 
         {/* Main Actions */}
         <div className="space-y-8">
-          <Link to="/classic">
+          <Link to="/classic" className="block">
             <Button 
               size="lg" 
               className="w-full h-14 text-base font-semibold hover-lift"
@@ -52,13 +52,13 @@ export function MainMenu() {
             </Button>
           </Link>
 
-          <Link to="/classic">
+          <Link to="/classic" className="block">
             <button className="ghost-button w-full h-12">
               New Classic Run
             </button>
           </Link>
 
-          <Link to="/custom">
+          <Link to="/custom" className="block">
             <button className="ghost-button w-full h-12">
               <Wand2 className="w-4 h-4 mr-2" />
               Custom Mode
