@@ -109,13 +109,54 @@ export class AudioEngine {
     gainNode.connect(panner);
     panner.connect(this.masterGain);
     
-    // Play sound
+    // Play sound with extended duration and natural decay
     const now = this.context.currentTime;
-    const duration = isEcho ? 0.15 : 0.2;
+    const baseDuration = isEcho ? 0.4 : 0.6;
     
+    // Multi-stage decay for natural reverb tail
     oscillator.start(now);
-    gainNode.gain.exponentialRampToValueAtTime(0.01, now + duration);
-    oscillator.stop(now + duration);
+    gainNode.gain.setValueAtTime(volumeByDistance * (isEcho ? 0.3 : 0.6), now);
+    gainNode.gain.exponentialRampToValueAtTime(0.15, now + baseDuration * 0.3);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, now + baseDuration);
+    oscillator.stop(now + baseDuration);
+    
+    // Add echo repetitions for realistic reverberation
+    if (!isEcho) {
+      const echoCount = 3;
+      const reverbMultiplier = 0.5 + (normalizedDistance * 0.5);
+      const echoDelay = 0.12 * reverbMultiplier;
+      const echoDecay = 0.6;
+      
+      for (let i = 1; i <= echoCount; i++) {
+        const echoOsc = this.context.createOscillator();
+        const echoGain = this.context.createGain();
+        const echoPanner = this.context.createStereoPanner();
+        
+        // Slightly lower pitch for each echo (Doppler-like effect)
+        echoOsc.type = this.currentTheme.waveform;
+        echoOsc.frequency.value = oscillator.frequency.value * (1 - i * 0.02);
+        
+        // Decreasing volume for each echo
+        const echoVolume = volumeByDistance * Math.pow(echoDecay, i) * 0.4;
+        echoGain.gain.value = echoVolume;
+        
+        // Slightly varied stereo position for spatial depth
+        echoPanner.pan.value = direction.horizontalRatio * (1 - i * 0.15);
+        
+        // Connect echo nodes
+        echoOsc.connect(echoGain);
+        echoGain.connect(echoPanner);
+        echoPanner.connect(this.masterGain);
+        
+        // Play echo with delay and decay
+        const echoStart = now + (echoDelay * i);
+        const echoDuration = baseDuration * 0.6;
+        
+        echoOsc.start(echoStart);
+        echoGain.gain.exponentialRampToValueAtTime(0.01, echoStart + echoDuration);
+        echoOsc.stop(echoStart + echoDuration);
+      }
+    }
   }
 
   /**
