@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 
 export function MainMenu() {
   const [hasSave, setHasSave] = useState(false);
+  const [saveDetails, setSaveDetails] = useState<{ level: number; chapter: number } | null>(null);
 
   useEffect(() => {
     // Check localStorage for existing save (temporary until Supabase is connected)
@@ -12,7 +13,10 @@ export function MainMenu() {
     if (savedProgress) {
       try {
         const progress = JSON.parse(savedProgress);
-        setHasSave(progress.level > 1);
+        if (progress.level > 1) {
+          setHasSave(true);
+          setSaveDetails({ level: progress.level, chapter: progress.chapter });
+        }
       } catch {
         setHasSave(false);
       }
@@ -48,12 +52,28 @@ export function MainMenu() {
               className="w-full h-14 text-base font-semibold hover-lift"
             >
               <Play className="w-5 h-5 mr-2" />
-              {hasSave ? 'Continue Classic' : 'Start Classic'}
+              {hasSave ? (
+                <div className="flex items-center gap-2">
+                  <span>Continue Classic</span>
+                  {saveDetails && (
+                    <span className="text-xs text-muted-foreground font-normal">
+                      (Ch. {saveDetails.chapter}, Lvl. {saveDetails.level})
+                    </span>
+                  )}
+                </div>
+              ) : (
+                'Start Classic'
+              )}
             </Button>
           </Link>
 
           <Link to="/classic" className="block">
-            <button className="ghost-button w-full h-12">
+            <button 
+              className="ghost-button w-full h-12"
+              onClick={() => {
+                localStorage.setItem('echo_reset_classic', 'true');
+              }}
+            >
               New Classic Run
             </button>
           </Link>

@@ -1,7 +1,7 @@
 import { Trophy, Clock, Target, Zap, Lightbulb, Share2, Copy, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { InfoTooltip } from '@/components/InfoTooltip';
-import { getNextRankInfo, getPointsToNextRank, getProgressToNextRank, generateStrategicTips } from '@/lib/game/scoring';
+import { getNextRankInfo, getPointsToNextRank, getProgressToNextRank, generateStrategicTips, getRankColor } from '@/lib/game/scoring';
 import { CustomGameConfig, encodeConfigToShareCode } from '@/lib/game/customConfig';
 import { useState } from 'react';
 
@@ -112,8 +112,12 @@ export function PostRoundSummary({
         {/* Rank */}
         <div className="text-center space-y-2">
           <div 
-            className={`inline-flex items-center justify-center w-24 h-24 rounded-full text-4xl font-display font-bold ${
-              success ? 'bg-echo-success/20 text-accent' : 'bg-destructive/20 text-destructive'
+            className={`inline-flex items-center justify-center w-24 h-24 rounded-full text-4xl font-display font-bold border-2 ${
+              getRankColor(score.rank).bg
+            } ${
+              getRankColor(score.rank).text
+            } ${
+              getRankColor(score.rank).border
             }`}
           >
             {score.rank}
@@ -135,7 +139,13 @@ export function PostRoundSummary({
           </div>
           
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 text-xl font-display font-bold text-primary">
+            <div className={`flex items-center justify-center w-12 h-12 rounded-lg text-xl font-display font-bold border ${
+              getRankColor(score.rank).bg
+            } ${
+              getRankColor(score.rank).text
+            } ${
+              getRankColor(score.rank).border
+            }`}>
               {score.rank}
             </div>
             

@@ -127,6 +127,51 @@ export function getRank(score: number): string {
 }
 
 /**
+ * Get color classes for rank display
+ */
+export function getRankColor(rank: string): {
+  bg: string;
+  text: string;
+  border: string;
+} {
+  switch (rank) {
+    case 'S':
+      return {
+        bg: 'bg-yellow-500/20',
+        text: 'text-yellow-400',
+        border: 'border-yellow-500/30',
+      };
+    case 'A+':
+    case 'A':
+      return {
+        bg: 'bg-green-500/20',
+        text: 'text-green-400',
+        border: 'border-green-500/30',
+      };
+    case 'B+':
+    case 'B':
+      return {
+        bg: 'bg-blue-500/20',
+        text: 'text-blue-400',
+        border: 'border-blue-500/30',
+      };
+    case 'C':
+      return {
+        bg: 'bg-orange-500/20',
+        text: 'text-orange-400',
+        border: 'border-orange-500/30',
+      };
+    case 'D':
+    default:
+      return {
+        bg: 'bg-red-500/20',
+        text: 'text-red-400',
+        border: 'border-red-500/30',
+      };
+  }
+}
+
+/**
  * Get next rank info
  */
 export function getNextRankInfo(currentRank: string): RankInfo | null {
