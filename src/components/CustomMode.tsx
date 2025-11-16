@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Play, Save, Trash2, Lightbulb, Download, BarChart3 } from 'lucide-react';
+import { ArrowLeft, Play, Save, Trash2, Lightbulb, Download, BarChart3, Target, Zap, Infinity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
@@ -285,8 +285,8 @@ export function CustomMode() {
               className="p-4 rounded-xl border-2 border-primary bg-primary/5 hover:bg-primary/10 transition-all text-left space-y-2 group"
             >
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center text-lg">
-                  🎯
+                <div className="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center">
+                  <Target className="w-5 h-5" />
                 </div>
                 <h4 className="text-base font-semibold group-hover:text-primary transition-colors">Normal Mode</h4>
               </div>
@@ -306,8 +306,8 @@ export function CustomMode() {
               className="p-4 rounded-xl border-2 border-border hover:border-red-500/50 hover:bg-red-500/5 transition-all text-left space-y-2 group"
             >
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center text-lg">
-                  🔥
+                <div className="w-8 h-8 rounded-lg bg-red-500/20 text-red-400 flex items-center justify-center">
+                  <Zap className="w-5 h-5" />
                 </div>
                 <h4 className="text-base font-semibold group-hover:text-red-400 transition-colors">Hard Mode</h4>
               </div>
