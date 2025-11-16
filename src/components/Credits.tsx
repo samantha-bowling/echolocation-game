@@ -37,16 +37,18 @@ export function Credits() {
 
         <div className="flat-card space-y-6">
           <div className="space-y-2">
-            <h3 className="text-heading-3">Game Concept and Design</h3>
-            <a 
-              href="https://samantha-bowling.com/" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-small text-primary hover:text-primary/80 transition-colors inline-flex items-center gap-1"
-            >
-              Samantha Bowling
-              <span className="text-xs">↗</span>
-            </a>
+            <h3 className="text-heading-3">
+              Game Concept and Design by{' '}
+              <a 
+                href="https://samantha-bowling.com/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-primary hover:text-primary/80 transition-colors inline-flex items-center gap-1"
+              >
+                Samantha Bowling
+                <span className="text-xs">↗</span>
+              </a>
+            </h3>
           </div>
 
           <div className="space-y-2">
