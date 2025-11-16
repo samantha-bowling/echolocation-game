@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { generateTargetPosition, getTargetCenter, Position } from '@/lib/game/coords';
 import { calculateProximity } from '@/lib/game/distance';
 import { calculateScore } from '@/lib/game/scoring';
-import { getLevelConfig } from '@/lib/game/chapters';
+import { getLevelConfig, getChapterFromLevel, getChapterConfig } from '@/lib/game/chapters';
 import { audioEngine } from '@/lib/audio/engine';
 import { PostRoundSummary } from './PostRoundSummary';
 import { GameCanvas } from './GameCanvas';
@@ -21,7 +21,6 @@ export function ClassicGame() {
   const canvasRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   
-  const [chapter] = useState(1);
   const [level, setLevel] = useState(() => {
     const saved = localStorage.getItem('echo_classic_progress');
     if (saved) {
@@ -38,7 +37,9 @@ export function ClassicGame() {
   const [scoreResult, setScoreResult] = useState<any>(null);
   const [showHint, setShowHint] = useState(false);
 
+  const chapter = getChapterFromLevel(level);
   const levelConfig = getLevelConfig(chapter, level);
+  const chapterConfig = getChapterConfig(chapter);
 
   const arenaSize = useMemo(() => {
     if (isMobile) {
@@ -59,6 +60,10 @@ export function ClassicGame() {
     initialPings: levelConfig.pings,
     arenaSize,
     target,
+    chapterConfig,
+    onTargetResize: (newSize) => {
+      setTarget(prev => ({ ...prev, size: newSize }));
+    },
   });
 
   useEffect(() => {
@@ -108,9 +113,10 @@ export function ClassicGame() {
 
   const handleNextLevel = () => {
     const nextLevel = level + 1;
+    const nextChapter = getChapterFromLevel(nextLevel);
     setLevel(nextLevel);
-    localStorage.setItem('echo_classic_progress', JSON.stringify({ level: nextLevel, chapter }));
-    const newLevelConfig = getLevelConfig(chapter, nextLevel);
+    localStorage.setItem('echo_classic_progress', JSON.stringify({ level: nextLevel, chapter: nextChapter }));
+    const newLevelConfig = getLevelConfig(nextChapter, nextLevel);
     setTarget(generateTargetPosition(arenaSize, newLevelConfig.targetSize));
     resetPings();
     resetPhase();

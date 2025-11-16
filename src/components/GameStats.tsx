@@ -1,6 +1,8 @@
-import { Radio } from 'lucide-react';
+import { Radio, Sparkles } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
+import { InfoTooltip } from './InfoTooltip';
+import { getChapterConfig } from '@/lib/game/chapters';
 
 export interface GameStatsProps {
   pingsRemaining: number;
@@ -47,11 +49,31 @@ export function GameStats({
       {/* Level Info (Classic Mode Only) */}
       {levelInfo && (
         <div className="flat-card bg-secondary/50 backdrop-blur-sm">
-          <div className="text-tiny text-muted-foreground uppercase tracking-wider font-medium mb-1">
-            Progress
+          <div className="flex items-center gap-2 mb-1">
+            <div className="text-tiny text-muted-foreground uppercase tracking-wider font-medium">
+              Progress
+            </div>
+            {(() => {
+              const chapterConfig = getChapterConfig(levelInfo.chapter);
+              if (chapterConfig.specialMechanic) {
+                const mechanicDescriptions: Record<string, string> = {
+                  shrinking_target: 'Target shrinks after each ping',
+                };
+                return (
+                  <div className="flex items-center gap-1">
+                    <Sparkles className="w-3.5 h-3.5 text-primary" />
+                    <InfoTooltip content={mechanicDescriptions[chapterConfig.specialMechanic] || chapterConfig.specialMechanic} />
+                  </div>
+                );
+              }
+              return null;
+            })()}
           </div>
           <div className="text-xl font-display font-semibold text-foreground">
-            Ch. {levelInfo.chapter} • Lvl. {levelInfo.level}
+            {getChapterConfig(levelInfo.chapter).name}
+          </div>
+          <div className="text-sm text-muted-foreground">
+            Level {levelInfo.level}
           </div>
         </div>
       )}
