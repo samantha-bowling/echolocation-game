@@ -1,6 +1,6 @@
 import { TutorialStep, TUTORIAL_STEPS } from '@/lib/game/tutorial';
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
+import { X, Volume2, ArrowLeftRight, ArrowUpDown } from 'lucide-react';
 
 export interface TutorialOverlayProps {
   step: TutorialStep;
@@ -8,6 +8,8 @@ export interface TutorialOverlayProps {
   onSkip: () => void;
   totalSteps?: number;
   currentStepNumber?: number;
+  demoPingsExperienced?: number;
+  totalDemoPings?: number;
 }
 
 export function TutorialOverlay({
@@ -16,10 +18,15 @@ export function TutorialOverlay({
   onSkip,
   totalSteps = 8,
   currentStepNumber = 1,
+  demoPingsExperienced = 0,
+  totalDemoPings = 4,
 }: TutorialOverlayProps) {
   const stepInfo = TUTORIAL_STEPS[step];
 
   if (step === 'complete') return null;
+
+  const isAudioCuesStep = step === 'audio-cues';
+  const allDemoPingsExperienced = demoPingsExperienced >= totalDemoPings;
 
   return (
     <>
@@ -59,10 +66,59 @@ export function TutorialOverlay({
               </p>
             </div>
 
+            {/* Audio Cues Visual Diagram */}
+            {isAudioCuesStep && (
+              <div className="space-y-3 py-3 border-y border-border">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                    <ArrowLeftRight className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-sm font-semibold">Left / Right</div>
+                    <div className="text-xs text-muted-foreground">Stereo panning in headphones</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                    <Volume2 className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-sm font-semibold">Distance</div>
+                    <div className="text-xs text-muted-foreground">Volume: louder = closer</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                    <ArrowUpDown className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-sm font-semibold">Above / Below</div>
+                    <div className="text-xs text-muted-foreground">Pitch: higher = above you</div>
+                  </div>
+                </div>
+                
+                {/* Demo Progress */}
+                <div className="pt-2 mt-2 border-t border-border/50">
+                  <div className="text-xs text-muted-foreground text-center">
+                    Demo pings experienced: {demoPingsExperienced} / {totalDemoPings}
+                  </div>
+                  {allDemoPingsExperienced && (
+                    <div className="text-xs text-primary text-center mt-1 font-semibold animate-fade-in">
+                      ✓ All demos completed! Click Continue when ready.
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Actions */}
             <div className="flex gap-3">
               {step !== 'first-ping' && step !== 'confirm-guess' && (
-                <Button onClick={onNext} className="flex-1">
+                <Button 
+                  onClick={onNext} 
+                  className="flex-1"
+                  disabled={isAudioCuesStep && !allDemoPingsExperienced}
+                >
                   {stepInfo.action || 'Next'}
                 </Button>
               )}

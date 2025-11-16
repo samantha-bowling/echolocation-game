@@ -26,8 +26,17 @@ export function TutorialGame() {
   const [target] = useState(() =>
     generateTargetPosition({ width: 800, height: 600 }, 100)
   );
+  const [demoPingsExperienced, setDemoPingsExperienced] = useState<Set<string>>(new Set());
 
   const arenaSize = { width: 800, height: 600 };
+
+  // Demo ping positions for audio-cues step
+  const demoPings = [
+    { id: 'left-close', position: { x: 100, y: 300 }, label: 'LEFT & CLOSE', description: 'Loud, left speaker' },
+    { id: 'right-far', position: { x: 700, y: 300 }, label: 'RIGHT & FAR', description: 'Quiet, right speaker' },
+    { id: 'center-top', position: { x: 400, y: 100 }, label: 'ABOVE', description: 'Higher pitch' },
+    { id: 'center-bottom', position: { x: 400, y: 500 }, label: 'BELOW', description: 'Lower pitch' },
+  ];
 
   const { gamePhase, finalGuess, setFinalGuess, handlePlaceFinalGuess, resetPhase } = useGamePhase();
   const { elapsedTime, finalTime, resetTimer } = useGameTimer({
@@ -63,6 +72,26 @@ export function TutorialGame() {
       y: e.clientY - rect.top,
     };
 
+    // Special handling for audio-cues demo mode
+    if (tutorialState.currentStep === 'audio-cues') {
+      const clickedDemo = demoPings.find(demo => {
+        const dx = clickPos.x - demo.position.x;
+        const dy = clickPos.y - demo.position.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        return distance <= 40; // 40px click radius
+      });
+
+      if (clickedDemo) {
+        // Play demo ping sound
+        audioEngine.playPing(clickedDemo.position, getTargetCenter(target), 
+          Math.max(arenaSize.width, arenaSize.height));
+        
+        // Mark as experienced
+        setDemoPingsExperienced(prev => new Set(prev).add(clickedDemo.id));
+      }
+      return;
+    }
+
     if (gamePhase === 'pinging') {
       handlePing(clickPos);
     } else if (gamePhase === 'placing') {
@@ -77,6 +106,7 @@ export function TutorialGame() {
       'welcome',
       'first-ping',
       'interpret-sound',
+      'audio-cues',
       'multiple-pings',
       'place-guess',
       'confirm-guess',
@@ -85,6 +115,11 @@ export function TutorialGame() {
     ];
     const currentIndex = currentSteps.indexOf(tutorialState.currentStep);
     const nextStep = currentSteps[Math.min(currentIndex + 1, currentSteps.length - 1)];
+
+    // Reset demo pings when leaving audio-cues step
+    if (tutorialState.currentStep === 'audio-cues') {
+      setDemoPingsExperienced(new Set());
+    }
 
     if (nextStep === 'complete') {
       markTutorialCompleted();
@@ -116,6 +151,7 @@ export function TutorialGame() {
       'welcome',
       'first-ping',
       'interpret-sound',
+      'audio-cues',
       'multiple-pings',
       'place-guess',
       'confirm-guess',
@@ -155,18 +191,70 @@ export function TutorialGame() {
         />
 
         {/* Game Canvas */}
-        <GameCanvas
-          arenaSize={arenaSize}
-          target={target}
-          pingHistory={pingHistory}
-          finalGuess={finalGuess}
-          gamePhase={gamePhase}
-          gameState="playing"
-          showHint={false}
-          currentHint={null}
-          onCanvasClick={handleCanvasClick}
-          canvasRef={canvasRef}
-        />
+        <div className="relative">
+          <GameCanvas
+            arenaSize={arenaSize}
+            target={target}
+            pingHistory={pingHistory}
+            finalGuess={finalGuess}
+            gamePhase={gamePhase}
+            gameState="playing"
+            showHint={false}
+            currentHint={null}
+            onCanvasClick={handleCanvasClick}
+            canvasRef={canvasRef}
+          />
+          
+          {/* Demo Ping Overlay for audio-cues step */}
+          {tutorialState.currentStep === 'audio-cues' && (
+            <div className="absolute inset-0 pointer-events-none">
+              {demoPings.map(demo => {
+                const isExperienced = demoPingsExperienced.has(demo.id);
+                return (
+                  <div
+                    key={demo.id}
+                    className="absolute pointer-events-auto cursor-pointer"
+                    style={{
+                      left: demo.position.x,
+                      top: demo.position.y,
+                      transform: 'translate(-50%, -50%)',
+                    }}
+                  >
+                    <div className={`relative transition-all ${isExperienced ? 'opacity-50' : 'opacity-100'}`}>
+                      {/* Pulse animation */}
+                      <div className={`absolute inset-0 ${!isExperienced ? 'animate-ping' : ''}`}>
+                        <div className="w-20 h-20 rounded-full bg-primary/30" />
+                      </div>
+                      
+                      {/* Main circle */}
+                      <div className={`w-20 h-20 rounded-full border-4 flex items-center justify-center transition-all ${
+                        isExperienced 
+                          ? 'bg-primary/20 border-primary/50' 
+                          : 'bg-primary/40 border-primary hover:scale-110'
+                      }`}>
+                        <div className="text-center">
+                          <div className="text-xs font-bold text-primary-foreground whitespace-nowrap">
+                            {demo.label}
+                          </div>
+                          {isExperienced && (
+                            <div className="text-2xl">✓</div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      {/* Description label */}
+                      <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                        <div className="text-xs bg-background/90 px-2 py-1 rounded border border-border text-foreground">
+                          {demo.description}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
 
         {/* Action Buttons */}
         {gamePhase === 'pinging' && tutorialState.currentStep === 'place-guess' && (
@@ -210,7 +298,9 @@ export function TutorialGame() {
         onNext={handleNextStep}
         onSkip={handleSkipTutorial}
         currentStepNumber={getStepNumber(tutorialState.currentStep)}
-        totalSteps={7}
+        totalSteps={8}
+        demoPingsExperienced={demoPingsExperienced.size}
+        totalDemoPings={4}
       />
     </div>
   );

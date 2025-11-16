@@ -2,6 +2,7 @@ export type TutorialStep =
   | 'welcome'
   | 'first-ping'
   | 'interpret-sound'
+  | 'audio-cues'
   | 'multiple-pings'
   | 'place-guess'
   | 'confirm-guess'
@@ -35,12 +36,17 @@ export const TUTORIAL_STEPS: Record<TutorialStep, {
   },
   'interpret-sound': {
     title: 'Listen to the Feedback',
-    description: 'Fast, high-pitched sounds mean you\'re very close. Slow, low-pitched sounds mean you\'re far away. Try pinging in different locations!',
-    action: 'Keep pinging',
+    description: 'The sound tells you how close you are. Now let\'s learn how to understand WHERE the target is located using spatial audio.',
+    action: 'Continue',
+  },
+  'audio-cues': {
+    title: 'Understanding Spatial Audio 🎧',
+    description: 'The sound tells you THREE things: LEFT/RIGHT (stereo panning), DISTANCE (volume - louder = closer), and UP/DOWN (pitch - higher tone = above you). Try the demo pings to experience each cue!',
+    action: 'Got it!',
   },
   'multiple-pings': {
     title: 'Triangulate the Target',
-    description: 'You have limited pings to find the target. Use them wisely! Each ping gives you more information about the target\'s location.',
+    description: 'You have limited pings to find the target. Use them wisely! After using most of your pings, a helpful hint may appear to guide you.',
     action: 'Continue pinging',
   },
   'place-guess': {
@@ -55,7 +61,7 @@ export const TUTORIAL_STEPS: Record<TutorialStep, {
   },
   scoring: {
     title: 'Understanding Your Score',
-    description: 'Your score is based on proximity to the target, pings efficiency, and time taken. The closer you are and fewer pings used, the higher your score!',
+    description: 'Your score is based on proximity to target, ping efficiency, and time. The game is forgiving for beginners - early seconds have less penalty! Complete all 10 levels in a chapter for bonus points.',
     action: 'Continue',
   },
   complete: {
@@ -109,6 +115,7 @@ export function getNextStep(currentStep: TutorialStep, pingCount: number = 0): T
     'welcome',
     'first-ping',
     'interpret-sound',
+    'audio-cues',
     'multiple-pings',
     'place-guess',
     'confirm-guess',
@@ -123,7 +130,7 @@ export function getNextStep(currentStep: TutorialStep, pingCount: number = 0): T
     return 'interpret-sound';
   }
   if (currentStep === 'interpret-sound' && pingCount >= 2) {
-    return 'multiple-pings';
+    return 'audio-cues';
   }
   if (currentStep === 'multiple-pings' && pingCount >= 4) {
     return 'place-guess';
