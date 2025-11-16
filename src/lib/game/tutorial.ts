@@ -61,7 +61,7 @@ export const TUTORIAL_STEPS: Record<TutorialStep, {
   },
   scoring: {
     title: 'Understanding Your Score',
-    description: 'Your score is based on proximity to target, ping efficiency, and time. The game is forgiving for beginners - early seconds have less penalty! Complete all 10 levels in a chapter for bonus points.',
+    description: 'Your score is based on THREE factors: (1) PROXIMITY - closer to target = higher score, (2) PING EFFICIENCY - unused pings earn bonus points, and (3) TIME - in the real game (not this tutorial), you have 60 seconds per round with a timer that affects your score. The timer is beginner-friendly: early seconds have minimal penalty! Complete all 10 levels in a chapter for a completion bonus.',
     action: 'Continue',
   },
   complete: {

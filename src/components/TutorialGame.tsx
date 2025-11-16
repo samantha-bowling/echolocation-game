@@ -50,7 +50,7 @@ export function TutorialGame() {
 
   const { gamePhase, finalGuess, setFinalGuess, handlePlaceFinalGuess, resetPhase } = useGamePhase();
   const { elapsedTime, finalTime, resetTimer } = useGameTimer({
-    enabled: true,
+    enabled: false,  // Tutorial doesn't need a running timer
     gamePhase,
   });
   const { pingHistory, pingsRemaining, pingsUsed, handlePing, resetPings } = usePingSystem({
@@ -199,7 +199,7 @@ export function TutorialGame() {
           pingsUsed={pingsUsed}
           elapsedTime={elapsedTime}
           finalTime={finalTime}
-          timerEnabled={true}
+          timerEnabled={false}  // Hide timer in tutorial UI
         />
 
         {/* Game Canvas */}

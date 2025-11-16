@@ -72,12 +72,13 @@ export function TutorialOverlay({
 
   return (
     <>
-      {/* Backdrop */}
-      <div className="fixed inset-0 bg-background/60 backdrop-blur-sm z-40 animate-fade-in" />
+      {/* Non-blocking subtle backdrop */}
+      <div className="fixed inset-0 bg-background/30 backdrop-blur-[1px] pointer-events-none z-30 animate-fade-in" />
 
-      {/* Tutorial Tooltip */}
-      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md px-4 animate-fade-in">
-        <div className="frosted-modal relative">
+      {/* Tutorial Panel - Bottom Position */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-4 animate-slide-in-from-bottom pointer-events-none">
+        <div className="max-w-2xl mx-auto pointer-events-auto">
+          <div className="frosted-modal relative shadow-2xl">
           {/* Close/Skip Button */}
           <button
             onClick={onSkip}
@@ -113,6 +114,14 @@ export function TutorialOverlay({
               <p className="text-small text-muted-foreground leading-relaxed">
                 {stepInfo.description}
               </p>
+              
+              {/* Interactive Step Indicator */}
+              {(step === 'first-ping' || step === 'audio-cues') && (
+                <div className="mt-3 flex items-center gap-2 text-xs text-primary/80 bg-primary/10 rounded-lg px-3 py-2">
+                  <span className="animate-pulse">👆</span>
+                  <span>Click the canvas above to interact</span>
+                </div>
+              )}
             </div>
 
             {/* Audio Cues Visual Diagram */}
@@ -189,9 +198,10 @@ export function TutorialOverlay({
                 Exit to Menu
               </Button>
             </div>
-          </div>
-        </div>
-      </div>
+            </div>
+          </div>  {/* Closes frosted-modal */}
+        </div>  {/* Closes max-w-2xl wrapper */}
+      </div>    {/* Closes bottom panel */}
     </>
   );
 }
