@@ -27,11 +27,13 @@ export function TutorialGame() {
     completed: boolean;
     skipped: boolean;
     pingCount: number;
+    replaysUsed: number;
   }>({
     currentStep: 'welcome',
     completed: false,
     skipped: false,
     pingCount: 0,
+    replaysUsed: 0,
   });
   const [target] = useState(() =>
     generateTargetPosition({ width: 800, height: 600 }, 100)
@@ -135,6 +137,7 @@ export function TutorialGame() {
     const newState = {
       ...tutorialState,
       currentStep: newStep,
+      replaysUsed: tutorialState.replaysUsed || 0,
     };
     setTutorialState(newState);
     saveTutorialState(newState);
@@ -178,6 +181,7 @@ export function TutorialGame() {
       completed: false,
       skipped: false,
       pingCount: 0,
+      replaysUsed: 0,
     };
     setTutorialState(newState);
     saveTutorialState(newState);

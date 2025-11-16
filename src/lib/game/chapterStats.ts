@@ -7,6 +7,7 @@ export interface ChapterStats {
   completedAt?: string;
   levelsCompleted: number;
   completionBonus?: number;
+  unlockedBoons?: string[];
 }
 
 export interface ChapterStatsMap {
@@ -65,6 +66,11 @@ export function updateChapterStats(
     chapterStat.completed = true;
     chapterStat.completedAt = new Date().toISOString();
     chapterStat.completionBonus = calculateCompletionBonus(chapterStat.avgScore);
+    
+    // Unlock boon for this chapter (if not already unlocked)
+    if (!chapterStat.unlockedBoons) {
+      chapterStat.unlockedBoons = [];
+    }
   }
 
   saveChapterStats(stats);

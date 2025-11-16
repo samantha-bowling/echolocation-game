@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Radio, Sparkles } from 'lucide-react';
+import { X, Radio, Sparkles, Target, Waves, Ghost, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ChapterConfig } from '@/lib/game/chapters';
 import { markChapterIntroSeen } from '@/lib/game/chapterStats';

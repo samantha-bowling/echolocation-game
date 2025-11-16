@@ -4,12 +4,21 @@ import { audioEngine } from '@/lib/audio/engine';
 import { CustomGameConfig } from '@/lib/game/customConfig';
 import { ChapterConfig } from '@/lib/game/chapters';
 
+export interface StoredPing {
+  position: Position;
+  targetPosition: Position;
+  timestamp: number;
+  isReplayed?: boolean;
+}
+
 export interface PingSystemOptions {
   initialPings: number;
   arenaSize: { width: number; height: number };
   target: Target;
   config?: CustomGameConfig;
   chapterConfig?: ChapterConfig;
+  replaysAvailable?: number;
+  onReplayUsed?: () => void;
   onTargetMove?: (newTarget: Target) => void;
   onTargetResize?: (newSize: number) => void;
 }
@@ -20,23 +29,34 @@ export function usePingSystem({
   target, 
   config,
   chapterConfig,
+  replaysAvailable,
+  onReplayUsed,
   onTargetMove,
   onTargetResize
 }: PingSystemOptions) {
-  const [pingHistory, setPingHistory] = useState<Position[]>([]);
+  const [pingHistory, setPingHistory] = useState<StoredPing[]>([]);
   const [pingsRemaining, setPingsRemaining] = useState(initialPings);
   const [pingsUsed, setPingsUsed] = useState(0);
+  const [replaysRemaining, setReplaysRemaining] = useState(replaysAvailable ?? Infinity);
+  const [replaysUsed, setReplaysUsed] = useState(0);
 
   const handlePing = (clickPos: Position) => {
     // Check ping limit (unless unlimited)
     if (config?.pingsMode === 'limited' && pingsRemaining <= 0) return false;
     if (!config && pingsRemaining <= 0) return false;
 
+    const targetCenter = getTargetCenter(target);
+    const pingData: StoredPing = {
+      position: clickPos,
+      targetPosition: targetCenter,
+      timestamp: Date.now(),
+      isReplayed: false,
+    };
+
     // Add to ping history
-    setPingHistory(prev => [...prev, clickPos]);
+    setPingHistory(prev => [...prev, pingData]);
 
     // Play audio
-    const targetCenter = getTargetCenter(target);
     const maxDistance = Math.max(arenaSize.width, arenaSize.height);
     audioEngine.playPing(clickPos, targetCenter, maxDistance);
 
@@ -111,17 +131,50 @@ export function usePingSystem({
     return true;
   };
 
+  const handleReplayPing = (pingIndex: number) => {
+    if (replaysRemaining <= 0 && replaysAvailable !== undefined) return false;
+    if (pingIndex < 0 || pingIndex >= pingHistory.length) return false;
+    
+    const originalPing = pingHistory[pingIndex];
+    
+    // Play audio from ORIGINAL positions
+    audioEngine.playPing(
+      originalPing.position,
+      originalPing.targetPosition,
+      Math.max(arenaSize.width, arenaSize.height)
+    );
+    
+    // Update replay counts
+    if (replaysAvailable !== undefined) {
+      setReplaysRemaining(prev => prev - 1);
+    }
+    setReplaysUsed(prev => prev + 1);
+    
+    // Mark ping as replayed
+    setPingHistory(prev => prev.map((p, i) => 
+      i === pingIndex ? { ...p, isReplayed: true } : p
+    ));
+    
+    onReplayUsed?.();
+    return true;
+  };
+
   const resetPings = () => {
     setPingHistory([]);
     setPingsRemaining(initialPings);
     setPingsUsed(0);
+    setReplaysRemaining(replaysAvailable ?? Infinity);
+    setReplaysUsed(0);
   };
 
   return {
     pingHistory,
     pingsRemaining,
     pingsUsed,
+    replaysRemaining,
+    replaysUsed,
     handlePing,
+    handleReplayPing,
     resetPings,
   };
 }
