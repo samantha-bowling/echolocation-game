@@ -1,13 +1,18 @@
 import { Link } from 'react-router-dom';
-import { Play, Wand2, Settings, Heart, Headphones } from 'lucide-react';
+import { Play, Wand2, Settings, Heart, Headphones, GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
+import { isTutorialCompleted } from '@/lib/game/tutorial';
 
 export function MainMenu() {
   const [hasSave, setHasSave] = useState(false);
   const [saveDetails, setSaveDetails] = useState<{ level: number; chapter: number } | null>(null);
+  const [tutorialCompleted, setTutorialCompleted] = useState(true);
 
   useEffect(() => {
+    // Check tutorial status
+    setTutorialCompleted(isTutorialCompleted());
+    
     // Check localStorage for existing save (temporary until Supabase is connected)
     const savedProgress = localStorage.getItem('echo_classic_progress');
     if (savedProgress) {
@@ -43,6 +48,26 @@ export function MainMenu() {
             <p className="text-small font-medium">Headphones recommended for best experience</p>
           </div>
         </div>
+
+        {/* Tutorial Prompt for First-Time Users */}
+        {!tutorialCompleted && (
+          <div className="flat-card bg-primary/10 border-primary/30 backdrop-blur-sm animate-fade-in">
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <GraduationCap className="w-5 h-5 text-primary" />
+                <div>
+                  <p className="font-semibold text-foreground">First time playing?</p>
+                  <p className="text-small text-muted-foreground">Learn the basics with our interactive tutorial</p>
+                </div>
+              </div>
+              <Link to="/tutorial" className="block">
+                <Button size="sm" className="w-full">
+                  Start Tutorial
+                </Button>
+              </Link>
+            </div>
+          </div>
+        )}
 
         {/* Main Actions */}
         <div className="space-y-8">
