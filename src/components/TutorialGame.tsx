@@ -120,11 +120,13 @@ export function TutorialGame() {
     resetPhase();
     setDemoPingsExperienced(new Set());
     
-    // Update tutorial state
-    setTutorialState({
+    // Update and save tutorial state
+    const newState = {
       ...tutorialState,
       currentStep: newStep,
-    });
+    };
+    setTutorialState(newState);
+    saveTutorialState(newState);
   };
 
   const handlePreviousStep = () => {
@@ -158,6 +160,25 @@ export function TutorialGame() {
     navigate('/');
   };
 
+  const handleRestartTutorial = () => {
+    // Reset tutorial to beginning
+    const newState = {
+      currentStep: 'welcome' as TutorialStep,
+      completed: false,
+      skipped: false,
+      pingCount: 0,
+    };
+    setTutorialState(newState);
+    saveTutorialState(newState);
+    
+    // Reset all game state
+    resetPings();
+    resetTimer();
+    resetPhase();
+    setFinalGuess(null);
+    setDemoPingsExperienced(new Set());
+  };
+
   const getStepNumber = (step: TutorialStep): number => {
     const steps: TutorialStep[] = [
       'welcome',
@@ -174,23 +195,13 @@ export function TutorialGame() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 echo-dots">
+    <div className="min-h-screen flex flex-col items-center justify-start p-6 pb-80 echo-dots">
       <div className="w-full max-w-5xl space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/')}
-            className="gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Menu
-          </Button>
+        <div className="flex items-center justify-center">
           <h1 className="text-heading-2 font-display">
             Tutorial Mode
           </h1>
-          <div className="w-24" /> {/* Spacer for centering */}
         </div>
 
         {/* Stats */}
@@ -285,11 +296,11 @@ export function TutorialGame() {
           <div className="flex justify-center gap-4">
             <Button
               variant="outline"
-            onClick={() => {
-              resetPhase();
-              const newState = { ...tutorialState, currentStep: 'place-guess' as TutorialStep };
-              setTutorialState(newState);
-            }}
+              onClick={() => {
+                resetPhase();
+                setFinalGuess(null);
+                // Stay on current step - don't reset
+              }}
             >
               Reposition
             </Button>
@@ -312,6 +323,7 @@ export function TutorialGame() {
         onStepChange={handleStepChange}
         onSkip={handleSkipTutorial}
         onExitToMenu={handleExitToMenu}
+        onRestartTutorial={handleRestartTutorial}
         currentStepNumber={getStepNumber(tutorialState.currentStep)}
         totalSteps={9}
         demoPingsExperienced={demoPingsExperienced.size}

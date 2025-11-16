@@ -1,6 +1,7 @@
 import { TutorialStep, TUTORIAL_STEPS } from '@/lib/game/tutorial';
 import { Button } from '@/components/ui/button';
-import { X, Volume2, ArrowLeftRight, ArrowUpDown } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { Volume2, ArrowLeftRight, ArrowUpDown } from 'lucide-react';
 
 export interface TutorialOverlayProps {
   step: TutorialStep;
@@ -9,6 +10,7 @@ export interface TutorialOverlayProps {
   onStepChange: (step: TutorialStep) => void;
   onSkip: () => void;
   onExitToMenu: () => void;
+  onRestartTutorial?: () => void;
   totalSteps?: number;
   currentStepNumber?: number;
   demoPingsExperienced?: number;
@@ -23,6 +25,7 @@ export function TutorialOverlay({
   onStepChange,
   onSkip,
   onExitToMenu,
+  onRestartTutorial,
   totalSteps = 9,
   currentStepNumber = 1,
   demoPingsExperienced = 0,
@@ -76,18 +79,9 @@ export function TutorialOverlay({
       <div className="fixed inset-0 bg-background/30 backdrop-blur-[1px] pointer-events-none z-30 animate-fade-in" />
 
       {/* Tutorial Panel - Bottom Position */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-4 animate-slide-in-from-bottom pointer-events-none">
+      <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-6 animate-slide-in-from-bottom pointer-events-none">
         <div className="max-w-2xl mx-auto pointer-events-auto">
           <div className="frosted-modal relative shadow-2xl">
-          {/* Close/Skip Button */}
-          <button
-            onClick={onSkip}
-            className="absolute top-4 right-4 p-2 rounded-full hover:bg-muted/50 transition-colors"
-            aria-label="Skip tutorial"
-          >
-            <X className="w-4 h-4 text-muted-foreground" />
-          </button>
-
           {/* Step Navigation Dots */}
           <div className="flex items-center justify-center gap-2 mb-4">
             {stepOrder.map((stepName, i) => (
@@ -156,12 +150,16 @@ export function TutorialOverlay({
                 </div>
                 
                 {/* Demo Progress */}
-                <div className="pt-2 mt-2 border-t border-border/50">
+                <div className="pt-2 mt-2 border-t border-border/50 space-y-2">
                   <div className="text-xs text-muted-foreground text-center">
                     Demo pings experienced: {demoPingsExperienced} / {totalDemoPings}
                   </div>
+                  <Progress 
+                    value={(demoPingsExperienced / totalDemoPings) * 100}
+                    className="h-1.5"
+                  />
                   {allDemoPingsExperienced && (
-                    <div className="text-xs text-primary text-center mt-1 font-semibold animate-fade-in">
+                    <div className="text-xs text-primary text-center font-semibold animate-fade-in">
                       ✓ All demos completed! Click Continue when ready.
                     </div>
                   )}
@@ -189,14 +187,25 @@ export function TutorialOverlay({
                 </Button>
               </div>
               
-              {/* Exit to Menu - Always Visible */}
-              <Button
-                variant="ghost"
-                onClick={onExitToMenu}
-                className="w-full text-muted-foreground hover:text-foreground"
-              >
-                Exit to Menu
-              </Button>
+              {/* Footer Navigation */}
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  onClick={onExitToMenu}
+                  className="flex-1 text-muted-foreground hover:text-foreground"
+                >
+                  Exit to Menu
+                </Button>
+                {onRestartTutorial && (
+                  <Button
+                    variant="ghost"
+                    onClick={onRestartTutorial}
+                    className="flex-1 text-muted-foreground hover:text-foreground"
+                  >
+                    Restart Tutorial
+                  </Button>
+                )}
+              </div>
             </div>
             </div>
           </div>  {/* Closes frosted-modal */}

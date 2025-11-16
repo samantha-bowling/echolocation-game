@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { audioEngine, AUDIO_THEMES } from '@/lib/audio/engine';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
+import { resetTutorial } from '@/lib/game/tutorial';
 
 export function Settings() {
   const navigate = useNavigate();
@@ -418,6 +419,37 @@ export function Settings() {
               checked={reduceMotion}
               onCheckedChange={setReduceMotion}
             />
+          </div>
+        </section>
+
+        {/* Tutorial Section */}
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-heading-3">Tutorial</h2>
+            <p className="text-muted-foreground">
+              Reset your tutorial progress to see the introduction again
+            </p>
+          </div>
+
+          <div className="flat-card space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium">Reset Tutorial</p>
+                <p className="text-xs text-muted-foreground">
+                  Clear tutorial completion status and restart from the beginning
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  resetTutorial();
+                  toast.success('Tutorial reset! Visit "How to Play" to start over.');
+                }}
+              >
+                Reset Tutorial
+              </Button>
+            </div>
           </div>
         </section>
 
