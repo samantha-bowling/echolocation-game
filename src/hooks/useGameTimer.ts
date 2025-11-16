@@ -31,9 +31,9 @@ export function useGameTimer({ enabled, gamePhase, onTimeFreeze }: GameTimerOpti
     return () => cancelAnimationFrame(animationFrameId);
   }, [enabled, startTime, finalTime]);
 
-  // Auto-freeze when gamePhase === 'confirming'
+  // Auto-freeze when gamePhase === 'placing' or 'confirming'
   useEffect(() => {
-    if (gamePhase === 'confirming' && finalTime === null && enabled) {
+    if ((gamePhase === 'placing' || gamePhase === 'confirming') && finalTime === null && enabled) {
       setFinalTime(elapsedTime);
       onTimeFreeze?.(elapsedTime);
     }
@@ -45,9 +45,14 @@ export function useGameTimer({ enabled, gamePhase, onTimeFreeze }: GameTimerOpti
     setFinalTime(null);
   };
 
+  const unfreezeTimer = () => {
+    setFinalTime(null);
+  };
+
   return {
     elapsedTime,
     finalTime,
     resetTimer,
+    unfreezeTimer,
   };
 }

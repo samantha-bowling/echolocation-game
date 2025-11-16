@@ -44,6 +44,7 @@ export function ClassicGame() {
   const [showChapterIntro, setShowChapterIntro] = useState(false);
   const [showChapterComplete, setShowChapterComplete] = useState(false);
   const [chapterTransition, setChapterTransition] = useState<string | null>(null);
+  const [showSummaryModal, setShowSummaryModal] = useState(true);
 
   const chapter = getChapterFromLevel(level);
   const levelConfig = getLevelConfig(chapter, level);
@@ -65,7 +66,7 @@ export function ClassicGame() {
   const [phantomTargets, setPhantomTargets] = useState<PhantomTarget[]>([]);
 
   const { gamePhase, finalGuess, setFinalGuess, handlePlaceFinalGuess, handleRepositionGuess, handleGoBackToPinging, resetPhase } = useGamePhase();
-  const { elapsedTime, finalTime, resetTimer } = useGameTimer({ enabled: true, gamePhase });
+  const { elapsedTime, finalTime, resetTimer, unfreezeTimer } = useGameTimer({ enabled: true, gamePhase });
   const { pingHistory, pingsRemaining, pingsUsed, handlePing, resetPings } = usePingSystem({
     initialPings: levelConfig.pings,
     arenaSize,
@@ -213,6 +214,7 @@ export function ClassicGame() {
     resetPhase();
     setGameState('playing');
     setScoreResult(null);
+    setShowSummaryModal(true);
 
     localStorage.setItem('echo_classic_progress', JSON.stringify({
       level: nextLevel,
@@ -238,11 +240,17 @@ export function ClassicGame() {
     resetPhase();
     setGameState('playing');
     setScoreResult(null);
+    setShowSummaryModal(true);
   };
 
   const handleContinueAfterChapterComplete = () => {
     setShowChapterComplete(false);
     handleNextLevel();
+  };
+
+  const handleRepositionGuessWithTimer = () => {
+    unfreezeTimer(); // Unfreeze timer to continue counting
+    handleRepositionGuess(); // Go back to placing phase
   };
 
   return (
@@ -325,6 +333,20 @@ export function ClassicGame() {
           />
 
           {/* Action Buttons */}
+          {/* Early Guess Button - during pinging phase */}
+          {gamePhase === 'pinging' && pingsRemaining > 0 && (
+            <div className="absolute -bottom-16 left-0 right-0 flex justify-center gap-2">
+              <Button
+                variant="default"
+                size="lg"
+                onClick={handlePlaceFinalGuess}
+                className="gap-2"
+              >
+                Place Final Guess
+              </Button>
+            </div>
+          )}
+
           {gamePhase === 'placing' && (
             <div className="absolute -bottom-16 left-0 right-0 flex justify-center gap-2">
               <Button
@@ -339,7 +361,7 @@ export function ClassicGame() {
           
           {gamePhase === 'confirming' && (
             <div className="absolute -bottom-16 left-0 right-0 flex justify-center gap-2">
-              <Button variant="outline" onClick={handleRepositionGuess}>
+              <Button variant="outline" onClick={handleRepositionGuessWithTimer}>
                 Reposition
               </Button>
               <Button size="lg" onClick={handleSubmitGuess}>
@@ -350,8 +372,21 @@ export function ClassicGame() {
         </div>
       </div>
 
+      {/* View Summary Button - appears when modal is closed */}
+      {gameState === 'summary' && !showSummaryModal && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-40">
+          <Button
+            size="lg"
+            onClick={() => setShowSummaryModal(true)}
+            className="shadow-xl"
+          >
+            View Summary
+          </Button>
+        </div>
+      )}
+
       {/* Summary Modal */}
-      {gameState === 'summary' && scoreResult && (
+      {gameState === 'summary' && scoreResult && showSummaryModal && (
         <PostRoundSummary
           score={scoreResult.score}
           proximity={scoreResult.proximity}
@@ -361,6 +396,7 @@ export function ClassicGame() {
           onNext={handleNextLevel}
           onRetry={handleRetry}
           onMenu={() => navigate('/')}
+          onClose={() => setShowSummaryModal(false)}
         />
       )}
     </div>

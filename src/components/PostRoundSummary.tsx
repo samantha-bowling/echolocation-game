@@ -1,4 +1,4 @@
-import { Trophy, Clock, Target, Zap, Lightbulb, Share2, Copy, Check } from 'lucide-react';
+import { Trophy, Clock, Target, Zap, Lightbulb, Share2, Copy, Check, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { InfoTooltip } from '@/components/InfoTooltip';
 import { getNextRankInfo, getPointsToNextRank, getProgressToNextRank, generateStrategicTips, getRankColor } from '@/lib/game/scoring';
@@ -14,6 +14,7 @@ interface PostRoundSummaryProps {
   onNext: () => void;
   onRetry: () => void;
   onMenu: () => void;
+  onClose?: () => void;
   isCustomGame?: boolean;
   winCondition?: CustomGameConfig['winCondition'];
   passedCondition?: boolean;
@@ -29,6 +30,7 @@ export function PostRoundSummary({
   onNext,
   onRetry,
   onMenu,
+  onClose,
   isCustomGame,
   winCondition,
   passedCondition,
@@ -70,7 +72,18 @@ export function PostRoundSummary({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-6 backdrop-blur-sm bg-black/50 animate-fade-in">
-      <div className="frosted-modal max-w-2xl w-full max-h-[90vh] overflow-y-auto space-y-4 animate-scale-in">
+      <div className="frosted-modal max-w-2xl w-full max-h-[90vh] overflow-y-auto space-y-4 animate-scale-in relative">
+        {/* Close Button */}
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 z-10 p-2 rounded-lg hover:bg-white/10 transition-colors"
+            aria-label="Close summary"
+          >
+            <X className="w-5 h-5 text-muted-foreground hover:text-foreground" />
+          </button>
+        )}
+
         {/* Win/Fail Banner for Custom Games */}
         {isCustomGame && passedCondition !== undefined && (
           <div className={`flat-card text-center space-y-2 p-6 animate-scale-in ${
