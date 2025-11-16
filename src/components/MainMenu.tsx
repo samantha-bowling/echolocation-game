@@ -109,15 +109,13 @@ export function MainMenu() {
             </Button>
           </Link>
 
-          {/* Tutorial Link */}
-          {!tutorialCompleted && (
-            <Link to="/tutorial" className="block">
-              <button className="ghost-button w-full h-12">
-                <GraduationCap className="w-4 h-4 mr-2" />
-                Start Tutorial
-              </button>
-            </Link>
-          )}
+          {/* How to Play Link */}
+          <Link to="/tutorial" className="block">
+            <button className="ghost-button w-full h-12">
+              <GraduationCap className="w-4 h-4 mr-2" />
+              How to Play
+            </button>
+          </Link>
         </div>
 
         {/* Secondary Actions */}
