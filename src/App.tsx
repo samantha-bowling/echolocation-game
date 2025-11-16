@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
+import Tutorial from "./pages/Tutorial";
 import { ClassicGame } from "./components/ClassicGame";
 import { CustomMode } from "./components/CustomMode";
 import { CustomGame } from "./components/CustomGame";
@@ -24,6 +25,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/tutorial" element={<Tutorial />} />
             <Route path="/classic" element={<ClassicGame />} />
             <Route path="/custom" element={<CustomMode />} />
             <Route path="/custom-game" element={<CustomGame />} />
