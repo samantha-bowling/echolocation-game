@@ -24,7 +24,7 @@ export const AUDIO_THEMES: AudioTheme[] = [
     name: 'Classic Sonar',
     baseFrequency: 440,
     waveform: 'sine',
-    description: 'Underwater sweep',
+    description: 'Clean underwater sweep',
     filterEnabled: true,
     filterFrequency: 800,
     filterSweep: 400,
@@ -34,7 +34,7 @@ export const AUDIO_THEMES: AudioTheme[] = [
     name: 'Submarine Sonar',
     baseFrequency: 220,
     waveform: 'sine',
-    description: 'Deep ocean pulse',
+    description: 'Deep bass pulse',
     filterEnabled: true,
     filterFrequency: 600,
     filterSweep: 300,
@@ -44,7 +44,7 @@ export const AUDIO_THEMES: AudioTheme[] = [
     name: 'Sci-Fi Pulse',
     baseFrequency: 330,
     waveform: 'sawtooth',
-    description: 'Detuned shimmer',
+    description: 'Synthetic shimmer',
     detuneAmount: 15,
   },
   {
@@ -52,7 +52,7 @@ export const AUDIO_THEMES: AudioTheme[] = [
     name: 'Dolphin Chirp',
     baseFrequency: 800,
     waveform: 'sine',
-    description: 'Smooth frequency sweep',
+    description: 'Natural frequency sweep',
     frequencySweepMultiplier: 1.5, // Sweeps from 800Hz to 1200Hz
   },
 ];
