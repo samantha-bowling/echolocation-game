@@ -1,4 +1,4 @@
-import { Position, Target, getTargetCenter } from '@/lib/game/coords';
+import { Position, Target, getTargetCenter, PhantomTarget } from '@/lib/game/coords';
 import { Hint } from '@/lib/game/hints';
 import { GamePhase } from '@/hooks/useGamePhase';
 import { ArrowRight } from 'lucide-react';
@@ -13,6 +13,8 @@ export interface GameCanvasProps {
   showHint: boolean;
   currentHint: Hint | null;
   targetMoveCount?: number;
+  targetMoveHistory?: Position[];
+  phantomTargets?: PhantomTarget[];
   showTargetMovementIndicator?: boolean;
   onCanvasClick: (e: React.MouseEvent<HTMLDivElement>) => void;
   canvasRef: React.RefObject<HTMLDivElement>;
@@ -28,6 +30,8 @@ export function GameCanvas({
   showHint,
   currentHint,
   targetMoveCount = 0,
+  targetMoveHistory = [],
+  phantomTargets = [],
   showTargetMovementIndicator = false,
   onCanvasClick,
   canvasRef,
@@ -69,6 +73,109 @@ export function GameCanvas({
           <div className="absolute top-2 right-2 text-xs text-muted-foreground bg-muted/80 px-2 py-1 rounded">
             Target moved {targetMoveCount}x
           </div>
+        )}
+
+        {/* Motion Trails - Show target movement history */}
+        {gameState === 'summary' && targetMoveHistory.length > 0 && (
+          <svg
+            className="absolute inset-0 pointer-events-none"
+            style={{ width: '100%', height: '100%' }}
+          >
+            <defs>
+              <marker
+                id="arrowhead"
+                markerWidth="6"
+                markerHeight="6"
+                refX="5"
+                refY="3"
+                orient="auto"
+              >
+                <polygon
+                  points="0 0, 6 3, 0 6"
+                  fill="hsl(var(--muted-foreground))"
+                  opacity="0.4"
+                />
+              </marker>
+            </defs>
+            {targetMoveHistory.map((pos, i) => (
+              <g key={i}>
+                {/* Ghost target at previous position */}
+                <circle
+                  cx={pos.x}
+                  cy={pos.y}
+                  r={target.size / 2}
+                  fill="hsl(var(--muted))"
+                  opacity={0.1 + (i / targetMoveHistory.length) * 0.1}
+                  stroke="hsl(var(--muted-foreground))"
+                  strokeWidth="1"
+                  strokeDasharray="4 2"
+                  strokeOpacity="0.2"
+                />
+                {/* Arrow to next position */}
+                {i < targetMoveHistory.length && (
+                  <line
+                    x1={pos.x}
+                    y1={pos.y}
+                    x2={i === targetMoveHistory.length - 1 ? targetCenter.x : targetMoveHistory[i + 1].x}
+                    y2={i === targetMoveHistory.length - 1 ? targetCenter.y : targetMoveHistory[i + 1].y}
+                    stroke="hsl(var(--muted-foreground))"
+                    strokeWidth="1.5"
+                    strokeOpacity="0.3"
+                    markerEnd="url(#arrowhead)"
+                  />
+                )}
+              </g>
+            ))}
+          </svg>
+        )}
+
+        {/* Phantom Targets - Show during gameplay */}
+        {phantomTargets.length > 0 && gameState !== 'summary' && (
+          <>
+            {phantomTargets.map((phantom) => (
+              <div
+                key={phantom.id}
+                className="absolute rounded-full border-2 border-muted-foreground/20 bg-muted/10 animate-glitch"
+                style={{
+                  left: phantom.position.x,
+                  top: phantom.position.y,
+                  width: phantom.size,
+                  height: phantom.size,
+                }}
+              />
+            ))}
+          </>
+        )}
+
+        {/* Phantom Targets - Show with labels in summary */}
+        {phantomTargets.length > 0 && gameState === 'summary' && (
+          <>
+            {phantomTargets.map((phantom) => {
+              const phantomCenter = getTargetCenter(phantom);
+              return (
+                <div key={phantom.id}>
+                  <div
+                    className="absolute rounded-full border-2 border-muted-foreground/30 bg-muted/20"
+                    style={{
+                      left: phantom.position.x,
+                      top: phantom.position.y,
+                      width: phantom.size,
+                      height: phantom.size,
+                    }}
+                  />
+                  <div
+                    className="absolute text-xs font-semibold text-muted-foreground px-2 py-1 bg-muted/80 rounded"
+                    style={{
+                      left: phantomCenter.x - 25,
+                      top: phantomCenter.y - 30,
+                    }}
+                  >
+                    DECOY
+                  </div>
+                </div>
+              );
+            })}
+          </>
         )}
 
         {/* Ping History */}
@@ -129,7 +236,7 @@ export function GameCanvas({
         {/* Show target after guess is confirmed (for debugging/reveal) */}
         {gameState === 'summary' && (
           <>
-            {/* Target circle */}
+            {/* Real Target circle */}
             <div
               className="absolute rounded-full border-2 border-accent bg-accent/20"
               style={{
@@ -139,6 +246,16 @@ export function GameCanvas({
                 height: target.size,
               }}
             />
+            {/* REAL label */}
+            <div
+              className="absolute text-xs font-semibold text-accent px-2 py-1 bg-accent/80 rounded"
+              style={{
+                left: targetCenter.x - 20,
+                top: targetCenter.y - 30,
+              }}
+            >
+              REAL
+            </div>
             {/* Line from guess to target */}
             {finalGuess && (
               <svg

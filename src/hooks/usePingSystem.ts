@@ -46,18 +46,46 @@ export function usePingSystem({
     }
     setPingsUsed(prev => prev + 1);
 
-    // Handle shrinking target mechanic (Classic Mode - Chapter 2)
-    if (chapterConfig?.specialMechanic === 'shrinking_target' && onTargetResize) {
-      const shrinkAmount = 3; // pixels per ping
-      const minSize = 40; // minimum target size
+    // Handle chapter mechanics
+    const mechanic = chapterConfig?.specialMechanic;
+    const details = chapterConfig?.mechanicDetails;
+
+    // Shrinking target mechanic (Chapter 2 & 5)
+    if ((mechanic === 'shrinking_target' || mechanic === 'combined_challenge') && onTargetResize) {
+      const shrinkAmount = details?.shrinkAmount || 3;
+      const minSize = details?.minTargetSize || 40;
       const newSize = Math.max(minSize, target.size - shrinkAmount);
       onTargetResize(newSize);
     }
 
-    // Handle target movement if enabled
-    if (config?.movementMode === 'after-pings' && onTargetMove) {
-      // Move target after each ping
-      const moveAmount = 30; // pixels
+    // Moving target mechanic (Chapter 3 & 5)
+    if ((mechanic === 'moving_target' || mechanic === 'combined_challenge') && onTargetMove) {
+      const moveDistance = details?.moveDistance || 30;
+      const angle = Math.random() * Math.PI * 2;
+      const newX = Math.max(
+        50,
+        Math.min(
+          arenaSize.width - target.size - 50,
+          target.position.x + Math.cos(angle) * moveDistance
+        )
+      );
+      const newY = Math.max(
+        50,
+        Math.min(
+          arenaSize.height - target.size - 50,
+          target.position.y + Math.sin(angle) * moveDistance
+        )
+      );
+      
+      onTargetMove({
+        ...target,
+        position: { x: newX, y: newY }
+      });
+    }
+
+    // Handle custom game target movement if enabled
+    if (config?.movementMode === 'after-pings' && onTargetMove && !mechanic) {
+      const moveAmount = 30;
       const angle = Math.random() * Math.PI * 2;
       const newX = Math.max(
         50,
