@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Position, Target } from '@/lib/game/coords';
 import { generateHint, shouldShowHint, Hint } from '@/lib/game/hints';
+import { StoredPing } from './usePingSystem';
 
 export interface HintSystemOptions {
   enabled: boolean;
   pingsUsed: number;
   totalPings: number;
   target: Target;
-  pingHistory: Position[];
+  pingHistory: StoredPing[];
 }
 
 export function useHintSystem({
@@ -26,7 +27,7 @@ export function useHintSystem({
 
     if (shouldShowHint(pingsUsed, totalPings)) {
       const lastPing = pingHistory[pingHistory.length - 1];
-      const hint = generateHint(lastPing, target, { width: 800, height: 600 });
+      const hint = generateHint(lastPing.position, target, { width: 800, height: 600 });
       setCurrentHint(hint);
       setShowHint(true);
     }

@@ -1,4 +1,4 @@
-import { Radio, Sparkles } from 'lucide-react';
+import { Radio, Sparkles, Volume2 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { InfoTooltip } from './InfoTooltip';
@@ -12,6 +12,8 @@ export interface GameStatsProps {
   finalTime: number | null;
   timerEnabled: boolean;
   pingsMode?: 'limited' | 'unlimited';
+  replaysRemaining?: number;
+  replaysAvailable?: number;
   levelInfo?: {
     chapter: number;
     level: number;
@@ -25,6 +27,8 @@ export function GameStats({
   finalTime,
   timerEnabled,
   pingsMode = 'limited',
+  replaysRemaining,
+  replaysAvailable,
   levelInfo,
 }: GameStatsProps) {
   const isMobile = useIsMobile();
@@ -150,6 +154,26 @@ export function GameStats({
             </div>
             <div className="text-2xl font-display font-semibold text-foreground">
               {pingsUsed}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Replays Remaining (when available) */}
+      {replaysAvailable !== undefined && (
+        <div className="flat-card bg-accent/10 backdrop-blur-sm border-accent/20 p-4">
+          <div className="flex flex-col items-center text-center space-y-1">
+            <div className="flex items-center gap-2 mb-0.5">
+              <Volume2 className="w-3.5 h-3.5 text-accent" />
+              <div className="text-tiny text-muted-foreground uppercase tracking-wider font-medium">
+                Replays
+              </div>
+            </div>
+            <div className={cn(
+              "text-2xl font-display font-semibold",
+              replaysRemaining === 0 ? 'text-muted-foreground' : 'text-accent'
+            )}>
+              {replaysRemaining === Infinity ? '∞' : replaysRemaining}
             </div>
           </div>
         </div>

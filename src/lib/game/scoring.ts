@@ -8,6 +8,7 @@ export interface ScoreComponents {
   difficultyMultiplier: number;
   boonBonus: number;
   earlyGuessBonus: number;
+  replayBonus: number;
 }
 
 export interface ScoreResult {
@@ -26,6 +27,7 @@ const SPEED_BONUS_THRESHOLD = 15;
 const SPEED_BONUS_MAX = 250;
 const PERFECT_TARGET_BONUS = 200;
 const EARLY_GUESS_BONUS_PER_PING = 75;
+const REPLAY_UNUSED_BONUS = 50;
 
 // Time penalty brackets - graduated system for better new player retention
 const TIME_PENALTY_BRACKETS = [
@@ -80,7 +82,9 @@ export function calculateScore(
   totalPings: number,
   timeSeconds: number,
   difficulty: 'easy' | 'medium' | 'hard' = 'medium',
-  activeBoons: string[] = []
+  activeBoons: string[] = [],
+  replaysUsed: number = 0,
+  replaysAvailable?: number
 ): ScoreResult {
   const unusedPings = totalPings - pingsUsed;
   const pingEfficiency = unusedPings / totalPings;
@@ -106,6 +110,15 @@ export function calculateScore(
     ? Math.round(unusedPings * EARLY_GUESS_BONUS_PER_PING)
     : 0;
   
+  // Replay bonus - reward players who don't use all available replays (only if replays were limited)
+  let replayBonus = 0;
+  if (replaysAvailable !== undefined && replaysAvailable > 0) {
+    const replaysUnused = replaysAvailable - replaysUsed;
+    if (replaysUnused > 0) {
+      replayBonus = replaysUnused * REPLAY_UNUSED_BONUS;
+    }
+  }
+  
   // Calculate pre-multiplier total
   const preMultiplierTotal = Math.max(
     0,
@@ -115,7 +128,8 @@ export function calculateScore(
     speedBonus +
     perfectTargetBonus +
     boonBonus +
-    earlyGuessBonus -
+    earlyGuessBonus +
+    replayBonus -
     timePenalty
   );
   
@@ -133,6 +147,7 @@ export function calculateScore(
     difficultyMultiplier,
     boonBonus,
     earlyGuessBonus,
+    replayBonus,
   };
   
   return {
@@ -390,6 +405,7 @@ export function calculateCustomScore(
     difficultyMultiplier: 1.0, // No multiplier for custom
     boonBonus: 0,
     earlyGuessBonus,
+    replayBonus: 0, // No replay bonus for custom games
   };
   
   return {

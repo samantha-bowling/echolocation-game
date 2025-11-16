@@ -1,12 +1,14 @@
 import { Position, Target, getTargetCenter, PhantomTarget } from '@/lib/game/coords';
 import { Hint } from '@/lib/game/hints';
 import { GamePhase } from '@/hooks/useGamePhase';
-import { ArrowRight } from 'lucide-react';
+import { StoredPing } from '@/hooks/usePingSystem';
+import { ArrowRight, Volume2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export interface GameCanvasProps {
   arenaSize: { width: number; height: number };
   target: Target;
-  pingHistory: Position[];
+  pingHistory: StoredPing[];
   finalGuess: Position | null;
   gamePhase: GamePhase;
   gameState: string;
@@ -17,6 +19,9 @@ export interface GameCanvasProps {
   phantomTargets?: PhantomTarget[];
   showTargetMovementIndicator?: boolean;
   onCanvasClick: (e: React.MouseEvent<HTMLDivElement>) => void;
+  onPingReplay?: (pingIndex: number) => void;
+  replaysRemaining?: number;
+  replaysUsed?: number;
   canvasRef: React.RefObject<HTMLDivElement>;
 }
 
@@ -34,6 +39,9 @@ export function GameCanvas({
   phantomTargets = [],
   showTargetMovementIndicator = false,
   onCanvasClick,
+  onPingReplay,
+  replaysRemaining,
+  replaysUsed,
   canvasRef,
 }: GameCanvasProps) {
   const targetCenter = getTargetCenter(target);
@@ -179,37 +187,61 @@ export function GameCanvas({
         )}
 
         {/* Ping History */}
-        {pingHistory.map((ping, i) => (
-          <div key={i}>
-            {/* Ping marker */}
-            <div
-              className="absolute w-3 h-3 bg-primary rounded-full animate-fade-in"
-              style={{
-                left: ping.x - 6,
-                top: ping.y - 6,
-                opacity: 0.6 - (i / pingHistory.length) * 0.3,
-              }}
-            />
-            {/* Connecting line to next ping */}
-            {i < pingHistory.length - 1 && (
-              <svg
-                className="absolute inset-0 pointer-events-none"
-                style={{ width: '100%', height: '100%' }}
+        {pingHistory.map((ping, i) => {
+          const isReplayable = onPingReplay && (replaysRemaining === undefined || replaysRemaining > 0);
+          const hasBeenReplayed = ping.isReplayed;
+          
+          return (
+            <div key={i}>
+              {/* Ping marker */}
+              <div
+                onClick={(e) => {
+                  if (isReplayable && gamePhase === 'pinging') {
+                    e.stopPropagation();
+                    onPingReplay(i);
+                  }
+                }}
+                className={cn(
+                  "absolute w-6 h-6 rounded-full transition-all flex items-center justify-center",
+                  isReplayable && gamePhase === 'pinging'
+                    ? "cursor-pointer hover:scale-125 hover:border-2 hover:border-accent bg-primary/40"
+                    : "bg-primary",
+                  hasBeenReplayed && "ring-2 ring-accent ring-offset-1 ring-offset-background"
+                )}
+                style={{
+                  left: ping.position.x - 12,
+                  top: ping.position.y - 12,
+                  opacity: 0.6 - (i / pingHistory.length) * 0.3,
+                  animation: hasBeenReplayed ? 'pulse 1s ease-in-out' : 'none',
+                }}
+                title={isReplayable ? 'Click to replay ping' : undefined}
               >
-                <line
-                  x1={ping.x}
-                  y1={ping.y}
-                  x2={pingHistory[i + 1].x}
-                  y2={pingHistory[i + 1].y}
-                  stroke="hsl(var(--primary))"
-                  strokeWidth="1"
-                  strokeOpacity="0.3"
-                  strokeDasharray="4 4"
-                />
-              </svg>
-            )}
-          </div>
-        ))}
+                {isReplayable && gamePhase === 'pinging' && (
+                  <Volume2 className="w-3 h-3 text-primary-foreground" />
+                )}
+                <div className="absolute inset-0 rounded-full bg-primary/30 animate-ping-fade" />
+              </div>
+              {/* Connecting line to next ping */}
+              {i < pingHistory.length - 1 && (
+                <svg
+                  className="absolute inset-0 pointer-events-none"
+                  style={{ width: '100%', height: '100%' }}
+                >
+                  <line
+                    x1={ping.position.x}
+                    y1={ping.position.y}
+                    x2={pingHistory[i + 1].position.x}
+                    y2={pingHistory[i + 1].position.y}
+                    stroke="hsl(var(--primary))"
+                    strokeWidth="1"
+                    strokeOpacity="0.3"
+                    strokeDasharray="4 4"
+                  />
+                </svg>
+              )}
+            </div>
+          );
+        })}
 
         {/* Final Guess Marker */}
         {finalGuess && (

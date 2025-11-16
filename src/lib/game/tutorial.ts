@@ -14,6 +14,7 @@ export interface TutorialState {
   completed: boolean;
   skipped: boolean;
   pingCount: number;
+  replaysUsed: number;
 }
 
 const TUTORIAL_STORAGE_KEY = 'echo_tutorial_state';
@@ -41,7 +42,7 @@ export const TUTORIAL_STEPS: Record<TutorialStep, {
   },
   'audio-cues': {
     title: 'Understanding 3D Audio 🎧',
-    description: 'Click the 4 demo pings below to hear how binaural audio works. Notice how each ping sounds like it\'s coming from a different location in 3D space around you. This is HRTF (Head-Related Transfer Function) - the same technology used in VR and spatial audio applications.',
+    description: 'Click any ping marker to replay it and hear the sound again. Notice how the direction and distance change. Click 4 demo pings to experience different positions, then replay them to reinforce your understanding.',
     action: 'Continue',
   },
   'multiple-pings': {
@@ -86,6 +87,7 @@ export function getTutorialState(): TutorialState {
     completed: false,
     skipped: false,
     pingCount: 0,
+    replaysUsed: 0,
   };
 }
 
