@@ -372,18 +372,18 @@ export function ClassicGame() {
         </div>
       </div>
 
-      {/* View Summary Button - appears when modal is closed */}
-      {gameState === 'summary' && !showSummaryModal && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-40">
-          <Button
-            size="lg"
-            onClick={() => setShowSummaryModal(true)}
-            className="shadow-xl"
-          >
-            View Summary
-          </Button>
-        </div>
-      )}
+        {/* View Summary Button - appears when modal is closed */}
+        {gameState === 'summary' && !showSummaryModal && (
+          <div className="fixed top-24 left-1/2 -translate-x-1/2 z-40 animate-bounce">
+            <Button
+              size="lg"
+              onClick={() => setShowSummaryModal(true)}
+              className="shadow-2xl bg-primary hover:bg-primary/90 border-2 border-accent"
+            >
+              📊 View Summary
+            </Button>
+          </div>
+        )}
 
       {/* Summary Modal */}
       {gameState === 'summary' && scoreResult && showSummaryModal && (
