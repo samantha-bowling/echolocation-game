@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Lightbulb, Settings as SettingsIcon } from 'lucide-react';
+import { ArrowLeft, Lightbulb } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { generateTargetPosition, getTargetCenter, Position, PhantomTarget, generatePhantomTargets } from '@/lib/game/coords';
 import { calculateProximity } from '@/lib/game/distance';
@@ -15,6 +15,7 @@ import { GameStats } from './GameStats';
 import { useGameTimer } from '@/hooks/useGameTimer';
 import { usePingSystem } from '@/hooks/usePingSystem';
 import { useGamePhase } from '@/hooks/useGamePhase';
+import { useHintSystem } from '@/hooks/useHintSystem';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { updateChapterStats, loadChapterStats, getSeenChapterIntros } from '@/lib/game/chapterStats';
 import { cn } from '@/lib/utils';
@@ -36,13 +37,13 @@ export function ClassicGame() {
     }
     return 1;
   });
+  
   const [gameState, setGameState] = useState<'playing' | 'summary'>('playing');
   const [scoreResult, setScoreResult] = useState<any>(null);
   const [showHint, setShowHint] = useState(false);
   const [showChapterIntro, setShowChapterIntro] = useState(false);
   const [showChapterComplete, setShowChapterComplete] = useState(false);
   const [chapterTransition, setChapterTransition] = useState<string | null>(null);
-  const [currentChapterForIntro, setCurrentChapterForIntro] = useState<number | null>(null);
 
   const chapter = getChapterFromLevel(level);
   const levelConfig = getLevelConfig(chapter, level);
@@ -63,7 +64,7 @@ export function ClassicGame() {
   const [targetMoveHistory, setTargetMoveHistory] = useState<Position[]>([]);
   const [phantomTargets, setPhantomTargets] = useState<PhantomTarget[]>([]);
 
-  const { gamePhase, finalGuess, setFinalGuess, handlePlaceFinalGuess, handleRepositionGuess, resetPhase } = useGamePhase();
+  const { gamePhase, finalGuess, setFinalGuess, handlePlaceFinalGuess, handleRepositionGuess, handleGoBackToPinging, resetPhase } = useGamePhase();
   const { elapsedTime, finalTime, resetTimer } = useGameTimer({ enabled: true, gamePhase });
   const { pingHistory, pingsRemaining, pingsUsed, handlePing, resetPings } = usePingSystem({
     initialPings: levelConfig.pings,
@@ -77,6 +78,14 @@ export function ClassicGame() {
       setTargetMoveHistory(prev => [...prev, getTargetCenter(target)]);
       setTarget(newTarget);
     },
+  });
+
+  const { currentHint } = useHintSystem({
+    enabled: showHint,
+    pingsUsed,
+    totalPings: levelConfig.pings,
+    target,
+    pingHistory,
   });
 
   useEffect(() => {
@@ -95,11 +104,10 @@ export function ClassicGame() {
   // Check if we should show chapter intro
   useEffect(() => {
     const seenIntros = getSeenChapterIntros();
-    if (!seenIntros.includes(chapter) && gamePhase === 'ready') {
-      setCurrentChapterForIntro(chapter);
+    if (!seenIntros.includes(chapter) && gamePhase === 'pinging' && gameState === 'playing') {
       setShowChapterIntro(true);
     }
-  }, [chapter, gamePhase]);
+  }, [chapter, gamePhase, gameState]);
 
   // Generate phantom targets when chapter requires them
   useEffect(() => {
@@ -121,38 +129,41 @@ export function ClassicGame() {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    if (gamePhase === 'playing') {
+    if (gamePhase === 'pinging') {
       handlePing({ x, y });
-    } else if (gamePhase === 'guessing') {
-      if (finalGuess) {
-        handleRepositionGuess({ x, y });
-      } else {
-        handlePlaceFinalGuess({ x, y });
+      if (pingsRemaining === 1) {
+        // Last ping used, transition to placing phase
+        setTimeout(() => handlePlaceFinalGuess(), 100);
       }
-    } else if (gamePhase === 'ready') {
-      resetPhase();
+    } else if (gamePhase === 'placing') {
+      setFinalGuess({ x, y });
     }
   };
 
-  const handleFinalGuessSubmit = () => {
+  const handleSubmitGuess = () => {
     if (!finalGuess) return;
 
     const targetCenter = getTargetCenter(target);
-    const distance = calculateProximity(finalGuess, targetCenter);
-    const timeUsed = elapsedTime;
-    const score = calculateScore(distance, pingsUsed, timeUsed, levelConfig.targetSize);
+    const maxDistance = Math.sqrt(arenaSize.width ** 2 + arenaSize.height ** 2);
+    const distance = calculateProximity(finalGuess, targetCenter, maxDistance);
+    const proximity = distance; // calculateProximity already returns 0-100
+    const scoreData = calculateScore(
+      proximity,
+      pingsUsed,
+      levelConfig.pings,
+      elapsedTime,
+      levelConfig.difficulty
+    );
 
     // Update chapter stats
-    updateChapterStats(chapter, level, pingsUsed, score, timeUsed);
-
-    const result = distance <= target.size / 2 ? 'success' : 'failure';
+    updateChapterStats(chapter, level, pingsUsed, scoreData.total, elapsedTime);
 
     setScoreResult({
-      result,
-      score,
-      distance,
+      score: scoreData,
+      proximity,
       pingsUsed,
-      timeElapsed: timeUsed,
+      totalPings: levelConfig.pings,
+      timeElapsed: elapsedTime,
     });
 
     localStorage.setItem('echo_classic_progress', JSON.stringify({
@@ -164,33 +175,22 @@ export function ClassicGame() {
   };
 
   const handleNextLevel = () => {
-    const nextLevel = level + 1;
-    const nextChapter = getChapterFromLevel(nextLevel);
-    
     // Check if we just completed a chapter (every 10th level)
-    const isChapterComplete = level % 10 === 0;
-    
-    if (isChapterComplete) {
-      const chapterStats = loadChapterStats();
-      const completedChapterStats = chapterStats[chapter];
+    if (level % 10 === 0) {
       setShowChapterComplete(true);
       return;
     }
+
+    const nextLevel = level + 1;
+    const nextChapter = getChapterFromLevel(nextLevel);
     
-    // Check if we're entering a new chapter
+    // Check if we're entering a new chapter or boss level
     if (nextChapter !== chapter) {
       setChapterTransition(`Entering Chapter ${nextChapter}...`);
-      setTimeout(() => {
-        setChapterTransition(null);
-      }, 2000);
-    }
-    
-    // Check if this is a boss level
-    if (nextLevel % 10 === 0) {
+      setTimeout(() => setChapterTransition(null), 2000);
+    } else if (nextLevel % 10 === 0) {
       setChapterTransition(`⚠️ BOSS LEVEL ${nextLevel} ⚠️`);
-      setTimeout(() => {
-        setChapterTransition(null);
-      }, 2000);
+      setTimeout(() => setChapterTransition(null), 2000);
     }
 
     setLevel(nextLevel);
@@ -208,12 +208,11 @@ export function ClassicGame() {
       setPhantomTargets([]);
     }
 
-    resetPings(newLevelConfig.pings);
+    resetPings();
     resetTimer();
     resetPhase();
     setGameState('playing');
     setScoreResult(null);
-    setFinalGuess(null);
 
     localStorage.setItem('echo_classic_progress', JSON.stringify({
       level: nextLevel,
@@ -234,53 +233,24 @@ export function ClassicGame() {
       setPhantomTargets([]);
     }
 
-    resetPings(levelConfig.pings);
+    resetPings();
     resetTimer();
     resetPhase();
     setGameState('playing');
     setScoreResult(null);
-    setFinalGuess(null);
   };
 
   const handleContinueAfterChapterComplete = () => {
     setShowChapterComplete(false);
-    const nextLevel = level + 1;
-    const nextChapter = getChapterFromLevel(nextLevel);
-    
-    setLevel(nextLevel);
-    const newLevelConfig = getLevelConfig(nextChapter, nextLevel);
-    const newTarget = generateTargetPosition(arenaSize, newLevelConfig.targetSize);
-    setTarget(newTarget);
-    setTargetMoveHistory([]);
-    
-    const newChapterConfig = getChapterConfig(nextChapter);
-    if (newChapterConfig.specialMechanic === 'phantom_targets' || newChapterConfig.specialMechanic === 'combined_challenge') {
-      const phantomCount = newChapterConfig.mechanicDetails?.phantomCount || 2;
-      const phantoms = generatePhantomTargets(arenaSize, newTarget, phantomCount);
-      setPhantomTargets(phantoms);
-    } else {
-      setPhantomTargets([]);
-    }
-
-    resetPings(newLevelConfig.pings);
-    resetTimer();
-    resetPhase();
-    setGameState('playing');
-    setScoreResult(null);
-    setFinalGuess(null);
-
-    localStorage.setItem('echo_classic_progress', JSON.stringify({
-      level: nextLevel,
-      chapter: nextChapter,
-    }));
+    handleNextLevel();
   };
 
   return (
     <div className="min-h-screen flex flex-col echo-dots relative">
       {/* Chapter Intro Modal */}
-      {showChapterIntro && currentChapterForIntro !== null && (
+      {showChapterIntro && (
         <ChapterIntro
-          chapter={getChapterConfig(currentChapterForIntro)}
+          chapter={chapterConfig}
           onClose={() => setShowChapterIntro(false)}
         />
       )}
@@ -288,7 +258,7 @@ export function ClassicGame() {
       {/* Chapter Complete Modal */}
       {showChapterComplete && (
         <ChapterComplete
-          chapter={getChapterConfig(chapter)}
+          chapter={chapterConfig}
           stats={loadChapterStats()[chapter]}
           onContinue={handleContinueAfterChapterComplete}
           onMainMenu={() => navigate('/')}
@@ -340,7 +310,7 @@ export function ClassicGame() {
       <div className="flex-1 flex items-center justify-center p-4">
         <div className="relative">
           <GameCanvas
-            ref={canvasRef}
+            canvasRef={canvasRef}
             arenaSize={arenaSize}
             target={target}
             phantomTargets={phantomTargets}
@@ -348,19 +318,32 @@ export function ClassicGame() {
             pingHistory={pingHistory}
             finalGuess={finalGuess}
             gamePhase={gamePhase}
+            gameState={gameState}
             showHint={showHint}
-            onClick={handleCanvasClick}
+            currentHint={currentHint}
+            onCanvasClick={handleCanvasClick}
           />
 
-          {gamePhase === 'guessing' && (
-            <div className="absolute -bottom-16 left-0 right-0 flex justify-center">
+          {/* Action Buttons */}
+          {gamePhase === 'placing' && (
+            <div className="absolute -bottom-16 left-0 right-0 flex justify-center gap-2">
               <Button
-                size="lg"
-                onClick={handleFinalGuessSubmit}
-                disabled={!finalGuess}
-                className="gap-2"
+                variant="outline"
+                onClick={handleGoBackToPinging}
+                disabled={pingsRemaining === 0}
               >
-                Submit Final Guess
+                Back to Pinging
+              </Button>
+            </div>
+          )}
+          
+          {gamePhase === 'confirming' && (
+            <div className="absolute -bottom-16 left-0 right-0 flex justify-center gap-2">
+              <Button variant="outline" onClick={handleRepositionGuess}>
+                Reposition
+              </Button>
+              <Button size="lg" onClick={handleSubmitGuess}>
+                Submit Guess
               </Button>
             </div>
           )}
@@ -370,14 +353,14 @@ export function ClassicGame() {
       {/* Summary Modal */}
       {gameState === 'summary' && scoreResult && (
         <PostRoundSummary
-          result={scoreResult.result}
           score={scoreResult.score}
-          distance={scoreResult.distance}
+          proximity={scoreResult.proximity}
           pingsUsed={scoreResult.pingsUsed}
+          totalPings={scoreResult.totalPings}
           timeElapsed={scoreResult.timeElapsed}
-          onNextLevel={handleNextLevel}
+          onNext={handleNextLevel}
           onRetry={handleRetry}
-          levelInfo={{ chapter, level }}
+          onMenu={() => navigate('/')}
         />
       )}
     </div>
