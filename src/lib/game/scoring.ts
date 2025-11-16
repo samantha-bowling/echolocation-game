@@ -7,6 +7,7 @@ export interface ScoreComponents {
   perfectTargetBonus: number;
   difficultyMultiplier: number;
   boonBonus: number;
+  earlyGuessBonus: number;
 }
 
 export interface ScoreResult {
@@ -24,6 +25,7 @@ const MAX_TIME_PENALTY = 500;
 const SPEED_BONUS_THRESHOLD = 15;
 const SPEED_BONUS_MAX = 250;
 const PERFECT_TARGET_BONUS = 200;
+const EARLY_GUESS_BONUS_PER_PING = 75;
 
 /**
  * Get difficulty multiplier
@@ -67,6 +69,11 @@ export function calculateScore(
   // Boon bonus
   const boonBonus = activeBoons.length * 25;
   
+  // Early guess bonus - reward players who guess without using all pings
+  const earlyGuessBonus = unusedPings > 0 
+    ? Math.round(unusedPings * EARLY_GUESS_BONUS_PER_PING)
+    : 0;
+  
   // Calculate pre-multiplier total
   const preMultiplierTotal = Math.max(
     0,
@@ -75,7 +82,8 @@ export function calculateScore(
     pingEfficiencyBonus +
     speedBonus +
     perfectTargetBonus +
-    boonBonus -
+    boonBonus +
+    earlyGuessBonus -
     timePenalty
   );
   
@@ -92,6 +100,7 @@ export function calculateScore(
     perfectTargetBonus,
     difficultyMultiplier,
     boonBonus,
+    earlyGuessBonus,
   };
   
   return {
@@ -107,6 +116,8 @@ export interface RankInfo {
 }
 
 export const RANK_THRESHOLDS: RankInfo[] = [
+  { rank: 'SS', threshold: 2800 },
+  { rank: 'S+', threshold: 2600 },
   { rank: 'S', threshold: 2400 },
   { rank: 'A+', threshold: 2000 },
   { rank: 'A', threshold: 1700 },
@@ -135,6 +146,18 @@ export function getRankColor(rank: string): {
   border: string;
 } {
   switch (rank) {
+    case 'SS':
+      return {
+        bg: 'bg-gradient-to-br from-purple-500/20 to-pink-500/20',
+        text: 'text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400',
+        border: 'border-purple-500/40',
+      };
+    case 'S+':
+      return {
+        bg: 'bg-gradient-to-br from-yellow-500/20 to-orange-500/20',
+        text: 'text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-400',
+        border: 'border-yellow-500/40',
+      };
     case 'S':
       return {
         bg: 'bg-yellow-500/20',
@@ -206,6 +229,18 @@ export function getProgressToNextRank(score: number, currentRank: string): numbe
  */
 export function getRankFlavor(rank: string): string {
   const flavors: Record<string, string[]> = {
+    'SS': [
+      'LEGENDARY! You are a master of the echoes!',
+      'TRANSCENDENT! The echoes bow to your skill!',
+      'MYTHICAL! You\'ve achieved perfection!',
+      'GODLIKE! Unmatched precision and strategy!',
+    ],
+    'S+': [
+      'EXCEPTIONAL! Near-perfect execution!',
+      'PHENOMENAL! Elite-tier performance!',
+      'OUTSTANDING! You\'ve mastered the game!',
+      'SPECTACULAR! Almost legendary!',
+    ],
     'S': ['Perfect Echo!', 'Sonar Master', 'Flawless Navigation'],
     'A+': ['Excellent Precision', 'Sharp Hearing', 'Nearly Perfect'],
     'A': ['Great Work', 'Strong Signal', 'Well Done'],
@@ -296,6 +331,11 @@ export function calculateCustomScore(
   // Perfect target bonus
   const perfectTargetBonus = proximity === 100 ? PERFECT_TARGET_BONUS : 0;
   
+  // Early guess bonus
+  const earlyGuessBonus = totalPings !== Infinity && unusedPings > 0
+    ? Math.round(unusedPings * EARLY_GUESS_BONUS_PER_PING)
+    : 0;
+  
   // Calculate total (no difficulty multiplier for custom games)
   const total = Math.max(
     0,
@@ -303,7 +343,8 @@ export function calculateCustomScore(
     proximityBonus +
     pingEfficiencyBonus +
     speedBonus +
-    perfectTargetBonus -
+    perfectTargetBonus +
+    earlyGuessBonus -
     timePenalty
   );
   
@@ -316,6 +357,7 @@ export function calculateCustomScore(
     perfectTargetBonus,
     difficultyMultiplier: 1.0, // No multiplier for custom
     boonBonus: 0,
+    earlyGuessBonus,
   };
   
   return {
