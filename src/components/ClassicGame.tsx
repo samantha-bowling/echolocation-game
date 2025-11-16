@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Lightbulb, Settings as SettingsIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { generateTargetPosition, getTargetCenter, Position } from '@/lib/game/coords';
+import { generateTargetPosition, getTargetCenter, Position, PhantomTarget, generatePhantomTargets } from '@/lib/game/coords';
 import { calculateProximity } from '@/lib/game/distance';
 import { calculateScore } from '@/lib/game/scoring';
 import { getLevelConfig, getChapterFromLevel, getChapterConfig } from '@/lib/game/chapters';
@@ -53,6 +53,8 @@ export function ClassicGame() {
   const [target, setTarget] = useState(() => 
     generateTargetPosition(arenaSize, levelConfig.targetSize)
   );
+  const [targetMoveHistory, setTargetMoveHistory] = useState<Position[]>([]);
+  const [phantomTargets, setPhantomTargets] = useState<PhantomTarget[]>([]);
 
   const { gamePhase, finalGuess, setFinalGuess, handlePlaceFinalGuess, handleRepositionGuess, resetPhase } = useGamePhase();
   const { elapsedTime, finalTime, resetTimer } = useGameTimer({ enabled: true, gamePhase });
@@ -63,6 +65,10 @@ export function ClassicGame() {
     chapterConfig,
     onTargetResize: (newSize) => {
       setTarget(prev => ({ ...prev, size: newSize }));
+    },
+    onTargetMove: (newTarget) => {
+      setTargetMoveHistory(prev => [...prev, getTargetCenter(target)]);
+      setTarget(newTarget);
     },
   });
 
@@ -78,6 +84,18 @@ export function ClassicGame() {
       localStorage.removeItem('echo_reset_classic');
     }
   }, []);
+
+  // Generate phantom targets when chapter requires them
+  useEffect(() => {
+    if (chapterConfig.specialMechanic === 'phantom_targets' || chapterConfig.specialMechanic === 'combined_challenge') {
+      const phantomCount = chapterConfig.mechanicDetails?.phantomCount || 2;
+      const phantoms = generatePhantomTargets(arenaSize, target, phantomCount);
+      setPhantomTargets(phantoms);
+    } else {
+      setPhantomTargets([]);
+    }
+    setTargetMoveHistory([]);
+  }, [level, chapterConfig.specialMechanic]);
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (gameState === 'summary') return;
@@ -117,7 +135,9 @@ export function ClassicGame() {
     setLevel(nextLevel);
     localStorage.setItem('echo_classic_progress', JSON.stringify({ level: nextLevel, chapter: nextChapter }));
     const newLevelConfig = getLevelConfig(nextChapter, nextLevel);
-    setTarget(generateTargetPosition(arenaSize, newLevelConfig.targetSize));
+    const newTarget = generateTargetPosition(arenaSize, newLevelConfig.targetSize);
+    setTarget(newTarget);
+    setTargetMoveHistory([]);
     resetPings();
     resetPhase();
     resetTimer();
@@ -127,7 +147,9 @@ export function ClassicGame() {
   };
 
   const handleRetry = () => {
-    setTarget(generateTargetPosition(arenaSize, levelConfig.targetSize));
+    const newTarget = generateTargetPosition(arenaSize, levelConfig.targetSize);
+    setTarget(newTarget);
+    setTargetMoveHistory([]);
     resetPings();
     resetPhase();
     resetTimer();
@@ -207,6 +229,8 @@ export function ClassicGame() {
             gameState={gameState}
             showHint={false}
             currentHint={null}
+            targetMoveHistory={targetMoveHistory}
+            phantomTargets={phantomTargets}
             onCanvasClick={handleCanvasClick}
             canvasRef={canvasRef}
           />

@@ -40,3 +40,26 @@
 .read-the-docs {
   color: #888;
 }
+
+@keyframes glitch {
+  0%, 100% {
+    transform: translate(0, 0);
+    filter: blur(0px);
+  }
+  25% {
+    transform: translate(-2px, 2px);
+    filter: blur(1px);
+  }
+  50% {
+    transform: translate(2px, -2px);
+    filter: blur(0.5px);
+  }
+  75% {
+    transform: translate(-1px, -1px);
+    filter: blur(1px);
+  }
+}
+
+.animate-glitch {
+  animation: glitch 3s ease-in-out infinite;
+}

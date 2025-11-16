@@ -27,6 +27,9 @@ export function GameStats({
   levelInfo,
 }: GameStatsProps) {
   const isMobile = useIsMobile();
+  
+  // Check if this is a boss level
+  const isBossLevel = levelInfo ? levelInfo.level % 10 === 0 : false;
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -53,11 +56,19 @@ export function GameStats({
             <div className="text-tiny text-muted-foreground uppercase tracking-wider font-medium">
               Progress
             </div>
+            {isBossLevel && (
+              <div className="text-tiny font-bold text-accent bg-accent/20 px-2 py-0.5 rounded">
+                BOSS LEVEL
+              </div>
+            )}
             {(() => {
               const chapterConfig = getChapterConfig(levelInfo.chapter);
               if (chapterConfig.specialMechanic) {
                 const mechanicDescriptions: Record<string, string> = {
                   shrinking_target: 'Target shrinks after each ping',
+                  moving_target: 'Target moves after each ping',
+                  phantom_targets: 'Decoy targets appear',
+                  combined_challenge: 'All mechanics combined!',
                 };
                 return (
                   <div className="flex items-center gap-1">
