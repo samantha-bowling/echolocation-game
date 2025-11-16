@@ -2,13 +2,16 @@ import { useState } from 'react';
 import { Position, Target, getTargetCenter } from '@/lib/game/coords';
 import { audioEngine } from '@/lib/audio/engine';
 import { CustomGameConfig } from '@/lib/game/customConfig';
+import { ChapterConfig } from '@/lib/game/chapters';
 
 export interface PingSystemOptions {
   initialPings: number;
   arenaSize: { width: number; height: number };
   target: Target;
   config?: CustomGameConfig;
+  chapterConfig?: ChapterConfig;
   onTargetMove?: (newTarget: Target) => void;
+  onTargetResize?: (newSize: number) => void;
 }
 
 export function usePingSystem({ 
@@ -16,7 +19,9 @@ export function usePingSystem({
   arenaSize, 
   target, 
   config,
-  onTargetMove 
+  chapterConfig,
+  onTargetMove,
+  onTargetResize
 }: PingSystemOptions) {
   const [pingHistory, setPingHistory] = useState<Position[]>([]);
   const [pingsRemaining, setPingsRemaining] = useState(initialPings);
@@ -40,6 +45,14 @@ export function usePingSystem({
       setPingsRemaining(prev => prev - 1);
     }
     setPingsUsed(prev => prev + 1);
+
+    // Handle shrinking target mechanic (Classic Mode - Chapter 2)
+    if (chapterConfig?.specialMechanic === 'shrinking_target' && onTargetResize) {
+      const shrinkAmount = 3; // pixels per ping
+      const minSize = 40; // minimum target size
+      const newSize = Math.max(minSize, target.size - shrinkAmount);
+      onTargetResize(newSize);
+    }
 
     // Handle target movement if enabled
     if (config?.movementMode === 'after-pings' && onTargetMove) {
