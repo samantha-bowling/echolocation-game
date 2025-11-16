@@ -70,10 +70,10 @@ export function PostRoundSummary({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-6 backdrop-blur-sm bg-black/50 animate-fade-in">
-      <div className="frosted-modal max-w-2xl w-full space-y-8 animate-scale-in">
+      <div className="frosted-modal max-w-2xl w-full max-h-[90vh] overflow-y-auto space-y-4 animate-scale-in">
         {/* Win/Fail Banner for Custom Games */}
         {isCustomGame && passedCondition !== undefined && (
-          <div className={`flat-card text-center space-y-3 p-8 animate-scale-in ${
+          <div className={`flat-card text-center space-y-2 p-6 animate-scale-in ${
             passedCondition 
               ? 'bg-gradient-to-br from-echo-success/10 to-emerald-500/10 border-echo-success/30' 
               : 'bg-gradient-to-br from-destructive/10 to-rose-500/10 border-destructive/30'
@@ -112,7 +112,7 @@ export function PostRoundSummary({
         {/* Rank */}
         <div className="text-center space-y-2">
           <div 
-            className={`inline-flex items-center justify-center w-24 h-24 rounded-full text-4xl font-display font-bold border-2 ${
+            className={`inline-flex items-center justify-center w-20 h-20 rounded-full text-3xl font-display font-bold border-2 ${
               getRankColor(score.rank).bg
             } ${
               getRankColor(score.rank).text
@@ -179,30 +179,30 @@ export function PostRoundSummary({
           <p className="text-tiny text-muted-foreground uppercase tracking-wider mb-2">
             Total Score
           </p>
-          <p className="text-display text-primary font-mono">{score.total}</p>
+          <p className="text-5xl text-primary font-mono">{score.total}</p>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="flat-card text-center space-y-2">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="flat-card text-center space-y-1">
             <Target className="w-6 h-6 mx-auto text-muted-foreground" />
             <p className="text-tiny text-muted-foreground">Proximity</p>
             <p className="text-heading-2 font-mono">{proximity}%</p>
           </div>
 
-          <div className="flat-card text-center space-y-2">
+          <div className="flat-card text-center space-y-1">
             <Zap className="w-6 h-6 mx-auto text-muted-foreground" />
             <p className="text-tiny text-muted-foreground">Pings Used</p>
             <p className="text-heading-2 font-mono">{pingsUsed}</p>
           </div>
 
-          <div className="flat-card text-center space-y-2">
+          <div className="flat-card text-center space-y-1">
             <Clock className="w-6 h-6 mx-auto text-muted-foreground" />
             <p className="text-tiny text-muted-foreground">Time</p>
             <p className="text-heading-2 font-mono">{timeElapsed.toFixed(1)}s</p>
           </div>
 
-          <div className="flat-card text-center space-y-2">
+          <div className="flat-card text-center space-y-1">
             <Trophy className="w-6 h-6 mx-auto text-muted-foreground" />
             <p className="text-tiny text-muted-foreground">Bonus</p>
             <p className="text-heading-2 font-mono">+{score.components.unusedPingBonus}</p>
