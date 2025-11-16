@@ -90,8 +90,8 @@ export function ClassicGame() {
   });
 
   useEffect(() => {
-    audioEngine.initialize();
-  }, []);
+    audioEngine.initialize(arenaSize.width, arenaSize.height);
+  }, [arenaSize]);
 
   useEffect(() => {
     const shouldReset = localStorage.getItem('echo_reset_classic');

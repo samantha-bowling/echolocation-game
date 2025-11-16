@@ -73,9 +73,9 @@ export function CustomGame() {
   });
 
   useEffect(() => {
-    audioEngine.initialize();
+    audioEngine.initialize(arenaSize.width, arenaSize.height);
     audioEngine.setTheme(config.theme);
-  }, [config.theme]);
+  }, [config.theme, arenaSize]);
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (gameState === 'summary' || gameState === 'round-transition') return;

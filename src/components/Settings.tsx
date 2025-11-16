@@ -20,6 +20,7 @@ export function Settings() {
     leftRight: false,
     distance: false,
     pitch: false,
+    spatial3D: false,
   });
 
   useEffect(() => {
@@ -30,7 +31,7 @@ export function Settings() {
     audioEngine.setTheme(audioTheme);
   }, [audioTheme]);
 
-  const runCalibrationTest = (testType: 'leftRight' | 'distance' | 'pitch') => {
+  const runCalibrationTest = (testType: 'leftRight' | 'distance' | 'pitch' | 'spatial3D') => {
     audioEngine.initialize();
     
     switch (testType) {
@@ -95,6 +96,43 @@ export function Settings() {
           toast.info('BELOW (low pitch)');
         }, 1800);
         setCalibrationTests(prev => ({ ...prev, pitch: true }));
+        break;
+        
+      case 'spatial3D':
+        // Test true 3D positioning: front-left → back-right → above → below
+        setTimeout(() => {
+          audioEngine.playPing(
+            { x: 500, y: 500 },
+            { x: 200, y: 300 },  // Front-left
+            1000
+          );
+          toast.info('FRONT-LEFT');
+        }, 100);
+        setTimeout(() => {
+          audioEngine.playPing(
+            { x: 500, y: 500 },
+            { x: 800, y: 700 },  // Back-right
+            1000
+          );
+          toast.info('BACK-RIGHT');
+        }, 1600);
+        setTimeout(() => {
+          audioEngine.playPing(
+            { x: 500, y: 500 },
+            { x: 500, y: 100 },  // Above
+            1000
+          );
+          toast.info('ABOVE');
+        }, 3100);
+        setTimeout(() => {
+          audioEngine.playPing(
+            { x: 500, y: 500 },
+            { x: 500, y: 900 },  // Below
+            1000
+          );
+          toast.info('BELOW');
+        }, 4600);
+        setCalibrationTests(prev => ({ ...prev, spatial3D: true }));
         break;
     }
   };
@@ -182,10 +220,87 @@ export function Settings() {
           </div>
         </section>
 
+        {/* Audio Setup Guide */}
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-heading-3 mb-2 flex items-center gap-2">
+              <Headphones className="w-5 h-5" />
+              Audio Setup Guide
+            </h2>
+            <p className="text-small text-muted-foreground">
+              Optimize your audio experience for true binaural 3D sound
+            </p>
+          </div>
+          
+          <div className="space-y-3">
+            {/* Headphones Required */}
+            <div className="flex items-start gap-3 p-4 bg-primary/10 rounded-lg border border-primary/20">
+              <span className="text-2xl">✅</span>
+              <div>
+                <p className="font-semibold text-primary mb-1">Use Headphones (Required)</p>
+                <p className="text-xs text-muted-foreground">
+                  This game uses <strong>binaural 3D audio with HRTF</strong> to create realistic spatial positioning. 
+                  Regular stereo headphones or earbuds work perfectly. Speakers will not provide the 3D audio effect.
+                </p>
+              </div>
+            </div>
+            
+            {/* Disable System Spatial Audio */}
+            <div className="flex items-start gap-3 p-4 bg-destructive/10 rounded-lg border border-destructive/20">
+              <span className="text-2xl">⚠️</span>
+              <div>
+                <p className="font-semibold text-destructive mb-1">Disable System Spatial Audio Features</p>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Turn off Windows Sonic, Dolby Atmos, or Apple Spatial Audio. These features are designed 
+                  for surround sound content and will interfere with the game's precise directional cues.
+                </p>
+                <div className="space-y-2 text-xs text-muted-foreground bg-background/50 rounded p-3">
+                  <div>
+                    <p className="font-semibold text-foreground">Windows:</p>
+                    <p className="font-mono text-[10px] leading-relaxed">
+                      Settings → System → Sound → [Your Device] → Properties → Set Spatial Sound to "Off"
+                    </p>
+                  </div>
+                  <div className="border-t border-border/50 pt-2">
+                    <p className="font-semibold text-foreground">Mac/iOS with AirPods:</p>
+                    <p className="font-mono text-[10px] leading-relaxed">
+                      Control Center → Click AirPods → Set Spatial Audio to "Off"
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Quiet Environment */}
+            <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg border border-border">
+              <span className="text-2xl">🤫</span>
+              <div>
+                <p className="font-semibold mb-1">Play in a Quiet Environment</p>
+                <p className="text-xs text-muted-foreground">
+                  Binaural audio relies on subtle cues. Background noise can mask important directional 
+                  information. Find a quiet space for the best experience.
+                </p>
+              </div>
+            </div>
+            
+            {/* Volume Sweet Spot */}
+            <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg border border-border">
+              <span className="text-2xl">🔊</span>
+              <div>
+                <p className="font-semibold mb-1">Find Your Volume Sweet Spot</p>
+                <p className="text-xs text-muted-foreground">
+                  Use the slider below to set a comfortable volume. You should hear pitch changes, 
+                  stereo positioning, and subtle distance variations clearly without straining.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Audio Calibration */}
         <section className="space-y-4">
           <div className="flex items-center gap-2">
-            <h2 className="text-heading-3">Audio Calibration</h2>
+            <h2 className="text-heading-3">Audio Calibration Tests</h2>
             {allTestsComplete && (
               <CheckCircle2 className="w-5 h-5 text-primary" />
             )}
@@ -198,7 +313,7 @@ export function Settings() {
                 <div>
                   <p className="text-small font-medium">Test your audio setup</p>
                   <p className="text-tiny text-muted-foreground">
-                    Verify that spatial audio is working correctly with your headphones
+                    Verify that binaural 3D audio is working correctly with your headphones
                   </p>
                 </div>
 
@@ -237,6 +352,21 @@ export function Settings() {
                       <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />
                     )}
                     <span className="flex-1 text-left">Vertical Position (Pitch)</span>
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => runCalibrationTest('spatial3D')}
+                    className="justify-start"
+                  >
+                    {calibrationTests.spatial3D && (
+                      <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />
+                    )}
+                    <span className="flex-1 text-left">3D Positioning Test</span>
+                    <span className="ml-auto text-xs text-muted-foreground">
+                      Front, Back, Above, Below
+                    </span>
                   </Button>
                 </div>
 

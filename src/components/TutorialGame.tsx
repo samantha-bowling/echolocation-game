@@ -60,7 +60,7 @@ export function TutorialGame() {
   });
 
   useEffect(() => {
-    audioEngine.initialize();
+    audioEngine.initialize(arenaSize.width, arenaSize.height);
   }, []);
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {

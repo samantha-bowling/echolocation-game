@@ -6,13 +6,15 @@ An audio-first minimal browser game where you find hidden boxes using only sound
 
 - **Classic Mode**: Progress through levels with increasing difficulty
 - **Custom Mode**: Configure your own challenge settings
-- **Spatial Audio**: Uses Web Audio API for 3D sound positioning
+- **Binaural 3D Audio**: Uses Web Audio API with HRTF for true spatial positioning
 - **Boon System**: Unlock and use power-ups to help your echolocation
 - **Score & Rank**: Transparent scoring based on accuracy, speed, and efficiency
 
-## 🎧 Best Experienced With Headphones
+## 🎧 Required: Headphones
 
-The game uses stereo panning and volume falloff to help you locate the hidden box. Headphones provide the best spatial audio experience.
+The game uses **binaural 3D audio with Head-Related Transfer Function (HRTF)** to create realistic spatial positioning. You'll hear sounds coming from all around you - left, right, above, below, near, and far. Headphones are required for the 3D audio effect.
+
+**Important:** Disable system spatial audio features (Windows Sonic, Dolby Atmos, Apple Spatial Audio) as they interfere with the game's precise audio cues.
 
 ## 🎨 Design System
 
@@ -32,12 +34,13 @@ Built on the **ECHOLOCATION** design system featuring:
 - Framer Motion
 - React Router
 
-## 🎵 Sound Themes
+## 🎵 Binaural Sound Themes
 
-- Classic Sonar (sine wave)
-- Arcade Beep (square wave)
-- Sci-Fi Pulse (sawtooth wave)
-- Natural Click (triangle wave)
+All themes use true 3D spatial positioning:
+- Classic Sonar (sine wave with underwater sweep)
+- Submarine Sonar (deep ocean pulse)
+- Sci-Fi Pulse (detuned shimmer)
+- Dolphin Chirp (smooth frequency sweep)
 
 ## 🚀 Development
 
