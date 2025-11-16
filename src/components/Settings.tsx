@@ -183,7 +183,12 @@ export function Settings() {
           </div>
 
           <div className="flat-card space-y-4">
-            <Label className="text-base">Sound Theme</Label>
+            <div>
+              <Label className="text-base">Sound Theme</Label>
+              <p className="text-xs text-muted-foreground mt-1">
+                All themes use the same <strong>binaural 3D positioning</strong>. Choose based on your preferred sound character.
+              </p>
+            </div>
             <div className="grid grid-cols-2 gap-2">
               {AUDIO_THEMES.map(t => (
                 <div
@@ -228,7 +233,7 @@ export function Settings() {
               Audio Setup Guide
             </h2>
             <p className="text-small text-muted-foreground">
-              Optimize your audio experience for true binaural 3D sound
+              Optimize your audio experience for true binaural 3D sound. After setup, complete the calibration tests below to verify everything works correctly.
             </p>
           </div>
           
@@ -289,7 +294,7 @@ export function Settings() {
               <div>
                 <p className="font-semibold mb-1">Find Your Volume Sweet Spot</p>
                 <p className="text-xs text-muted-foreground">
-                  Use the slider below to set a comfortable volume. You should hear pitch changes, 
+                  Adjust the volume slider at the top of this page to a comfortable level. You should hear pitch changes, 
                   stereo positioning, and subtle distance variations clearly without straining.
                 </p>
               </div>
