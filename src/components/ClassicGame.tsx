@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Lightbulb } from 'lucide-react';
+import { ArrowLeft, Lightbulb, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { generateTargetPosition, getTargetCenter, Position, PhantomTarget, generatePhantomTargets } from '@/lib/game/coords';
 import { calculateProximity } from '@/lib/game/distance';
@@ -12,12 +12,14 @@ import { ChapterIntro } from './ChapterIntro';
 import { ChapterComplete } from './ChapterComplete';
 import { GameCanvas } from './GameCanvas';
 import { GameStats } from './GameStats';
+import { BoonSelection } from './BoonSelection';
 import { useGameTimer } from '@/hooks/useGameTimer';
 import { usePingSystem } from '@/hooks/usePingSystem';
 import { useGamePhase } from '@/hooks/useGamePhase';
 import { useHintSystem } from '@/hooks/useHintSystem';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { updateChapterStats, loadChapterStats, getSeenChapterIntros } from '@/lib/game/chapterStats';
+import { getUnlockedBoons, applyBoonEffects } from '@/lib/game/boons';
 import { cn } from '@/lib/utils';
 
 export function ClassicGame() {
@@ -45,6 +47,14 @@ export function ClassicGame() {
   const [showChapterComplete, setShowChapterComplete] = useState(false);
   const [chapterTransition, setChapterTransition] = useState<string | null>(null);
   const [showSummaryModal, setShowSummaryModal] = useState(true);
+  const [showBoonSelection, setShowBoonSelection] = useState(false);
+  const [activeBoons, setActiveBoons] = useState<string[]>([]);
+  const [completedChapters, setCompletedChapters] = useState<number[]>(() => {
+    const stats = loadChapterStats();
+    return Object.values(stats)
+      .filter(s => s.levelsCompleted === 10)
+      .map((_, idx) => idx + 1);
+  });
 
   const chapter = getChapterFromLevel(level);
   const levelConfig = getLevelConfig(chapter, level);
@@ -67,11 +77,20 @@ export function ClassicGame() {
 
   const { gamePhase, finalGuess, setFinalGuess, handlePlaceFinalGuess, handleRepositionGuess, handleGoBackToPinging, resetPhase } = useGamePhase();
   const { elapsedTime, finalTime, resetTimer, unfreezeTimer } = useGameTimer({ enabled: true, gamePhase });
-  const { pingHistory, pingsRemaining, pingsUsed, handlePing, resetPings } = usePingSystem({
-    initialPings: levelConfig.pings,
+  
+  // Apply boon effects to game configuration
+  const boonEffects = applyBoonEffects(
+    levelConfig.pings,
+    chapterConfig.replaysAvailable,
+    activeBoons
+  );
+  
+  const { pingHistory, pingsRemaining, pingsUsed, replaysRemaining, replaysUsed, handlePing, handleReplayPing, resetPings } = usePingSystem({
+    initialPings: boonEffects.pings,
     arenaSize,
     target,
     chapterConfig,
+    replaysAvailable: boonEffects.replays,
     onTargetResize: (newSize) => {
       setTarget(prev => ({ ...prev, size: newSize }));
     },
@@ -105,10 +124,16 @@ export function ClassicGame() {
   // Check if we should show chapter intro
   useEffect(() => {
     const seenIntros = getSeenChapterIntros();
-    if (!seenIntros.includes(chapter) && gamePhase === 'pinging' && gameState === 'playing') {
+    if (!seenIntros.includes(chapter)) {
       setShowChapterIntro(true);
+    } else {
+      // If no intro, check for boon selection
+      const unlockedBoons = getUnlockedBoons(completedChapters);
+      if (chapter >= 2 && chapter <= 5 && unlockedBoons.length > 0 && activeBoons.length === 0) {
+        setShowBoonSelection(true);
+      }
     }
-  }, [chapter, gamePhase, gameState]);
+  }, [chapter, completedChapters, activeBoons]);
 
   // Generate phantom targets when chapter requires them
   useEffect(() => {
@@ -153,7 +178,10 @@ export function ClassicGame() {
       pingsUsed,
       levelConfig.pings,
       elapsedTime,
-      levelConfig.difficulty
+      levelConfig.difficulty,
+      activeBoons,
+      replaysUsed,
+      chapterConfig.replaysAvailable
     );
 
     // Update chapter stats
@@ -178,6 +206,14 @@ export function ClassicGame() {
     }));
 
     setGameState('summary');
+    
+    // Update completed chapters if this was the last level
+    if (level % 10 === 0) {
+      setCompletedChapters(prev => {
+        const updated = [...new Set([...prev, chapter])];
+        return updated;
+      });
+    }
   };
 
   const handleNextLevel = () => {
@@ -264,7 +300,31 @@ export function ClassicGame() {
       {showChapterIntro && (
         <ChapterIntro
           chapter={chapterConfig}
-          onClose={() => setShowChapterIntro(false)}
+          onClose={() => {
+            setShowChapterIntro(false);
+            // After intro, show boon selection for chapters 2-5
+            const unlockedBoons = getUnlockedBoons(completedChapters);
+            if (chapter >= 2 && chapter <= 5 && unlockedBoons.length > 0) {
+              setShowBoonSelection(true);
+            }
+          }}
+        />
+      )}
+
+      {/* Boon Selection Modal */}
+      {showBoonSelection && (
+        <BoonSelection
+          availableBoons={getUnlockedBoons(completedChapters)}
+          maxSelections={chapter === 2 ? 1 : 2}
+          onConfirm={(selectedBoonIds) => {
+            setActiveBoons(selectedBoonIds);
+            setShowBoonSelection(false);
+          }}
+          onSkip={() => {
+            setActiveBoons([]);
+            setShowBoonSelection(false);
+          }}
+          chapterName={chapterConfig.name}
         />
       )}
 
@@ -273,7 +333,22 @@ export function ClassicGame() {
         <ChapterComplete
           chapter={chapterConfig}
           stats={loadChapterStats()[chapter]}
-          onContinue={handleContinueAfterChapterComplete}
+          onContinue={() => {
+            setShowChapterComplete(false);
+            setChapterTransition(chapterConfig.name);
+            setTimeout(() => {
+              setChapterTransition(null);
+              setShowChapterIntro(true);
+              
+              // After chapter intro, show boon selection for chapters 2-5
+              const unlockedBoons = getUnlockedBoons(completedChapters);
+              if (chapter >= 2 && chapter <= 5 && unlockedBoons.length > 0) {
+                setTimeout(() => {
+                  setShowBoonSelection(true);
+                }, 500);
+              }
+            }, 2000);
+          }}
           onMainMenu={() => navigate('/')}
         />
       )}
@@ -306,6 +381,8 @@ export function ClassicGame() {
           finalTime={finalTime}
           timerEnabled={true}
           levelInfo={{ chapter, level }}
+          replaysRemaining={replaysRemaining}
+          replaysAvailable={chapterConfig.replaysAvailable}
         />
 
         <Button
@@ -381,12 +458,13 @@ export function ClassicGame() {
         {gameState === 'summary' && !showSummaryModal && (
           <div className="fixed top-24 left-1/2 -translate-x-1/2 z-40 animate-bounce">
             <Button
-              size="lg"
-              onClick={() => setShowSummaryModal(true)}
-              className="shadow-2xl bg-primary hover:bg-primary/90 border-2 border-accent"
-            >
-              📊 View Summary
-            </Button>
+            size="lg"
+            onClick={() => setShowSummaryModal(true)}
+            className="shadow-2xl bg-primary hover:bg-primary/90 border-2 border-accent"
+          >
+            <BarChart3 className="w-5 h-5 mr-2" />
+            View Summary
+          </Button>
           </div>
         )}
 
@@ -403,6 +481,8 @@ export function ClassicGame() {
           onRetry={handleRetry}
           onMenu={() => navigate('/')}
           onClose={() => setShowSummaryModal(false)}
+          replaysUsed={replaysUsed}
+          replaysAvailable={chapterConfig.replaysAvailable}
         />
       )}
     </div>

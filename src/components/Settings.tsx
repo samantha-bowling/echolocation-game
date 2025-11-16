@@ -290,9 +290,9 @@ export function Settings() {
             </div>
             
             {/* Volume Sweet Spot */}
-            <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg border border-border">
-              <span className="text-2xl">🔊</span>
-              <div>
+          <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg border border-border">
+            <Volume2 className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
+            <div>
                 <p className="font-semibold mb-1">Find Your Volume Sweet Spot</p>
                 <p className="text-xs text-muted-foreground">
                   Adjust the volume slider at the top of this page to a comfortable level. You should hear pitch changes, 

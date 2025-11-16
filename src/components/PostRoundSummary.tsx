@@ -1,4 +1,4 @@
-import { Trophy, Clock, Target, Zap, Lightbulb, Share2, Copy, Check, X } from 'lucide-react';
+import { Trophy, Clock, Target, Zap, Lightbulb, Share2, Copy, Check, X, Volume2, PartyPopper, HeartCrack } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { InfoTooltip } from '@/components/InfoTooltip';
 import { getNextRankInfo, getPointsToNextRank, getProgressToNextRank, generateStrategicTips, getRankColor } from '@/lib/game/scoring';
@@ -20,6 +20,8 @@ interface PostRoundSummaryProps {
   winCondition?: CustomGameConfig['winCondition'];
   passedCondition?: boolean;
   config?: CustomGameConfig;
+  replaysUsed?: number;
+  replaysAvailable?: number;
 }
 
 export function PostRoundSummary({
@@ -37,6 +39,8 @@ export function PostRoundSummary({
   winCondition,
   passedCondition,
   config,
+  replaysUsed = 0,
+  replaysAvailable,
 }: PostRoundSummaryProps) {
   const success = proximity >= 80;
   const [showShareDialog, setShowShareDialog] = useState(false);
@@ -93,8 +97,8 @@ export function PostRoundSummary({
               ? 'bg-gradient-to-br from-echo-success/10 to-emerald-500/10 border-echo-success/30' 
               : 'bg-gradient-to-br from-destructive/10 to-rose-500/10 border-destructive/30'
           }`}>
-            <div className={`text-6xl ${passedCondition ? 'animate-bounce' : ''}`}>
-              {passedCondition ? '🎉' : '💔'}
+            <div className={`flex items-center justify-center ${passedCondition ? 'animate-bounce' : ''}`}>
+              {passedCondition ? <PartyPopper className="w-16 h-16 text-echo-success" /> : <HeartCrack className="w-16 h-16 text-destructive" />}
             </div>
             <h2 className={`text-heading-1 ${
               passedCondition ? 'text-echo-success' : 'text-destructive'
@@ -264,7 +268,7 @@ export function PostRoundSummary({
               
               {score.components.earlyGuessBonus > 0 && (
                 <ScoreBreakdownItem 
-                  label="🎯 Early Guess Bonus"
+                  label="Early Guess Bonus"
                   value={score.components.earlyGuessBonus}
                   isPositive={true}
                   detail={`Guessed ${totalPings - pingsUsed} pings early`}
@@ -274,7 +278,7 @@ export function PostRoundSummary({
               
               {score.components.speedBonus > 0 && (
                 <ScoreBreakdownItem 
-                  label="⚡ Speed Bonus"
+                  label="Speed Bonus"
                   value={score.components.speedBonus}
                   isPositive={true}
                   detail={`Completed in ${timeElapsed.toFixed(1)}s`}
@@ -283,7 +287,7 @@ export function PostRoundSummary({
               
               {score.components.perfectTargetBonus > 0 && (
                 <ScoreBreakdownItem 
-                  label="🎉 Perfect Hit"
+                  label="Perfect Hit"
                   value={score.components.perfectTargetBonus}
                   isPositive={true}
                   highlight={true}
@@ -298,9 +302,19 @@ export function PostRoundSummary({
               />
             )}
 
+            {score.components.replayBonus > 0 && (
+              <ScoreBreakdownItem 
+                label="Replay Conservation"
+                value={score.components.replayBonus}
+                isPositive={true}
+                detail={`${(replaysAvailable || 0) - replaysUsed} replays unused`}
+                highlight={true}
+              />
+            )}
+
             {completionBonus > 0 && (
               <ScoreBreakdownItem 
-                label="🏆 Chapter Complete!"
+                label="Chapter Complete!"
                 value={completionBonus}
                 isPositive={true}
                 detail="All 10 levels finished"
