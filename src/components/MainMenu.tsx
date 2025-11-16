@@ -49,25 +49,6 @@ export function MainMenu() {
           </div>
         </div>
 
-        {/* Tutorial Prompt for First-Time Users */}
-        {!tutorialCompleted && (
-          <div className="flat-card bg-primary/10 border-primary/30 backdrop-blur-sm animate-fade-in">
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <GraduationCap className="w-5 h-5 text-primary" />
-                <div>
-                  <p className="font-semibold text-foreground">First time playing?</p>
-                  <p className="text-small text-muted-foreground">Learn the basics with our interactive tutorial</p>
-                </div>
-              </div>
-              <Link to="/tutorial" className="block">
-                <Button size="sm" className="w-full">
-                  Start Tutorial
-                </Button>
-              </Link>
-            </div>
-          </div>
-        )}
 
         {/* Main Actions */}
         <div className="space-y-8">
@@ -78,11 +59,11 @@ export function MainMenu() {
             >
               <Play className="w-5 h-5 mr-2" />
               {hasSave ? (
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col items-center gap-1">
                   <span>Continue Classic</span>
                   {saveDetails && (
-                    <span className="text-xs text-muted-foreground font-normal">
-                      (Ch. {saveDetails.chapter}, Lvl. {saveDetails.level})
+                    <span className="text-xs bg-white/20 px-3 py-0.5 rounded-full font-medium">
+                      Chapter {saveDetails.chapter} • Level {saveDetails.level}
                     </span>
                   )}
                 </div>
@@ -93,14 +74,17 @@ export function MainMenu() {
           </Link>
 
           <Link to="/classic" className="block">
-            <button 
-              className="ghost-button w-full h-12"
+            <Button
+              variant="outline"
+              size="lg"
+              className="w-full h-14 text-base font-semibold border-2 hover-lift"
               onClick={() => {
                 localStorage.setItem('echo_reset_classic', 'true');
               }}
             >
+              <Play className="w-5 h-5 mr-2" />
               New Classic Run
-            </button>
+            </Button>
           </Link>
 
           <Link to="/chapters" className="block">
@@ -124,6 +108,16 @@ export function MainMenu() {
               Custom Mode
             </Button>
           </Link>
+
+          {/* Tutorial Link */}
+          {!tutorialCompleted && (
+            <Link to="/tutorial" className="block">
+              <button className="ghost-button w-full h-12">
+                <GraduationCap className="w-4 h-4 mr-2" />
+                Start Tutorial
+              </button>
+            </Link>
+          )}
         </div>
 
         {/* Secondary Actions */}
