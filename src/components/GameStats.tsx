@@ -108,19 +108,21 @@ export function GameStats({
       )}
 
       {/* Pings Stat */}
-      <div className="flat-card bg-primary/10 backdrop-blur-sm border-primary/20">
-        <div className="flex items-center gap-2 mb-1">
-          <Radio className="w-4 h-4 text-primary" />
-          <div className="text-tiny text-muted-foreground uppercase tracking-wider font-medium">
-            {pingsMode === 'unlimited' ? 'Pings Used' : 'Pings Left'}
+      <div className="flat-card bg-primary/10 backdrop-blur-sm border-primary/20 p-4">
+        <div className="flex flex-col items-center text-center space-y-1">
+          <div className="flex items-center gap-2 mb-0.5">
+            <Radio className="w-3.5 h-3.5 text-primary" />
+            <div className="text-tiny text-muted-foreground uppercase tracking-wider font-medium">
+              {pingsMode === 'unlimited' ? 'Pings Used' : 'Pings Left'}
+            </div>
           </div>
-        </div>
-        <div className={cn(
-          "text-xl font-display font-semibold",
-          pingsMode === 'unlimited' ? 'text-foreground' : 
-          pingsRemaining === 0 ? 'text-destructive' : 'text-primary'
-        )}>
-          {pingsMode === 'unlimited' ? pingsUsed : pingsRemaining}
+          <div className={cn(
+            "text-2xl font-display font-semibold",
+            pingsMode === 'unlimited' ? 'text-foreground' : 
+            pingsRemaining === 0 ? 'text-destructive' : 'text-primary'
+          )}>
+            {pingsMode === 'unlimited' ? pingsUsed : pingsRemaining}
+          </div>
         </div>
       </div>
 
@@ -141,12 +143,14 @@ export function GameStats({
 
       {/* Total Pings Used (for unlimited mode or as additional stat) */}
       {(pingsMode === 'limited' || !timerEnabled) && (
-        <div className="flat-card bg-secondary/50 backdrop-blur-sm">
-          <div className="text-tiny text-muted-foreground uppercase tracking-wider font-medium mb-1">
-            Pings Used
-          </div>
-          <div className="text-xl font-display font-semibold text-foreground">
-            {pingsUsed}
+        <div className="flat-card bg-secondary/50 backdrop-blur-sm p-4">
+          <div className="flex flex-col items-center text-center space-y-1">
+            <div className="text-tiny text-muted-foreground uppercase tracking-wider font-medium mb-0.5">
+              Pings Used
+            </div>
+            <div className="text-2xl font-display font-semibold text-foreground">
+              {pingsUsed}
+            </div>
           </div>
         </div>
       )}

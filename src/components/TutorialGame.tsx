@@ -37,6 +37,7 @@ export function TutorialGame() {
     generateTargetPosition({ width: 800, height: 600 }, 100)
   );
   const [demoPingsExperienced, setDemoPingsExperienced] = useState<Set<string>>(new Set());
+  const [isModalMinimized, setIsModalMinimized] = useState(false);
 
   const arenaSize = { width: 800, height: 600 };
 
@@ -62,6 +63,16 @@ export function TutorialGame() {
   useEffect(() => {
     audioEngine.initialize(arenaSize.width, arenaSize.height);
   }, []);
+
+  // Auto-minimize for interactive steps
+  useEffect(() => {
+    const interactiveSteps: TutorialStep[] = ['first-ping', 'audio-cues', 'confirm-guess'];
+    if (interactiveSteps.includes(tutorialState.currentStep)) {
+      setIsModalMinimized(true);
+    } else {
+      setIsModalMinimized(false);
+    }
+  }, [tutorialState.currentStep]);
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = canvasRef.current?.getBoundingClientRect();
@@ -324,6 +335,8 @@ export function TutorialGame() {
         onSkip={handleSkipTutorial}
         onExitToMenu={handleExitToMenu}
         onRestartTutorial={handleRestartTutorial}
+        isMinimized={isModalMinimized}
+        onToggleMinimize={() => setIsModalMinimized(!isModalMinimized)}
         currentStepNumber={getStepNumber(tutorialState.currentStep)}
         totalSteps={9}
         demoPingsExperienced={demoPingsExperienced.size}
