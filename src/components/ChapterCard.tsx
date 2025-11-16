@@ -1,0 +1,123 @@
+import { Lock, CheckCircle2 } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { ChapterConfig } from '@/lib/game/chapters';
+import { ChapterStats } from '@/lib/game/chapterStats';
+import { cn } from '@/lib/utils';
+
+interface ChapterCardProps {
+  chapter: ChapterConfig;
+  stats: ChapterStats | null;
+  isUnlocked: boolean;
+  onClick?: () => void;
+}
+
+export function ChapterCard({ chapter, stats, isUnlocked, onClick }: ChapterCardProps) {
+  const progress = stats ? (stats.levelsCompleted / 10) * 100 : 0;
+  const isCompleted = stats?.completed || false;
+
+  return (
+    <Card
+      className={cn(
+        "relative overflow-hidden transition-all duration-300 cursor-pointer group",
+        isUnlocked
+          ? "hover:scale-105 hover:shadow-lg hover-lift"
+          : "opacity-60 cursor-not-allowed"
+      )}
+      style={{
+        borderColor: isUnlocked ? chapter.theme.primary : 'hsl(var(--border))',
+        background: isUnlocked
+          ? `linear-gradient(135deg, ${chapter.theme.primary}15, ${chapter.theme.secondary}10)`
+          : 'hsl(var(--card))',
+      }}
+      onClick={isUnlocked ? onClick : undefined}
+    >
+      {/* Background Decoration */}
+      <div
+        className="absolute inset-0 opacity-5 transition-opacity duration-300 group-hover:opacity-10"
+        style={{
+          background: `radial-gradient(circle at 30% 50%, ${chapter.theme.primary}, transparent 70%)`,
+        }}
+      />
+
+      <CardContent className="relative p-6 space-y-4">
+        {/* Header */}
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-1">
+              <h3
+                className="text-2xl font-display font-bold"
+                style={{ color: isUnlocked ? chapter.theme.primary : 'hsl(var(--muted-foreground))' }}
+              >
+                Chapter {chapter.id}
+              </h3>
+              {!isUnlocked && <Lock className="w-4 h-4 text-muted-foreground" />}
+              {isCompleted && (
+                <CheckCircle2 className="w-5 h-5" style={{ color: chapter.theme.accent }} />
+              )}
+            </div>
+            <h4 className="text-lg font-semibold text-foreground">{chapter.name}</h4>
+          </div>
+        </div>
+
+        {/* Description */}
+        <p className="text-sm text-muted-foreground line-clamp-2">{chapter.description}</p>
+
+        {/* Progress */}
+        {stats && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Progress</span>
+              <span className="font-semibold text-foreground">
+                {stats.levelsCompleted}/10 levels
+              </span>
+            </div>
+            <Progress
+              value={progress}
+              className="h-2"
+              style={{
+                // @ts-ignore
+                '--progress-background': chapter.theme.primary,
+              }}
+            />
+          </div>
+        )}
+
+        {/* Stats Summary */}
+        {stats && stats.levelsCompleted > 0 && (
+          <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border/50">
+            <div className="text-center">
+              <div className="text-xs text-muted-foreground">Best Score</div>
+              <div className="text-sm font-semibold text-foreground">
+                {Math.round(stats.bestScore)}
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="text-xs text-muted-foreground">Avg Pings</div>
+              <div className="text-sm font-semibold text-foreground">
+                {stats.levelsCompleted > 0
+                  ? Math.round(stats.totalPings / stats.levelsCompleted)
+                  : 0}
+              </div>
+            </div>
+            <div className="text-center">
+              <div className="text-xs text-muted-foreground">Total Time</div>
+              <div className="text-sm font-semibold text-foreground">
+                {Math.floor(stats.totalTime / 60)}m
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Locked Message */}
+        {!isUnlocked && (
+          <div className="text-center pt-2">
+            <p className="text-xs text-muted-foreground">
+              Complete previous chapter to unlock
+            </p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}

@@ -1,0 +1,121 @@
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, Trophy, Target } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ChapterCard } from '@/components/ChapterCard';
+import { CHAPTERS } from '@/lib/game/chapters';
+import { loadChapterStats } from '@/lib/game/chapterStats';
+import { useEffect, useState } from 'react';
+
+export default function ChapterSelect() {
+  const navigate = useNavigate();
+  const [chapterStats, setChapterStats] = useState(loadChapterStats());
+  const [currentProgress, setCurrentProgress] = useState({ level: 1, chapter: 1 });
+
+  useEffect(() => {
+    const savedProgress = localStorage.getItem('echo_classic_progress');
+    if (savedProgress) {
+      try {
+        const progress = JSON.parse(savedProgress);
+        setCurrentProgress({ level: progress.level, chapter: progress.chapter });
+      } catch {
+        // Ignore
+      }
+    }
+  }, []);
+
+  const handleChapterClick = (chapterId: number) => {
+    // Navigate to classic mode and start at this chapter
+    const firstLevelOfChapter = (chapterId - 1) * 10 + 1;
+    
+    // Save as the current progress if player wants to jump to this chapter
+    localStorage.setItem(
+      'echo_classic_progress',
+      JSON.stringify({
+        level: firstLevelOfChapter,
+        chapter: chapterId,
+        totalScore: 0,
+        totalPings: 0,
+        totalTime: 0,
+      })
+    );
+    
+    navigate('/classic');
+  };
+
+  const isChapterUnlocked = (chapterId: number): boolean => {
+    if (chapterId === 1) return true;
+    
+    // Chapter is unlocked if previous chapter is completed or if current progress is in this chapter
+    const prevChapterStats = chapterStats[chapterId - 1];
+    const isCurrentChapter = currentProgress.chapter === chapterId;
+    
+    return prevChapterStats?.completed || isCurrentChapter || currentProgress.chapter > chapterId;
+  };
+
+  const totalLevelsCompleted = Object.values(chapterStats).reduce(
+    (sum, stat) => sum + (stat?.levelsCompleted || 0),
+    0
+  );
+  const totalChaptersCompleted = Object.values(chapterStats).filter(
+    (stat) => stat?.completed
+  ).length;
+
+  return (
+    <div className="min-h-screen p-6 echo-dots">
+      <div className="max-w-6xl mx-auto space-y-8 animate-fade-in">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <Button variant="ghost" onClick={() => navigate('/')} className="gap-2">
+            <ArrowLeft className="w-4 h-4" />
+            Back to Menu
+          </Button>
+        </div>
+
+        {/* Title & Stats */}
+        <div className="text-center space-y-4">
+          <h1 className="text-display font-display tracking-tight">
+            Chapter Select
+          </h1>
+          <p className="text-muted-foreground">
+            Choose your challenge and master the art of echolocation
+          </p>
+
+          {/* Overall Progress */}
+          <div className="flex items-center justify-center gap-8 pt-4">
+            <div className="flex items-center gap-2">
+              <Trophy className="w-5 h-5 text-primary" />
+              <div>
+                <div className="text-2xl font-display font-bold text-foreground">
+                  {totalChaptersCompleted}/5
+                </div>
+                <div className="text-xs text-muted-foreground">Chapters Complete</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Target className="w-5 h-5 text-accent" />
+              <div>
+                <div className="text-2xl font-display font-bold text-foreground">
+                  {totalLevelsCompleted}/50
+                </div>
+                <div className="text-xs text-muted-foreground">Levels Complete</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Chapter Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {CHAPTERS.map((chapter) => (
+            <ChapterCard
+              key={chapter.id}
+              chapter={chapter}
+              stats={chapterStats[chapter.id] || null}
+              isUnlocked={isChapterUnlocked(chapter.id)}
+              onClick={() => handleChapterClick(chapter.id)}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}

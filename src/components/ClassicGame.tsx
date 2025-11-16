@@ -8,12 +8,15 @@ import { calculateScore } from '@/lib/game/scoring';
 import { getLevelConfig, getChapterFromLevel, getChapterConfig } from '@/lib/game/chapters';
 import { audioEngine } from '@/lib/audio/engine';
 import { PostRoundSummary } from './PostRoundSummary';
+import { ChapterIntro } from './ChapterIntro';
+import { ChapterComplete } from './ChapterComplete';
 import { GameCanvas } from './GameCanvas';
 import { GameStats } from './GameStats';
 import { useGameTimer } from '@/hooks/useGameTimer';
 import { usePingSystem } from '@/hooks/usePingSystem';
 import { useGamePhase } from '@/hooks/useGamePhase';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { updateChapterStats, loadChapterStats, getSeenChapterIntros } from '@/lib/game/chapterStats';
 import { cn } from '@/lib/utils';
 
 export function ClassicGame() {
@@ -36,6 +39,10 @@ export function ClassicGame() {
   const [gameState, setGameState] = useState<'playing' | 'summary'>('playing');
   const [scoreResult, setScoreResult] = useState<any>(null);
   const [showHint, setShowHint] = useState(false);
+  const [showChapterIntro, setShowChapterIntro] = useState(false);
+  const [showChapterComplete, setShowChapterComplete] = useState(false);
+  const [chapterTransition, setChapterTransition] = useState<string | null>(null);
+  const [currentChapterForIntro, setCurrentChapterForIntro] = useState<number | null>(null);
 
   const chapter = getChapterFromLevel(level);
   const levelConfig = getLevelConfig(chapter, level);
@@ -85,6 +92,15 @@ export function ClassicGame() {
     }
   }, []);
 
+  // Check if we should show chapter intro
+  useEffect(() => {
+    const seenIntros = getSeenChapterIntros();
+    if (!seenIntros.includes(chapter) && gamePhase === 'ready') {
+      setCurrentChapterForIntro(chapter);
+      setShowChapterIntro(true);
+    }
+  }, [chapter, gamePhase]);
+
   // Generate phantom targets when chapter requires them
   useEffect(() => {
     if (chapterConfig.specialMechanic === 'phantom_targets' || chapterConfig.specialMechanic === 'combined_challenge') {
@@ -102,163 +118,268 @@ export function ClassicGame() {
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
 
-    const clickPos: Position = {
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    };
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
 
-    if (gamePhase === 'pinging') {
-      handlePing(clickPos);
-    } else if (gamePhase === 'placing') {
-      setFinalGuess(clickPos);
+    if (gamePhase === 'playing') {
+      handlePing({ x, y });
+    } else if (gamePhase === 'guessing') {
+      if (finalGuess) {
+        handleRepositionGuess({ x, y });
+      } else {
+        handlePlaceFinalGuess({ x, y });
+      }
+    } else if (gamePhase === 'ready') {
+      resetPhase();
     }
   };
 
-  const handleSubmitGuess = () => {
+  const handleFinalGuessSubmit = () => {
     if (!finalGuess) return;
+
     const targetCenter = getTargetCenter(target);
-    const proximity = calculateProximity(finalGuess, targetCenter, Math.max(arenaSize.width, arenaSize.height));
-    const score = calculateScore(
-      proximity,
+    const distance = calculateProximity(finalGuess, targetCenter);
+    const timeUsed = elapsedTime;
+    const score = calculateScore(distance, pingsUsed, timeUsed, levelConfig.targetSize);
+
+    // Update chapter stats
+    updateChapterStats(chapter, level, pingsUsed, score, timeUsed);
+
+    const result = distance <= target.size / 2 ? 'success' : 'failure';
+
+    setScoreResult({
+      result,
+      score,
+      distance,
       pingsUsed,
-      levelConfig.pings,
-      finalTime ?? elapsedTime,
-      levelConfig.difficulty
-    );
-    setScoreResult(score);
+      timeElapsed: timeUsed,
+    });
+
+    localStorage.setItem('echo_classic_progress', JSON.stringify({
+      level,
+      chapter,
+    }));
+
     setGameState('summary');
   };
 
   const handleNextLevel = () => {
     const nextLevel = level + 1;
     const nextChapter = getChapterFromLevel(nextLevel);
+    
+    // Check if we just completed a chapter (every 10th level)
+    const isChapterComplete = level % 10 === 0;
+    
+    if (isChapterComplete) {
+      const chapterStats = loadChapterStats();
+      const completedChapterStats = chapterStats[chapter];
+      setShowChapterComplete(true);
+      return;
+    }
+    
+    // Check if we're entering a new chapter
+    if (nextChapter !== chapter) {
+      setChapterTransition(`Entering Chapter ${nextChapter}...`);
+      setTimeout(() => {
+        setChapterTransition(null);
+      }, 2000);
+    }
+    
+    // Check if this is a boss level
+    if (nextLevel % 10 === 0) {
+      setChapterTransition(`⚠️ BOSS LEVEL ${nextLevel} ⚠️`);
+      setTimeout(() => {
+        setChapterTransition(null);
+      }, 2000);
+    }
+
     setLevel(nextLevel);
-    localStorage.setItem('echo_classic_progress', JSON.stringify({ level: nextLevel, chapter: nextChapter }));
     const newLevelConfig = getLevelConfig(nextChapter, nextLevel);
     const newTarget = generateTargetPosition(arenaSize, newLevelConfig.targetSize);
     setTarget(newTarget);
     setTargetMoveHistory([]);
-    resetPings();
-    resetPhase();
+    
+    const newChapterConfig = getChapterConfig(nextChapter);
+    if (newChapterConfig.specialMechanic === 'phantom_targets' || newChapterConfig.specialMechanic === 'combined_challenge') {
+      const phantomCount = newChapterConfig.mechanicDetails?.phantomCount || 2;
+      const phantoms = generatePhantomTargets(arenaSize, newTarget, phantomCount);
+      setPhantomTargets(phantoms);
+    } else {
+      setPhantomTargets([]);
+    }
+
+    resetPings(newLevelConfig.pings);
     resetTimer();
-    setShowHint(false);
+    resetPhase();
     setGameState('playing');
     setScoreResult(null);
+    setFinalGuess(null);
+
+    localStorage.setItem('echo_classic_progress', JSON.stringify({
+      level: nextLevel,
+      chapter: nextChapter,
+    }));
   };
 
   const handleRetry = () => {
     const newTarget = generateTargetPosition(arenaSize, levelConfig.targetSize);
     setTarget(newTarget);
     setTargetMoveHistory([]);
-    resetPings();
-    resetPhase();
+    
+    if (chapterConfig.specialMechanic === 'phantom_targets' || chapterConfig.specialMechanic === 'combined_challenge') {
+      const phantomCount = chapterConfig.mechanicDetails?.phantomCount || 2;
+      const phantoms = generatePhantomTargets(arenaSize, newTarget, phantomCount);
+      setPhantomTargets(phantoms);
+    } else {
+      setPhantomTargets([]);
+    }
+
+    resetPings(levelConfig.pings);
     resetTimer();
-    setShowHint(false);
+    resetPhase();
     setGameState('playing');
     setScoreResult(null);
+    setFinalGuess(null);
   };
 
-  if (gameState === 'summary' && scoreResult) {
-    const proximity = calculateProximity(finalGuess!, getTargetCenter(target), Math.max(arenaSize.width, arenaSize.height));
-    return (
-      <PostRoundSummary
-        score={scoreResult}
-        proximity={proximity}
-        pingsUsed={pingsUsed}
-        totalPings={levelConfig.pings}
-        timeElapsed={finalTime ?? elapsedTime}
-        onNext={handleNextLevel}
-        onRetry={handleRetry}
-        onMenu={() => navigate('/')}
-      />
-    );
-  }
+  const handleContinueAfterChapterComplete = () => {
+    setShowChapterComplete(false);
+    const nextLevel = level + 1;
+    const nextChapter = getChapterFromLevel(nextLevel);
+    
+    setLevel(nextLevel);
+    const newLevelConfig = getLevelConfig(nextChapter, nextLevel);
+    const newTarget = generateTargetPosition(arenaSize, newLevelConfig.targetSize);
+    setTarget(newTarget);
+    setTargetMoveHistory([]);
+    
+    const newChapterConfig = getChapterConfig(nextChapter);
+    if (newChapterConfig.specialMechanic === 'phantom_targets' || newChapterConfig.specialMechanic === 'combined_challenge') {
+      const phantomCount = newChapterConfig.mechanicDetails?.phantomCount || 2;
+      const phantoms = generatePhantomTargets(arenaSize, newTarget, phantomCount);
+      setPhantomTargets(phantoms);
+    } else {
+      setPhantomTargets([]);
+    }
+
+    resetPings(newLevelConfig.pings);
+    resetTimer();
+    resetPhase();
+    setGameState('playing');
+    setScoreResult(null);
+    setFinalGuess(null);
+
+    localStorage.setItem('echo_classic_progress', JSON.stringify({
+      level: nextLevel,
+      chapter: nextChapter,
+    }));
+  };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <header className="border-b border-border p-4">
-        <div className={cn("mx-auto flex items-center justify-between", isMobile ? "max-w-full" : "max-w-6xl")}>
-          <Button variant="ghost" size="sm" onClick={() => navigate('/')} className="hover-lift">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            {!isMobile && 'Menu'}
-          </Button>
-          <div className="text-center">
-            <p className="text-tiny text-muted-foreground">Chapter {chapter}</p>
-            <p className={cn("font-display font-semibold", isMobile ? "text-lg" : "text-heading-3")}>Level {level}</p>
+    <div className="min-h-screen flex flex-col echo-dots relative">
+      {/* Chapter Intro Modal */}
+      {showChapterIntro && currentChapterForIntro !== null && (
+        <ChapterIntro
+          chapter={getChapterConfig(currentChapterForIntro)}
+          onClose={() => setShowChapterIntro(false)}
+        />
+      )}
+
+      {/* Chapter Complete Modal */}
+      {showChapterComplete && (
+        <ChapterComplete
+          chapter={getChapterConfig(chapter)}
+          stats={loadChapterStats()[chapter]}
+          onContinue={handleContinueAfterChapterComplete}
+          onMainMenu={() => navigate('/')}
+        />
+      )}
+
+      {/* Chapter Transition Overlay */}
+      {chapterTransition && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
+          <div className="text-5xl font-display font-bold text-primary animate-pulse">
+            {chapterTransition}
           </div>
-          <Button variant="ghost" size="sm" onClick={() => navigate('/settings')} className="hover-lift">
-            <SettingsIcon className="w-4 h-4" />
-          </Button>
         </div>
-      </header>
+      )}
 
-      <div className="flex-1 flex flex-col items-center justify-center p-4 md:p-6">
-        <div className={cn("space-y-4 md:space-y-6 w-full", isMobile ? "max-w-full" : "max-w-4xl")}>
-          <GameStats
-            pingsRemaining={pingsRemaining}
-            pingsUsed={pingsUsed}
-            elapsedTime={elapsedTime}
-            finalTime={finalTime}
-            timerEnabled={true}
-            levelInfo={{ chapter, level }}
-          />
+      {/* Header */}
+      <div className="w-full p-4 flex items-center justify-between gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate('/')}
+          className="gap-2"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          {!isMobile && 'Menu'}
+        </Button>
 
-          {pingsUsed >= 3 && !showHint && gamePhase === 'pinging' && (
-            <div className="flex justify-center">
-              <Button variant="outline" size="sm" onClick={() => setShowHint(true)} className="gap-2">
-                <Lightbulb className="w-4 h-4" />
-                Need a hint?
-              </Button>
-            </div>
-          )}
+        <GameStats
+          pingsRemaining={pingsRemaining}
+          pingsUsed={pingsUsed}
+          elapsedTime={elapsedTime}
+          finalTime={finalTime}
+          timerEnabled={true}
+          levelInfo={{ chapter, level }}
+        />
 
-          {showHint && pingHistory.length > 0 && (
-            <div className="flat-card bg-accent/20 border-accent/50 backdrop-blur-sm animate-fade-in">
-              <p className="text-small text-accent-foreground">
-                {pingHistory.length < 2 ? "Try pinging in different areas to triangulate the target position." : "The target is closer to your recent pings. Keep narrowing it down!"}
-              </p>
-            </div>
-          )}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowHint(!showHint)}
+          className="gap-2"
+        >
+          <Lightbulb className={cn('w-4 h-4', showHint && 'text-accent')} />
+          {!isMobile && 'Hint'}
+        </Button>
+      </div>
 
+      {/* Game Canvas */}
+      <div className="flex-1 flex items-center justify-center p-4">
+        <div className="relative">
           <GameCanvas
+            ref={canvasRef}
             arenaSize={arenaSize}
             target={target}
+            phantomTargets={phantomTargets}
+            targetMoveHistory={targetMoveHistory}
             pingHistory={pingHistory}
             finalGuess={finalGuess}
             gamePhase={gamePhase}
-            gameState={gameState}
-            showHint={false}
-            currentHint={null}
-            targetMoveHistory={targetMoveHistory}
-            phantomTargets={phantomTargets}
-            onCanvasClick={handleCanvasClick}
-            canvasRef={canvasRef}
+            showHint={showHint}
+            onClick={handleCanvasClick}
           />
 
-          <div className="flex justify-center gap-3">
-            {gamePhase === 'pinging' && (
-              <Button size={isMobile ? "lg" : "default"} onClick={handlePlaceFinalGuess} disabled={pingsUsed === 0} className={cn("hover-lift", isMobile && "min-h-[48px] px-8")}>
-                Place Final Guess
+          {gamePhase === 'guessing' && (
+            <div className="absolute -bottom-16 left-0 right-0 flex justify-center">
+              <Button
+                size="lg"
+                onClick={handleFinalGuessSubmit}
+                disabled={!finalGuess}
+                className="gap-2"
+              >
+                Submit Final Guess
               </Button>
-            )}
-            {gamePhase === 'placing' && (
-              <div className="text-center space-y-3">
-                <p className="text-small text-muted-foreground">Click on the canvas to place your guess</p>
-              </div>
-            )}
-            {gamePhase === 'confirming' && finalGuess && (
-              <>
-                <Button variant="outline" size={isMobile ? "lg" : "default"} onClick={handleRepositionGuess} className={isMobile ? "min-h-[48px]" : ""}>
-                  Reposition
-                </Button>
-                <Button size={isMobile ? "lg" : "default"} onClick={handleSubmitGuess} className={cn("hover-lift", isMobile && "min-h-[48px]")}>
-                  Confirm & Submit
-                </Button>
-              </>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Summary Modal */}
+      {gameState === 'summary' && scoreResult && (
+        <PostRoundSummary
+          result={scoreResult.result}
+          score={scoreResult.score}
+          distance={scoreResult.distance}
+          pingsUsed={scoreResult.pingsUsed}
+          timeElapsed={scoreResult.timeElapsed}
+          onNextLevel={handleNextLevel}
+          onRetry={handleRetry}
+          levelInfo={{ chapter, level }}
+        />
+      )}
     </div>
   );
 }

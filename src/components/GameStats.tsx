@@ -3,6 +3,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { InfoTooltip } from './InfoTooltip';
 import { getChapterConfig } from '@/lib/game/chapters';
+import { Progress } from '@/components/ui/progress';
 
 export interface GameStatsProps {
   pingsRemaining: number;
@@ -85,6 +86,19 @@ export function GameStats({
           </div>
           <div className="text-sm text-muted-foreground">
             Level {levelInfo.level}
+          </div>
+          {/* Mini Progress Bar */}
+          <div className="mt-2 space-y-1">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-muted-foreground">Chapter</span>
+              <span className="font-medium text-foreground">
+                {((levelInfo.level - 1) % 10) + 1}/10
+              </span>
+            </div>
+            <Progress 
+              value={((((levelInfo.level - 1) % 10) + 1) / 10) * 100} 
+              className="h-1.5"
+            />
           </div>
         </div>
       )}
