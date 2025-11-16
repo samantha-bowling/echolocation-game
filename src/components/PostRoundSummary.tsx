@@ -222,78 +222,117 @@ export function PostRoundSummary({
           </div>
         </div>
 
-        {/* Score Breakdown */}
-        <div className="flat-card space-y-3">
-          <p className="text-small font-semibold">Score Breakdown</p>
-          <div className="space-y-2 text-small font-mono">
-            {/* Base Score */}
-            <div className="flex justify-between items-center group">
-              <span className="text-muted-foreground flex items-center gap-2">
-                Base Score
-                <InfoTooltip content="Every round starts with 1,000 base points" />
-              </span>
-              <span>+{score.components.base}</span>
+        {/* Enhanced Score Breakdown */}
+        <div className="flat-card space-y-4">
+          <div className="flex items-center gap-2">
+            <Trophy className="w-5 h-5 text-accent" />
+            <h3 className="text-heading-2">Score Breakdown</h3>
+          </div>
+          
+          <div className="space-y-3">
+            {/* Positive Components - Green theme */}
+            <div className="space-y-2">
+              <div className="text-xs font-semibold text-emerald-400 uppercase tracking-wide">
+                Earned Points
+              </div>
+              
+              <ScoreBreakdownItem 
+                label="Base Score"
+                value={score.components.base}
+                isPositive={true}
+              />
+              
+              {score.components.proximityBonus > 0 && (
+                <ScoreBreakdownItem 
+                  label="Accuracy Bonus"
+                  value={score.components.proximityBonus}
+                  isPositive={true}
+                  detail={`${proximity.toFixed(1)}% proximity × 4`}
+                />
+              )}
+              
+              {score.components.pingEfficiencyBonus > 0 && (
+                <ScoreBreakdownItem 
+                  label="Ping Efficiency"
+                  value={score.components.pingEfficiencyBonus}
+                  isPositive={true}
+                  detail={`${totalPings - pingsUsed} unused pings`}
+                />
+              )}
+              
+              {score.components.earlyGuessBonus > 0 && (
+                <ScoreBreakdownItem 
+                  label="🎯 Early Guess Bonus"
+                  value={score.components.earlyGuessBonus}
+                  isPositive={true}
+                  detail={`Guessed ${totalPings - pingsUsed} pings early`}
+                  highlight={true}
+                />
+              )}
+              
+              {score.components.speedBonus > 0 && (
+                <ScoreBreakdownItem 
+                  label="⚡ Speed Bonus"
+                  value={score.components.speedBonus}
+                  isPositive={true}
+                  detail={`Completed in ${timeElapsed.toFixed(1)}s`}
+                />
+              )}
+              
+              {score.components.perfectTargetBonus > 0 && (
+                <ScoreBreakdownItem 
+                  label="🎉 Perfect Hit"
+                  value={score.components.perfectTargetBonus}
+                  isPositive={true}
+                  highlight={true}
+                />
+              )}
+              
+              {score.components.boonBonus > 0 && (
+                <ScoreBreakdownItem 
+                  label="Boon Bonus"
+                  value={score.components.boonBonus}
+                  isPositive={true}
+                />
+              )}
             </div>
-
-            {/* Proximity Bonus with Formula */}
-            <div className="flex justify-between items-center group">
-              <span className="text-muted-foreground flex items-center gap-2">
-                Proximity ({proximity}% × 4)
-                <InfoTooltip content="Earn 4 points for each percent of proximity. Max 400 points at 100%." />
-              </span>
-              <span className="text-accent">+{score.components.proximityBonus}</span>
-            </div>
-
-            {/* Ping Efficiency with Formula */}
-            <div className="flex justify-between items-center group">
-              <span className="text-muted-foreground flex items-center gap-2">
-                Ping Efficiency ({totalPings - pingsUsed}/{totalPings} unused)
-                <InfoTooltip content="Save pings to earn bonus points! Max 300 points for perfect efficiency." />
-              </span>
-              <span className="text-accent">+{score.components.pingEfficiencyBonus}</span>
-            </div>
-
-            {/* Time Penalty with Formula */}
-            <div className="flex justify-between items-center group">
-              <span className="text-muted-foreground flex items-center gap-2">
-                Time Penalty ({timeElapsed.toFixed(1)}s × -2)
-                <InfoTooltip content="You lose 2 points per second. Max penalty: -500 points." />
-              </span>
-              <span className="text-destructive">-{score.components.timePenalty}</span>
-            </div>
-
-            {/* Speed Bonus (if earned) */}
-            {score.components.speedBonus > 0 && (
-              <div className="flex justify-between items-center group">
-                <span className="text-muted-foreground flex items-center gap-2">
-                  ⚡ Speed Bonus
-                  <InfoTooltip content="Complete in under 15 seconds for bonus points!" />
-                </span>
-                <span className="text-echo-success">+{score.components.speedBonus}</span>
+            
+            {/* Negative Components - Red theme */}
+            {score.components.timePenalty > 0 && (
+              <div className="space-y-2 pt-2 border-t border-border/50">
+                <div className="text-xs font-semibold text-rose-400 uppercase tracking-wide">
+                  Deductions
+                </div>
+                <ScoreBreakdownItem 
+                  label="Time Penalty"
+                  value={score.components.timePenalty}
+                  isPositive={false}
+                  detail={`${timeElapsed.toFixed(1)}s × 2`}
+                />
               </div>
             )}
-
-            {/* Perfect Target Bonus (if earned) */}
-            {score.components.perfectTargetBonus > 0 && (
-              <div className="flex justify-between items-center group">
-                <span className="text-muted-foreground flex items-center gap-2">
-                  🎯 Perfect Target!
-                  <InfoTooltip content="100% proximity accuracy bonus!" />
-                </span>
-                <span className="text-echo-success">+{score.components.perfectTargetBonus}</span>
-              </div>
-            )}
-
-            {/* Difficulty Multiplier */}
+            
+            {/* Multiplier */}
             {score.components.difficultyMultiplier !== 1.0 && (
-              <div className="flex justify-between items-center group border-t border-border pt-2 mt-2">
-                <span className="text-muted-foreground flex items-center gap-2">
-                  Difficulty (×{score.components.difficultyMultiplier})
-                  <InfoTooltip content="Higher difficulty levels multiply your score!" />
-                </span>
-                <span className="text-accent font-semibold">×{score.components.difficultyMultiplier}</span>
+              <div className="pt-2 border-t border-border/50">
+                <div className="flex justify-between items-center text-small">
+                  <span className="text-muted-foreground">Difficulty Multiplier</span>
+                  <span className="font-mono text-accent">
+                    ×{score.components.difficultyMultiplier.toFixed(1)}
+                  </span>
+                </div>
               </div>
             )}
+            
+            {/* Final Total */}
+            <div className="pt-3 border-t-2 border-accent/30">
+              <div className="flex justify-between items-center">
+                <span className="text-heading-3 text-accent">Final Score</span>
+                <span className="text-heading-1 font-bold text-accent">
+                  {score.total}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -419,6 +458,38 @@ export function PostRoundSummary({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function ScoreBreakdownItem({ 
+  label, 
+  value, 
+  isPositive, 
+  detail,
+  highlight 
+}: { 
+  label: string; 
+  value: number; 
+  isPositive: boolean; 
+  detail?: string;
+  highlight?: boolean;
+}) {
+  return (
+    <div className={`flex justify-between items-start gap-2 p-2 rounded-lg transition-colors ${
+      highlight ? 'bg-accent/10 border border-accent/30' : 'hover:bg-white/5'
+    }`}>
+      <div className="flex-1">
+        <div className="text-small font-medium">{label}</div>
+        {detail && (
+          <div className="text-xs text-muted-foreground">{detail}</div>
+        )}
+      </div>
+      <div className={`font-mono font-bold text-base ${
+        isPositive ? 'text-emerald-400' : 'text-rose-400'
+      }`}>
+        {isPositive ? '+' : '-'}{value}
+      </div>
     </div>
   );
 }
