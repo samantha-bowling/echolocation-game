@@ -22,7 +22,17 @@ export function TutorialGame() {
   const navigate = useNavigate();
   const canvasRef = useRef<HTMLDivElement>(null);
 
-  const [tutorialState, setTutorialState] = useState(getTutorialState());
+  const [tutorialState, setTutorialState] = useState<{
+    currentStep: TutorialStep;
+    completed: boolean;
+    skipped: boolean;
+    pingCount: number;
+  }>({
+    currentStep: 'welcome',
+    completed: false,
+    skipped: false,
+    pingCount: 0,
+  });
   const [target] = useState(() =>
     generateTargetPosition({ width: 800, height: 600 }, 100)
   );
@@ -52,16 +62,6 @@ export function TutorialGame() {
   useEffect(() => {
     audioEngine.initialize();
   }, []);
-
-  // Auto-progress tutorial based on actions
-  useEffect(() => {
-    const nextStep = getNextStep(tutorialState.currentStep, pingsUsed);
-    if (nextStep !== tutorialState.currentStep) {
-      const newState = { ...tutorialState, currentStep: nextStep, pingCount: pingsUsed };
-      setTutorialState(newState);
-      saveTutorialState(newState);
-    }
-  }, [pingsUsed, tutorialState]);
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = canvasRef.current?.getBoundingClientRect();
@@ -101,31 +101,42 @@ export function TutorialGame() {
     }
   };
 
+  const stepOrder: TutorialStep[] = [
+    'welcome',
+    'first-ping',
+    'interpret-sound',
+    'audio-cues',
+    'multiple-pings',
+    'place-guess',
+    'confirm-guess',
+    'scoring',
+    'complete',
+  ];
+
+  const handleStepChange = (newStep: TutorialStep) => {
+    // Reset game state when manually changing steps
+    resetPings();
+    resetTimer();
+    resetPhase();
+    setDemoPingsExperienced(new Set());
+    
+    // Update tutorial state
+    setTutorialState({
+      ...tutorialState,
+      currentStep: newStep,
+    });
+  };
+
+  const handlePreviousStep = () => {
+    const currentIndex = stepOrder.indexOf(tutorialState.currentStep);
+    if (currentIndex > 0) {
+      handleStepChange(stepOrder[currentIndex - 1]);
+    }
+  };
+
   const handleNextStep = () => {
-    const currentSteps: TutorialStep[] = [
-      'welcome',
-      'first-ping',
-      'interpret-sound',
-      'audio-cues',
-      'multiple-pings',
-      'place-guess',
-      'confirm-guess',
-      'scoring',
-      'complete',
-    ];
-    const currentIndex = currentSteps.indexOf(tutorialState.currentStep);
-    const nextStep = currentSteps[Math.min(currentIndex + 1, currentSteps.length - 1)];
-
-    // Reset demo pings when leaving audio-cues step
-    if (tutorialState.currentStep === 'audio-cues') {
-      setDemoPingsExperienced(new Set());
-    }
-
-    if (nextStep === 'complete') {
-      markTutorialCompleted();
-      navigate('/classic');
-      return;
-    }
+    const currentIndex = stepOrder.indexOf(tutorialState.currentStep);
+    const nextStep = stepOrder[Math.min(currentIndex + 1, stepOrder.length - 1)];
 
     if (nextStep === 'place-guess') {
       // User should manually click "Place Final Guess" button
@@ -136,14 +147,15 @@ export function TutorialGame() {
       handlePlaceFinalGuess();
     }
 
-    const newState = { ...tutorialState, currentStep: nextStep };
-    setTutorialState(newState);
-    saveTutorialState(newState);
+    handleStepChange(nextStep);
   };
 
   const handleSkipTutorial = () => {
-    markTutorialCompleted();
-    navigate('/classic');
+    navigate('/');
+  };
+
+  const handleExitToMenu = () => {
+    navigate('/');
   };
 
   const getStepNumber = (step: TutorialStep): number => {
@@ -296,11 +308,15 @@ export function TutorialGame() {
       <TutorialOverlay
         step={tutorialState.currentStep}
         onNext={handleNextStep}
+        onPrevious={handlePreviousStep}
+        onStepChange={handleStepChange}
         onSkip={handleSkipTutorial}
+        onExitToMenu={handleExitToMenu}
         currentStepNumber={getStepNumber(tutorialState.currentStep)}
-        totalSteps={8}
+        totalSteps={9}
         demoPingsExperienced={demoPingsExperienced.size}
         totalDemoPings={4}
+        stepOrder={stepOrder}
       />
     </div>
   );

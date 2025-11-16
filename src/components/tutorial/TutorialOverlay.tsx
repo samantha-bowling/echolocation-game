@@ -5,25 +5,67 @@ import { X, Volume2, ArrowLeftRight, ArrowUpDown } from 'lucide-react';
 export interface TutorialOverlayProps {
   step: TutorialStep;
   onNext: () => void;
+  onPrevious: () => void;
+  onStepChange: (step: TutorialStep) => void;
   onSkip: () => void;
+  onExitToMenu: () => void;
   totalSteps?: number;
   currentStepNumber?: number;
   demoPingsExperienced?: number;
   totalDemoPings?: number;
+  stepOrder: TutorialStep[];
 }
 
 export function TutorialOverlay({
   step,
   onNext,
+  onPrevious,
+  onStepChange,
   onSkip,
-  totalSteps = 8,
+  onExitToMenu,
+  totalSteps = 9,
   currentStepNumber = 1,
   demoPingsExperienced = 0,
   totalDemoPings = 4,
+  stepOrder,
 }: TutorialOverlayProps) {
   const stepInfo = TUTORIAL_STEPS[step];
 
-  if (step === 'complete') return null;
+  // Celebration screen for complete step
+  if (step === 'complete') {
+    return (
+      <>
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 animate-fade-in" />
+        <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md px-4">
+          <div className="frosted-modal text-center space-y-6">
+            <div className="space-y-2">
+              <div className="text-6xl">🎉</div>
+              <h2 className="text-heading-2">You're Ready!</h2>
+              <p className="text-muted-foreground">
+                You've learned all the mechanics. Time to test your echolocation skills!
+              </p>
+            </div>
+            
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => onStepChange('welcome')}
+                className="flex-1"
+              >
+                Restart Tutorial
+              </Button>
+              <Button
+                onClick={onExitToMenu}
+                className="flex-1"
+              >
+                Start Playing
+              </Button>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   const isAudioCuesStep = step === 'audio-cues';
   const allDemoPingsExperienced = demoPingsExperienced >= totalDemoPings;
@@ -45,14 +87,21 @@ export function TutorialOverlay({
             <X className="w-4 h-4 text-muted-foreground" />
           </button>
 
-          {/* Progress Indicator */}
-          <div className="flex items-center gap-1 mb-4">
-            {Array.from({ length: totalSteps }).map((_, i) => (
-              <div
+          {/* Step Navigation Dots */}
+          <div className="flex items-center justify-center gap-2 mb-4">
+            {stepOrder.map((stepName, i) => (
+              <button
                 key={i}
-                className={`h-1 flex-1 rounded-full transition-colors ${
-                  i < currentStepNumber ? 'bg-primary' : 'bg-border'
+                onClick={() => onStepChange(stepName)}
+                className={`transition-all hover:scale-125 rounded-full ${
+                  i === currentStepNumber - 1
+                    ? 'bg-primary w-8 h-2.5'
+                    : i < currentStepNumber - 1
+                    ? 'bg-primary/50 w-2.5 h-2.5'
+                    : 'bg-border w-2.5 h-2.5'
                 }`}
+                aria-label={`Go to step ${i + 1}`}
+                title={TUTORIAL_STEPS[stepName].title}
               />
             ))}
           </div>
@@ -111,32 +160,35 @@ export function TutorialOverlay({
               </div>
             )}
 
-            {/* Actions */}
-            <div className="flex gap-3">
-              {step !== 'first-ping' && step !== 'confirm-guess' && (
-                <Button 
-                  onClick={onNext} 
+            {/* Navigation Buttons */}
+            <div className="space-y-2">
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={onPrevious}
+                  disabled={currentStepNumber === 1}
                   className="flex-1"
-                  disabled={isAudioCuesStep && !allDemoPingsExperienced}
                 >
-                  {stepInfo.action || 'Next'}
+                  ← Previous
                 </Button>
-              )}
-              {step === 'welcome' && (
-                <Button onClick={onSkip} variant="outline" className="flex-1">
-                  Skip Tutorial
+                <Button
+                  onClick={onNext}
+                  disabled={isAudioCuesStep && !allDemoPingsExperienced}
+                  className="flex-1"
+                >
+                  {stepInfo.action || 'Next'} →
                 </Button>
-              )}
-            </div>
-
-            {step !== 'welcome' && (
-              <button
-                onClick={onSkip}
-                className="w-full text-tiny text-muted-foreground hover:text-foreground transition-colors"
+              </div>
+              
+              {/* Exit to Menu - Always Visible */}
+              <Button
+                variant="ghost"
+                onClick={onExitToMenu}
+                className="w-full text-muted-foreground hover:text-foreground"
               >
-                Skip tutorial
-              </button>
-            )}
+                Exit to Menu
+              </Button>
+            </div>
           </div>
         </div>
       </div>
