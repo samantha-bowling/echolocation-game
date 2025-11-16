@@ -1,7 +1,7 @@
 import { TutorialStep, TUTORIAL_STEPS } from '@/lib/game/tutorial';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Volume2, ArrowLeftRight, ArrowUpDown } from 'lucide-react';
+import { Volume2, ArrowLeftRight, ArrowUpDown, ChevronDown, ChevronUp } from 'lucide-react';
 
 export interface TutorialOverlayProps {
   step: TutorialStep;
@@ -11,6 +11,8 @@ export interface TutorialOverlayProps {
   onSkip: () => void;
   onExitToMenu: () => void;
   onRestartTutorial?: () => void;
+  isMinimized?: boolean;
+  onToggleMinimize?: () => void;
   totalSteps?: number;
   currentStepNumber?: number;
   demoPingsExperienced?: number;
@@ -26,6 +28,8 @@ export function TutorialOverlay({
   onSkip,
   onExitToMenu,
   onRestartTutorial,
+  isMinimized = false,
+  onToggleMinimize,
   totalSteps = 9,
   currentStepNumber = 1,
   demoPingsExperienced = 0,
@@ -75,142 +79,168 @@ export function TutorialOverlay({
 
   return (
     <>
-      {/* Non-blocking subtle backdrop */}
-      <div className="fixed inset-0 bg-background/30 backdrop-blur-[1px] pointer-events-none z-30 animate-fade-in" />
+      {/* Non-blocking subtle backdrop - only when not minimized */}
+      {!isMinimized && (
+        <div className="fixed inset-0 bg-background/30 backdrop-blur-[1px] pointer-events-none z-30 animate-fade-in" />
+      )}
 
       {/* Tutorial Panel - Bottom Position */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-6 animate-slide-in-from-bottom pointer-events-none">
+      <div className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-6 pointer-events-none">
         <div className="max-w-2xl mx-auto pointer-events-auto">
-          <div className="frosted-modal relative shadow-2xl">
-          {/* Step Navigation Dots */}
-          <div className="flex items-center justify-center gap-2 mb-4">
-            {stepOrder.map((stepName, i) => (
-              <button
-                key={i}
-                onClick={() => onStepChange(stepName)}
-                className={`transition-all hover:scale-125 rounded-full ${
-                  i === currentStepNumber - 1
-                    ? 'bg-primary w-8 h-2.5'
-                    : i < currentStepNumber - 1
-                    ? 'bg-primary/50 w-2.5 h-2.5'
-                    : 'bg-border w-2.5 h-2.5'
-                }`}
-                aria-label={`Go to step ${i + 1}`}
-                title={TUTORIAL_STEPS[stepName].title}
-              />
-            ))}
-          </div>
-
-          {/* Content */}
-          <div className="space-y-4">
-            <div>
-              <h2 className="text-heading-3 mb-2">{stepInfo.title}</h2>
-              <p className="text-small text-muted-foreground leading-relaxed">
-                {stepInfo.description}
-              </p>
-              
-              {/* Interactive Step Indicator */}
-              {(step === 'first-ping' || step === 'audio-cues') && (
-                <div className="mt-3 flex items-center gap-2 text-xs text-primary/80 bg-primary/10 rounded-lg px-3 py-2">
-                  <span className="animate-pulse">👆</span>
-                  <span>Click the canvas above to interact</span>
+          {isMinimized ? (
+            // Minimized view - compact pill
+            <div className="frosted-modal py-3 px-4 flex items-center justify-between gap-4 animate-slide-in-from-bottom">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="text-xs text-muted-foreground font-medium shrink-0">
+                  Step {currentStepNumber}/{totalSteps}
                 </div>
-              )}
+                <div className="text-sm font-medium truncate">
+                  {stepInfo.title}
+                </div>
+              </div>
+              <Button
+                size="sm"
+                onClick={onToggleMinimize}
+                className="shrink-0"
+              >
+                <ChevronUp className="w-4 h-4 mr-2" />
+                Show Tutorial
+              </Button>
             </div>
+          ) : (
+            // Full modal view
+            <div className="frosted-modal relative shadow-2xl animate-slide-in-from-bottom">
+              {/* Minimize button */}
+              {onToggleMinimize && (
+                <button
+                  onClick={onToggleMinimize}
+                  className="absolute top-4 right-4 p-2 rounded-full hover:bg-muted/50 transition-colors z-10"
+                  aria-label="Minimize tutorial"
+                >
+                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                </button>
+              )}
 
-            {/* Audio Cues Visual Diagram */}
-            {isAudioCuesStep && (
-              <div className="space-y-3 py-3 border-y border-border">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                    <ArrowLeftRight className="w-5 h-5 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="text-sm font-semibold">Left / Right</div>
-                    <div className="text-xs text-muted-foreground">Stereo panning in headphones</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                    <Volume2 className="w-5 h-5 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="text-sm font-semibold">Distance</div>
-                    <div className="text-xs text-muted-foreground">Volume: louder = closer</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-                    <ArrowUpDown className="w-5 h-5 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="text-sm font-semibold">Above / Below</div>
-                    <div className="text-xs text-muted-foreground">Pitch: higher = above you</div>
-                  </div>
-                </div>
-                
-                {/* Demo Progress */}
-                <div className="pt-2 mt-2 border-t border-border/50 space-y-2">
-                  <div className="text-xs text-muted-foreground text-center">
-                    Demo pings experienced: {demoPingsExperienced} / {totalDemoPings}
-                  </div>
-                  <Progress 
-                    value={(demoPingsExperienced / totalDemoPings) * 100}
-                    className="h-1.5"
+              {/* Step Navigation Dots */}
+              <div className="flex items-center justify-center gap-2 mb-4">
+                {stepOrder.map((stepName, i) => (
+                  <button
+                    key={i}
+                    onClick={() => onStepChange(stepName)}
+                    className={`transition-all hover:scale-125 rounded-full ${
+                      i === currentStepNumber - 1
+                        ? 'bg-primary w-8 h-2.5'
+                        : i < currentStepNumber - 1
+                        ? 'bg-primary/50 w-2.5 h-2.5'
+                        : 'bg-border w-2.5 h-2.5'
+                    }`}
+                    aria-label={`Go to step ${i + 1}`}
+                    title={TUTORIAL_STEPS[stepName].title}
                   />
-                  {allDemoPingsExperienced && (
-                    <div className="text-xs text-primary text-center font-semibold animate-fade-in">
-                      ✓ All demos completed! Click Continue when ready.
+                ))}
+              </div>
+
+              {/* Content */}
+              <div className="space-y-4">
+                <div>
+                  <h2 className="text-heading-3 mb-2">{stepInfo.title}</h2>
+                  <p className="text-small text-muted-foreground leading-relaxed">
+                    {stepInfo.description}
+                  </p>
+                  
+                  {/* Interactive Step Indicator */}
+                  {(step === 'first-ping' || step === 'audio-cues') && (
+                    <div className="mt-4 p-3 bg-primary/10 border border-primary/20 rounded-lg">
+                      <p className="text-sm font-medium text-primary">
+                        👆 Click on the canvas above to interact
+                      </p>
                     </div>
                   )}
                 </div>
-              </div>
-            )}
 
-            {/* Navigation Buttons */}
-            <div className="space-y-2">
-              <div className="flex gap-3">
-                <Button
-                  variant="outline"
-                  onClick={onPrevious}
-                  disabled={currentStepNumber === 1}
-                  className="flex-1"
-                >
-                  ← Previous
-                </Button>
-                <Button
-                  onClick={onNext}
-                  disabled={isAudioCuesStep && !allDemoPingsExperienced}
-                  className="flex-1"
-                >
-                  {stepInfo.action || 'Next'} →
-                </Button>
-              </div>
-              
-              {/* Footer Navigation */}
-              <div className="flex gap-2">
-                <Button
-                  variant="ghost"
-                  onClick={onExitToMenu}
-                  className="flex-1 text-muted-foreground hover:text-foreground"
-                >
-                  Exit to Menu
-                </Button>
-                {onRestartTutorial && (
+                {/* Audio Cues Visual Demo */}
+                {isAudioCuesStep && (
+                  <div className="space-y-3 p-4 bg-secondary/30 rounded-lg border border-border">
+                    <div className="text-sm font-semibold text-foreground mb-2">
+                      What you'll hear:
+                    </div>
+                    <div className="grid grid-cols-3 gap-3 text-xs">
+                      <div className="flex flex-col items-center gap-1.5 p-2 bg-background/50 rounded">
+                        <ArrowLeftRight className="w-4 h-4 text-primary" />
+                        <span className="font-medium text-foreground">Stereo Pan</span>
+                        <span className="text-muted-foreground text-center">Left/Right speaker</span>
+                      </div>
+                      <div className="flex flex-col items-center gap-1.5 p-2 bg-background/50 rounded">
+                        <Volume2 className="w-4 h-4 text-primary" />
+                        <span className="font-medium text-foreground">Volume</span>
+                        <span className="text-muted-foreground text-center">Distance cue</span>
+                      </div>
+                      <div className="flex flex-col items-center gap-1.5 p-2 bg-background/50 rounded">
+                        <ArrowUpDown className="w-4 h-4 text-primary" />
+                        <span className="font-medium text-foreground">Pitch</span>
+                        <span className="text-muted-foreground text-center">High = up, Low = down</span>
+                      </div>
+                    </div>
+
+                    {/* Progress indicator for demo pings */}
+                    <div className="mt-4 space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-muted-foreground">Demo pings experienced</span>
+                        <span className="font-medium text-foreground">
+                          {demoPingsExperienced}/{totalDemoPings}
+                        </span>
+                      </div>
+                      <Progress 
+                        value={(demoPingsExperienced / totalDemoPings) * 100} 
+                        className="h-2"
+                      />
+                    </div>
+                  </div>
+                )}
+                
+                {/* Navigation Buttons */}
+                <div className="flex gap-3 pt-2">
+                  <Button
+                    variant="outline"
+                    onClick={onPrevious}
+                    disabled={currentStepNumber === 1}
+                    className="flex-1"
+                  >
+                    ← Previous
+                  </Button>
+                  <Button
+                    onClick={onNext}
+                    disabled={isAudioCuesStep && !allDemoPingsExperienced}
+                    className="flex-1"
+                  >
+                    {stepInfo.action || 'Next'} →
+                  </Button>
+                </div>
+                
+                {/* Footer Navigation */}
+                <div className="flex gap-2">
                   <Button
                     variant="ghost"
-                    onClick={onRestartTutorial}
+                    onClick={onExitToMenu}
                     className="flex-1 text-muted-foreground hover:text-foreground"
                   >
-                    Restart Tutorial
+                    Exit to Menu
                   </Button>
-                )}
+                  {onRestartTutorial && (
+                    <Button
+                      variant="ghost"
+                      onClick={onRestartTutorial}
+                      className="flex-1 text-muted-foreground hover:text-foreground"
+                    >
+                      Restart Tutorial
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
-            </div>
-          </div>  {/* Closes frosted-modal */}
-        </div>  {/* Closes max-w-2xl wrapper */}
-      </div>    {/* Closes bottom panel */}
+          )}
+        </div>
+      </div>
     </>
   );
 }
