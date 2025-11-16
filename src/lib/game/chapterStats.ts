@@ -6,6 +6,7 @@ export interface ChapterStats {
   totalTime: number;
   completedAt?: string;
   levelsCompleted: number;
+  completionBonus?: number;
 }
 
 export interface ChapterStatsMap {
@@ -63,10 +64,34 @@ export function updateChapterStats(
   if (levelInChapter === 10) {
     chapterStat.completed = true;
     chapterStat.completedAt = new Date().toISOString();
+    chapterStat.completionBonus = calculateCompletionBonus(chapterStat.avgScore);
   }
 
   saveChapterStats(stats);
   return stats[chapter];
+}
+
+/**
+ * Calculate completion bonus based on average chapter score
+ * Rewards consistent performance with tiered bonuses
+ */
+export function calculateCompletionBonus(avgScore: number): number {
+  if (avgScore >= 2600) return 1000; // Master tier
+  if (avgScore >= 2000) return 750;  // Expert tier
+  if (avgScore >= 1400) return 500;  // Skilled tier
+  if (avgScore >= 800) return 300;   // Competent tier
+  return 150; // Completion tier (any score)
+}
+
+/**
+ * Get the tier name for a given average score
+ */
+export function getCompletionBonusTier(avgScore: number): string {
+  if (avgScore >= 2600) return 'Master';
+  if (avgScore >= 2000) return 'Expert';
+  if (avgScore >= 1400) return 'Skilled';
+  if (avgScore >= 800) return 'Competent';
+  return 'Complete';
 }
 
 export function getSeenChapterIntros(): number[] {

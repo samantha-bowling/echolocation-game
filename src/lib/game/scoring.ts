@@ -20,12 +20,44 @@ const BASE_SCORE = 1000;
 export const PING_BONUS_PER_UNUSED = 50;
 const PROXIMITY_POINTS_PER_PERCENT = 4;
 const PING_EFFICIENCY_MAX = 300;
-const TIME_PENALTY_PER_SECOND = 2;
+const TIME_PENALTY_PER_SECOND = 2; // Legacy constant, replaced by tiered system
 const MAX_TIME_PENALTY = 500;
 const SPEED_BONUS_THRESHOLD = 15;
 const SPEED_BONUS_MAX = 250;
 const PERFECT_TARGET_BONUS = 200;
 const EARLY_GUESS_BONUS_PER_PING = 75;
+
+// Time penalty brackets - graduated system for better new player retention
+const TIME_PENALTY_BRACKETS = [
+  { maxTime: 20, rate: 1 },  // 0-20s: gentle 1 pt/s (learning zone)
+  { maxTime: 40, rate: 2 },  // 21-40s: moderate 2 pts/s
+  { maxTime: 60, rate: 3 },  // 41-60s: significant 3 pts/s
+  { maxTime: Infinity, rate: 4 }, // 61+s: strong 4 pts/s (push to improve)
+];
+
+/**
+ * Calculate time penalty using graduated brackets
+ * More forgiving for new players, stronger incentive for veterans
+ */
+function calculateTimePenalty(timeSeconds: number): number {
+  let totalPenalty = 0;
+  let remainingTime = timeSeconds;
+  
+  for (let i = 0; i < TIME_PENALTY_BRACKETS.length; i++) {
+    const bracket = TIME_PENALTY_BRACKETS[i];
+    const prevMax = i > 0 ? TIME_PENALTY_BRACKETS[i - 1].maxTime : 0;
+    const timeInBracket = Math.min(remainingTime, bracket.maxTime - prevMax);
+    
+    if (timeInBracket > 0) {
+      totalPenalty += timeInBracket * bracket.rate;
+      remainingTime -= timeInBracket;
+    }
+    
+    if (remainingTime <= 0) break;
+  }
+  
+  return Math.round(totalPenalty);
+}
 
 /**
  * Get difficulty multiplier
@@ -56,7 +88,7 @@ export function calculateScore(
   // Calculate individual components
   const proximityBonus = Math.round(proximity * PROXIMITY_POINTS_PER_PERCENT);
   const pingEfficiencyBonus = Math.round(pingEfficiency * PING_EFFICIENCY_MAX);
-  const timePenalty = Math.min(MAX_TIME_PENALTY, Math.round(timeSeconds * TIME_PENALTY_PER_SECOND));
+  const timePenalty = Math.min(MAX_TIME_PENALTY, calculateTimePenalty(timeSeconds));
   
   // Speed bonus: max points if completed very quickly
   const speedBonus = timeSeconds < SPEED_BONUS_THRESHOLD
@@ -318,9 +350,9 @@ export function calculateCustomScore(
     ? 0 
     : Math.round(pingEfficiency * PING_EFFICIENCY_MAX);
   
-  // Time penalty: 0 if timer disabled
+  // Time penalty: 0 if timer disabled, tiered if enabled
   const timePenalty = timerEnabled
-    ? Math.min(MAX_TIME_PENALTY, Math.round(timeSeconds * TIME_PENALTY_PER_SECOND))
+    ? Math.min(MAX_TIME_PENALTY, calculateTimePenalty(timeSeconds))
     : 0;
   
   // Speed bonus: 0 if timer disabled

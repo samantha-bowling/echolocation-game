@@ -11,6 +11,7 @@ interface PostRoundSummaryProps {
   pingsUsed: number;
   totalPings: number;
   timeElapsed: number;
+  completionBonus?: number;
   onNext: () => void;
   onRetry: () => void;
   onMenu: () => void;
@@ -27,6 +28,7 @@ export function PostRoundSummary({
   pingsUsed,
   totalPings,
   timeElapsed,
+  completionBonus = 0,
   onNext,
   onRetry,
   onMenu,
@@ -288,14 +290,24 @@ export function PostRoundSummary({
                 />
               )}
               
-              {score.components.boonBonus > 0 && (
-                <ScoreBreakdownItem 
-                  label="Boon Bonus"
-                  value={score.components.boonBonus}
-                  isPositive={true}
-                />
-              )}
-            </div>
+            {score.components.boonBonus > 0 && (
+              <ScoreBreakdownItem 
+                label="Boon Bonus"
+                value={score.components.boonBonus}
+                isPositive={true}
+              />
+            )}
+
+            {completionBonus > 0 && (
+              <ScoreBreakdownItem 
+                label="🏆 Chapter Complete!"
+                value={completionBonus}
+                isPositive={true}
+                detail="All 10 levels finished"
+                highlight={true}
+              />
+            )}
+          </div>
             
             {/* Negative Components - Red theme */}
             {score.components.timePenalty > 0 && (
