@@ -157,7 +157,11 @@ export function ClassicGame() {
     );
 
     // Update chapter stats
-    updateChapterStats(chapter, level, pingsUsed, scoreData.total, elapsedTime);
+    const updatedChapterStats = updateChapterStats(chapter, level, pingsUsed, scoreData.total, elapsedTime);
+
+    // Check if chapter was just completed (level 10) to award completion bonus
+    const isChapterComplete = (level % 10 === 0);
+    const completionBonus = isChapterComplete ? (updatedChapterStats.completionBonus || 0) : 0;
 
     setScoreResult({
       score: scoreData,
@@ -165,6 +169,7 @@ export function ClassicGame() {
       pingsUsed,
       totalPings: levelConfig.pings,
       timeElapsed: elapsedTime,
+      completionBonus,
     });
 
     localStorage.setItem('echo_classic_progress', JSON.stringify({
@@ -393,6 +398,7 @@ export function ClassicGame() {
           pingsUsed={scoreResult.pingsUsed}
           totalPings={scoreResult.totalPings}
           timeElapsed={scoreResult.timeElapsed}
+          completionBonus={scoreResult.completionBonus}
           onNext={handleNextLevel}
           onRetry={handleRetry}
           onMenu={() => navigate('/')}

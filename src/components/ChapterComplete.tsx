@@ -1,7 +1,7 @@
-import { Trophy, Star, Radio, Clock, ArrowRight, Home } from 'lucide-react';
+import { Trophy, Star, Radio, Clock, ArrowRight, Home, Award } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ChapterConfig, CHAPTERS } from '@/lib/game/chapters';
-import { ChapterStats } from '@/lib/game/chapterStats';
+import { ChapterStats, getCompletionBonusTier } from '@/lib/game/chapterStats';
 
 interface ChapterCompleteProps {
   chapter: ChapterConfig;
@@ -113,6 +113,33 @@ export function ChapterComplete({
             <div className="text-sm text-muted-foreground">Total Time</div>
           </div>
         </div>
+
+        {/* Completion Bonus */}
+        {stats.completionBonus && (
+          <div className="flat-card bg-gradient-to-br from-accent/20 to-primary/20 border-2 border-accent/50 mb-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Award className="w-8 h-8 text-accent" />
+                <div>
+                  <div className="text-heading-3 font-bold text-accent">
+                    Chapter Completion Bonus
+                  </div>
+                  <div className="text-small text-muted-foreground">
+                    {getCompletionBonusTier(stats.avgScore)} Tier Achievement
+                  </div>
+                </div>
+              </div>
+              <div className="text-heading-1 font-bold text-accent">
+                +{stats.completionBonus}
+              </div>
+            </div>
+            {stats.avgScore < 2600 && (
+              <div className="mt-3 pt-3 border-t border-border/50 text-xs text-muted-foreground">
+                💡 Replay levels to improve your average score for a higher tier bonus!
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Next Chapter Unlock */}
         {!isLastChapter && nextChapter && (
