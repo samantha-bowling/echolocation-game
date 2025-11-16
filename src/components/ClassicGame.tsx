@@ -95,14 +95,13 @@ export function ClassicGame() {
     if (!finalGuess) return;
     const targetCenter = getTargetCenter(target);
     const proximity = calculateProximity(finalGuess, targetCenter, Math.max(arenaSize.width, arenaSize.height));
-    const score = calculateScore({
+    const score = calculateScore(
       proximity,
       pingsUsed,
-      totalPings: levelConfig.pings,
-      timeElapsed: finalTime ?? elapsedTime,
-      targetSize: target.size,
-      difficulty: levelConfig.difficulty,
-    });
+      levelConfig.pings,
+      finalTime ?? elapsedTime,
+      levelConfig.difficulty
+    );
     setScoreResult(score);
     setGameState('summary');
   };
@@ -112,31 +111,34 @@ export function ClassicGame() {
     setLevel(nextLevel);
     localStorage.setItem('echo_classic_progress', JSON.stringify({ level: nextLevel, chapter }));
     const newLevelConfig = getLevelConfig(chapter, nextLevel);
-    setTarget(generateTargetPosition({ width: arenaSize.width, height: arenaSize.height }, newLevelConfig.targetSize));
+    setTarget(generateTargetPosition(arenaSize, newLevelConfig.targetSize));
     resetPings();
     resetPhase();
+    resetTimer();
     setShowHint(false);
     setGameState('playing');
     setScoreResult(null);
   };
 
   const handleRetry = () => {
-    setTarget(generateTargetPosition({ width: arenaSize.width, height: arenaSize.height }, levelConfig.targetSize));
+    setTarget(generateTargetPosition(arenaSize, levelConfig.targetSize));
     resetPings();
     resetPhase();
+    resetTimer();
     setShowHint(false);
     setGameState('playing');
     setScoreResult(null);
   };
 
   if (gameState === 'summary' && scoreResult) {
+    const proximity = calculateProximity(finalGuess!, getTargetCenter(target), Math.max(arenaSize.width, arenaSize.height));
     return (
       <PostRoundSummary
         score={scoreResult}
-        proximity={calculateProximity(finalGuess!, getTargetCenter(target), Math.max(arenaSize.width, arenaSize.height))}
-        pingsUsed={scoreResult.pingsUsed}
-        totalPings={scoreResult.totalPings}
-        timeElapsed={scoreResult.timeElapsed}
+        proximity={proximity}
+        pingsUsed={pingsUsed}
+        totalPings={levelConfig.pings}
+        timeElapsed={finalTime ?? elapsedTime}
         onNext={handleNextLevel}
         onRetry={handleRetry}
         onMenu={() => navigate('/')}
