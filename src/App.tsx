@@ -7,6 +7,7 @@ import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Tutorial from "./pages/Tutorial";
+import ChapterSelect from "./pages/ChapterSelect";
 import { ClassicGame } from "./components/ClassicGame";
 import { CustomMode } from "./components/CustomMode";
 import { CustomGame } from "./components/CustomGame";
@@ -26,6 +27,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/tutorial" element={<Tutorial />} />
+            <Route path="/chapters" element={<ChapterSelect />} />
             <Route path="/classic" element={<ClassicGame />} />
             <Route path="/custom" element={<CustomMode />} />
             <Route path="/custom-game" element={<CustomGame />} />

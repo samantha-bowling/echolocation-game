@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Play, Wand2, Settings, Heart, Headphones, GraduationCap } from 'lucide-react';
+import { Play, Wand2, Settings, Heart, Headphones, GraduationCap, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { isTutorialCompleted } from '@/lib/game/tutorial';
@@ -103,11 +103,26 @@ export function MainMenu() {
             </button>
           </Link>
 
+          <Link to="/chapters" className="block">
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="w-full h-14 text-base font-semibold border-2 hover-lift"
+            >
+              <BookOpen className="w-5 h-5 mr-2" />
+              Chapter Select
+            </Button>
+          </Link>
+
           <Link to="/custom" className="block">
-            <button className="ghost-button w-full h-12">
-              <Wand2 className="w-4 h-4 mr-2" />
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="w-full h-14 text-base font-semibold border-2 hover-lift"
+            >
+              <Wand2 className="w-5 h-5 mr-2" />
               Custom Mode
-            </button>
+            </Button>
           </Link>
         </div>
 
