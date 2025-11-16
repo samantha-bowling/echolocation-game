@@ -62,14 +62,38 @@ export class AudioEngine {
   private masterGain: GainNode | null = null;
   private currentTheme: AudioTheme = AUDIO_THEMES[0];
   private volume: number = 0.7;
+  private canvasWidth: number = 1000;
+  private canvasHeight: number = 1000;
 
-  initialize() {
+  initialize(canvasWidth: number = 1000, canvasHeight: number = 1000) {
     if (this.context) return;
     
     this.context = new (window.AudioContext || (window as any).webkitAudioContext)();
     this.masterGain = this.context.createGain();
     this.masterGain.connect(this.context.destination);
     this.masterGain.gain.value = this.volume;
+    
+    // Store canvas dimensions for 3D coordinate mapping
+    this.canvasWidth = canvasWidth;
+    this.canvasHeight = canvasHeight;
+    
+    // Set up listener position (user's "ears" in 3D space)
+    if (this.context.listener.positionX) {
+      // Modern API
+      this.context.listener.positionX.value = 0;
+      this.context.listener.positionY.value = 0;
+      this.context.listener.positionZ.value = 0;
+      this.context.listener.forwardX.value = 0;
+      this.context.listener.forwardY.value = 0;
+      this.context.listener.forwardZ.value = -1;  // Looking into the screen
+      this.context.listener.upX.value = 0;
+      this.context.listener.upY.value = 1;
+      this.context.listener.upZ.value = 0;
+    } else {
+      // Fallback for older browsers
+      this.context.listener.setPosition(0, 0, 0);
+      this.context.listener.setOrientation(0, 0, -1, 0, 1, 0);
+    }
   }
 
   setTheme(themeId: string) {
@@ -87,7 +111,7 @@ export class AudioEngine {
   }
 
   /**
-   * Play ping sound with spatial audio based on distance and direction
+   * Play ping sound with true binaural 3D audio (HRTF)
    */
   playPing(
     userPosition: Position,
@@ -104,12 +128,20 @@ export class AudioEngine {
     const direction = getDirection(userPosition, targetPosition);
     const normalizedDistance = Math.min(direction.distance / maxDistance, 1);
     
+    // Map 2D canvas coordinates to 3D space
+    // X: -1 to 1 (left to right) scaled to -10 to 10
+    // Y: -1 to 1 (top to bottom, inverted for audio space) scaled to -5 to 5
+    // Z: Based on distance (0 to -10, closer = towards listener)
+    const targetX = ((targetPosition.x / this.canvasWidth) * 2 - 1) * 10;
+    const targetY = ((targetPosition.y / this.canvasHeight) * -2 + 1) * 5;
+    const targetZ = -normalizedDistance * 10;
+    
     // Create oscillator
     const oscillator = this.context.createOscillator();
     oscillator.type = this.currentTheme.waveform;
     
-    // Pitch varies slightly with vertical position
-    const pitchModifier = 1 + (direction.verticalRatio * 0.1);
+    // Pitch modifier - enhanced for Z-axis depth perception
+    const pitchModifier = 1 + (direction.verticalRatio * 0.1) + (normalizedDistance * 0.05);
     const baseFreq = this.currentTheme.baseFrequency * pitchModifier;
     oscillator.frequency.value = baseFreq;
     
@@ -154,9 +186,29 @@ export class AudioEngine {
       filterNode.Q.value = 5;
     }
     
-    // Create panner for stereo positioning
-    const panner = this.context.createStereoPanner();
-    panner.pan.value = direction.horizontalRatio; // -1 (left) to 1 (right)
+    // Create PannerNode for true binaural 3D audio with HRTF
+    const panner = this.context.createPanner();
+    
+    // Configure panner for HRTF binaural audio
+    panner.panningModel = 'HRTF';  // Use Head-Related Transfer Function
+    panner.distanceModel = 'inverse';  // Natural distance falloff
+    panner.refDistance = 1;  // Reference distance for volume
+    panner.maxDistance = 20;  // Maximum audible distance
+    panner.rolloffFactor = 1.5;  // How quickly sound fades with distance
+    panner.coneInnerAngle = 360;  // Omnidirectional sound
+    panner.coneOuterAngle = 360;
+    panner.coneOuterGain = 0;
+    
+    // Set 3D position of the sound source
+    if (panner.positionX) {
+      // Modern API
+      panner.positionX.value = targetX;
+      panner.positionY.value = targetY;
+      panner.positionZ.value = targetZ;
+    } else {
+      // Fallback for older browsers
+      panner.setPosition(targetX, targetY, targetZ);
+    }
     
     // Create noise if theme supports it
     let noiseSource: AudioBufferSourceNode | null = null;
@@ -176,7 +228,7 @@ export class AudioEngine {
       noiseGain.connect(panner);
     }
     
-    // Connect nodes
+    // Connect nodes: oscillator → gain → filter (optional) → panner → master
     oscillator.connect(gainNode);
     if (filterNode) {
       gainNode.connect(filterNode);

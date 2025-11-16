@@ -35,14 +35,14 @@ export const TUTORIAL_STEPS: Record<TutorialStep, {
     action: 'Click to ping',
   },
   'interpret-sound': {
-    title: 'Listen to the Feedback',
-    description: 'The sound tells you how close you are. Now let\'s learn how to understand WHERE the target is located using spatial audio.',
-    action: 'Continue',
+    title: 'Reading Audio Cues 👂',
+    description: 'Listen carefully! The game uses binaural 3D audio with HRTF to help you locate targets. LEFT/RIGHT tells you horizontal position, PITCH (high/low) indicates vertical position, and VOLUME shows distance. With headphones, you can also sense depth and direction naturally.',
+    action: 'Got it',
   },
   'audio-cues': {
-    title: 'Understanding Spatial Audio 🎧',
-    description: 'The sound tells you THREE things: LEFT/RIGHT (stereo panning), DISTANCE (volume - louder = closer), and UP/DOWN (pitch - higher tone = above you). Try the demo pings to experience each cue!',
-    action: 'Got it!',
+    title: 'Understanding 3D Audio 🎧',
+    description: 'Click the 4 demo pings below to hear how binaural audio works. Notice how each ping sounds like it\'s coming from a different location in 3D space around you. This is HRTF (Head-Related Transfer Function) - the same technology used in VR and spatial audio applications.',
+    action: 'Continue',
   },
   'multiple-pings': {
     title: 'Triangulate the Target',
