@@ -69,7 +69,7 @@ export function PostRoundSummary({
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 echo-dots">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 backdrop-blur-sm bg-black/50 animate-fade-in">
       <div className="frosted-modal max-w-2xl w-full space-y-8 animate-scale-in">
         {/* Win/Fail Banner for Custom Games */}
         {isCustomGame && passedCondition !== undefined && (
