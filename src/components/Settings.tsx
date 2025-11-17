@@ -526,7 +526,7 @@ export function Settings() {
             <div className="flex gap-2">
               <Input
                 type="text"
-                placeholder="Enter code (e.g., UNLOCK_ALL)..."
+                placeholder="Enter code..."
                 value={cheatCodeInput}
                 onChange={(e) => setCheatCodeInput(e.target.value.toUpperCase())}
                 onKeyDown={(e) => {
