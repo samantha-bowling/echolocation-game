@@ -30,7 +30,7 @@ export function TutorialOverlay({
   onRestartTutorial,
   isMinimized = false,
   onToggleMinimize,
-  totalSteps = 9,
+  totalSteps = 8,
   currentStepNumber = 1,
   demoPingsExperienced = 0,
   totalDemoPings = 4,
@@ -149,13 +149,13 @@ export function TutorialOverlay({
                   </p>
                   
                   {/* Interactive Step Indicator */}
-                  {(step === 'first-ping' || step === 'audio-cues' || step === 'multiple-pings' || step === 'confirm-guess') && (
+                  {(step === 'first-ping' || step === 'audio-cues' || step === 'multiple-pings' || step === 'place-guess') && (
                     <div className="mt-4 p-3 bg-primary/10 border border-primary/20 rounded-lg">
                       <div className="flex items-center gap-2">
                         <ChevronDown className="w-4 h-4 text-primary" />
                         <p className="text-sm font-medium text-primary">
-                          {step === 'confirm-guess' 
-                            ? 'Minimize this panel and click where you think the target is' 
+                          {step === 'place-guess' 
+                            ? 'Minimize this panel, click "Place Final Guess", then click where you think the target is' 
                             : 'Minimize this panel and click on the canvas to interact'}
                         </p>
                       </div>
