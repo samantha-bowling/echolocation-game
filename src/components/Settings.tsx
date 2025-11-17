@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Volume2, Moon, Sun, Headphones, CheckCircle2, Code2 } from 'lucide-react';
+import { ArrowLeft, Volume2, Moon, Sun, Headphones, CheckCircle2, Code2, Settings as SettingsIcon, Palette, GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
@@ -194,7 +194,15 @@ export function Settings() {
       <div className="max-w-2xl mx-auto p-6 space-y-8 py-12">
         {/* Audio */}
         <section className="space-y-4">
-          <h2 className="text-heading-3">Audio</h2>
+          <div>
+            <h2 className="text-heading-3 mb-2 flex items-center gap-2">
+              <Volume2 className="w-5 h-5" />
+              Audio
+            </h2>
+            <p className="text-small text-muted-foreground">
+              Configure volume and sound theme preferences
+            </p>
+          </div>
           
           <div className="flat-card space-y-4">
             <div className="flex items-center justify-between">
@@ -336,11 +344,17 @@ export function Settings() {
 
         {/* Audio Calibration */}
         <section className="space-y-4">
-          <div className="flex items-center gap-2">
-            <h2 className="text-heading-3">Audio Calibration Tests</h2>
-            {allTestsComplete && (
-              <CheckCircle2 className="w-5 h-5 text-primary" />
-            )}
+          <div>
+            <h2 className="text-heading-3 mb-2 flex items-center gap-2">
+              <SettingsIcon className="w-5 h-5" />
+              Audio Calibration Tests
+              {allTestsComplete && (
+                <CheckCircle2 className="w-5 h-5 text-primary ml-auto" />
+              )}
+            </h2>
+            <p className="text-small text-muted-foreground">
+              Verify that binaural 3D audio is working correctly
+            </p>
           </div>
           
           <div className="flat-card space-y-4">
@@ -421,7 +435,15 @@ export function Settings() {
 
         {/* Appearance */}
         <section className="space-y-4">
-          <h2 className="text-heading-3">Appearance</h2>
+          <div>
+            <h2 className="text-heading-3 mb-2 flex items-center gap-2">
+              <Palette className="w-5 h-5" />
+              Appearance
+            </h2>
+            <p className="text-small text-muted-foreground">
+              Customize visual theme and motion preferences
+            </p>
+          </div>
           
           <div className="flat-card flex items-center justify-between">
             <div className="space-y-1">
@@ -456,8 +478,11 @@ export function Settings() {
         {/* Tutorial Section */}
         <section className="space-y-4">
           <div>
-            <h2 className="text-heading-3">Tutorial</h2>
-            <p className="text-muted-foreground">
+            <h2 className="text-heading-3 mb-2 flex items-center gap-2">
+              <GraduationCap className="w-5 h-5" />
+              Tutorial
+            </h2>
+            <p className="text-small text-muted-foreground">
               Reset your tutorial progress to see the introduction again
             </p>
           </div>
@@ -486,14 +511,14 @@ export function Settings() {
 
         {/* Cheat Codes Section */}
         <section className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Code2 className="w-5 h-5 text-primary" />
-            <div>
-              <h2 className="text-heading-3">Cheat Codes</h2>
-              <p className="text-muted-foreground">
-                Classic game codes for testing and exploration
-              </p>
-            </div>
+          <div>
+            <h2 className="text-heading-3 mb-2 flex items-center gap-2">
+              <Code2 className="w-5 h-5" />
+              Cheat Codes
+            </h2>
+            <p className="text-small text-muted-foreground">
+              Classic game codes for testing and exploration
+            </p>
           </div>
 
           <div className="flat-card space-y-4">
@@ -547,7 +572,7 @@ export function Settings() {
               </div>
             ) : (
               <p className="text-xs text-muted-foreground italic">
-                No active cheats. Try entering "UNLOCK_ALL" to unlock all chapters for testing.
+                No active cheats.
               </p>
             )}
           </div>
