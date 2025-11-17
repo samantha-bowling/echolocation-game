@@ -11,11 +11,12 @@ import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
 import { resetTutorial } from '@/lib/game/tutorial';
 import { activateCheat, deactivateCheat, getActiveCheats } from '@/lib/game/cheats';
-
 export function Settings() {
   const navigate = useNavigate();
-  const { theme, setTheme } = useTheme();
-  
+  const {
+    theme,
+    setTheme
+  } = useTheme();
   const [volume, setVolume] = useState([70]);
   const [audioTheme, setAudioTheme] = useState('sonar');
   const [reduceMotion, setReduceMotion] = useState(false);
@@ -23,165 +24,187 @@ export function Settings() {
     leftRight: false,
     distance: false,
     pitch: false,
-    spatial3D: false,
+    spatial3D: false
   });
   const [cheatCodeInput, setCheatCodeInput] = useState('');
   const [activeCheats, setActiveCheats] = useState(getActiveCheats());
-
   useEffect(() => {
     audioEngine.setVolume(volume[0] / 100);
   }, [volume]);
-
   useEffect(() => {
     audioEngine.setTheme(audioTheme);
   }, [audioTheme]);
-
   const runCalibrationTest = (testType: 'leftRight' | 'distance' | 'pitch' | 'spatial3D') => {
     audioEngine.initialize();
-    
     switch (testType) {
       case 'leftRight':
         // Play left channel, then right channel
         setTimeout(() => {
-          audioEngine.playPing(
-            { x: 0, y: 500 },
-            { x: 100, y: 500 },
-            1000
-          );
+          audioEngine.playPing({
+            x: 0,
+            y: 500
+          }, {
+            x: 100,
+            y: 500
+          }, 1000);
           toast.info('LEFT channel');
         }, 100);
         setTimeout(() => {
-          audioEngine.playPing(
-            { x: 1000, y: 500 },
-            { x: 900, y: 500 },
-            1000
-          );
+          audioEngine.playPing({
+            x: 1000,
+            y: 500
+          }, {
+            x: 900,
+            y: 500
+          }, 1000);
           toast.info('RIGHT channel');
         }, 1500);
-        setCalibrationTests(prev => ({ ...prev, leftRight: true }));
+        setCalibrationTests(prev => ({
+          ...prev,
+          leftRight: true
+        }));
         break;
-        
       case 'distance':
         // Play close, then far
         setTimeout(() => {
-          audioEngine.playPing(
-            { x: 500, y: 500 },
-            { x: 520, y: 500 },
-            1000
-          );
+          audioEngine.playPing({
+            x: 500,
+            y: 500
+          }, {
+            x: 520,
+            y: 500
+          }, 1000);
           toast.info('CLOSE (loud)');
         }, 100);
         setTimeout(() => {
-          audioEngine.playPing(
-            { x: 500, y: 500 },
-            { x: 900, y: 500 },
-            1000
-          );
+          audioEngine.playPing({
+            x: 500,
+            y: 500
+          }, {
+            x: 900,
+            y: 500
+          }, 1000);
           toast.info('FAR (quiet)');
         }, 1800);
-        setCalibrationTests(prev => ({ ...prev, distance: true }));
+        setCalibrationTests(prev => ({
+          ...prev,
+          distance: true
+        }));
         break;
-        
       case 'pitch':
         // Play high (above), then low (below)
         setTimeout(() => {
-          audioEngine.playPing(
-            { x: 500, y: 500 },
-            { x: 500, y: 100 },
-            1000
-          );
+          audioEngine.playPing({
+            x: 500,
+            y: 500
+          }, {
+            x: 500,
+            y: 100
+          }, 1000);
           toast.info('ABOVE (high pitch)');
         }, 100);
         setTimeout(() => {
-          audioEngine.playPing(
-            { x: 500, y: 500 },
-            { x: 500, y: 900 },
-            1000
-          );
+          audioEngine.playPing({
+            x: 500,
+            y: 500
+          }, {
+            x: 500,
+            y: 900
+          }, 1000);
           toast.info('BELOW (low pitch)');
         }, 1800);
-        setCalibrationTests(prev => ({ ...prev, pitch: true }));
+        setCalibrationTests(prev => ({
+          ...prev,
+          pitch: true
+        }));
         break;
-        
       case 'spatial3D':
         // Test true 3D positioning: front-left → back-right → above → below
         setTimeout(() => {
-          audioEngine.playPing(
-            { x: 500, y: 500 },
-            { x: 200, y: 300 },  // Front-left
-            1000
-          );
+          audioEngine.playPing({
+            x: 500,
+            y: 500
+          }, {
+            x: 200,
+            y: 300
+          },
+          // Front-left
+          1000);
           toast.info('FRONT-LEFT');
         }, 100);
         setTimeout(() => {
-          audioEngine.playPing(
-            { x: 500, y: 500 },
-            { x: 800, y: 700 },  // Back-right
-            1000
-          );
+          audioEngine.playPing({
+            x: 500,
+            y: 500
+          }, {
+            x: 800,
+            y: 700
+          },
+          // Back-right
+          1000);
           toast.info('BACK-RIGHT');
         }, 1600);
         setTimeout(() => {
-          audioEngine.playPing(
-            { x: 500, y: 500 },
-            { x: 500, y: 100 },  // Above
-            1000
-          );
+          audioEngine.playPing({
+            x: 500,
+            y: 500
+          }, {
+            x: 500,
+            y: 100
+          },
+          // Above
+          1000);
           toast.info('ABOVE');
         }, 3100);
         setTimeout(() => {
-          audioEngine.playPing(
-            { x: 500, y: 500 },
-            { x: 500, y: 900 },  // Below
-            1000
-          );
+          audioEngine.playPing({
+            x: 500,
+            y: 500
+          }, {
+            x: 500,
+            y: 900
+          },
+          // Below
+          1000);
           toast.info('BELOW');
         }, 4600);
-        setCalibrationTests(prev => ({ ...prev, spatial3D: true }));
+        setCalibrationTests(prev => ({
+          ...prev,
+          spatial3D: true
+        }));
         break;
     }
   };
-
   const handleCheatCodeSubmit = () => {
     if (!cheatCodeInput.trim()) return;
-    
     const success = activateCheat(cheatCodeInput);
     if (success) {
       toast.success(`Cheat activated: ${cheatCodeInput}`, {
         description: 'All chapters unlocked! 🎮',
-        duration: 3000,
+        duration: 3000
       });
       setCheatCodeInput('');
       setActiveCheats(getActiveCheats());
     } else {
       toast.error('Invalid code', {
         description: 'Try UNLOCK_ALL to unlock all chapters',
-        duration: 2500,
+        duration: 2500
       });
     }
   };
-
   const handleDeactivateCheat = (code: string) => {
     deactivateCheat(code);
     setActiveCheats(getActiveCheats());
     toast.info('Cheat deactivated', {
-      description: 'Chapter progression restored to normal',
+      description: 'Chapter progression restored to normal'
     });
   };
-
   const allTestsComplete = Object.values(calibrationTests).every(test => test);
-
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border p-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/')}
-            className="hover-lift"
-          >
+          <Button variant="ghost" size="sm" onClick={() => navigate('/')} className="hover-lift">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Menu
           </Button>
@@ -212,14 +235,7 @@ export function Settings() {
               </Label>
               <span className="text-heading-3 font-mono">{volume[0]}%</span>
             </div>
-            <Slider
-              value={volume}
-              onValueChange={setVolume}
-              min={0}
-              max={100}
-              step={5}
-              className="w-full"
-            />
+            <Slider value={volume} onValueChange={setVolume} min={0} max={100} step={5} className="w-full" />
           </div>
 
           <div className="flat-card space-y-4">
@@ -230,37 +246,21 @@ export function Settings() {
               </p>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              {AUDIO_THEMES.map(t => (
-                <div
-                  key={t.id}
-                  className={`relative p-3 rounded-xl border-2 transition-all ${
-                    audioTheme === t.id
-                      ? 'border-primary bg-primary/10'
-                      : 'border-border hover:border-foreground/20'
-                  }`}
-                >
-                  <button
-                    onClick={() => setAudioTheme(t.id)}
-                    className="w-full text-left pr-10"
-                  >
+              {AUDIO_THEMES.map(t => <div key={t.id} className={`relative p-3 rounded-xl border-2 transition-all ${audioTheme === t.id ? 'border-primary bg-primary/10' : 'border-border hover:border-foreground/20'}`}>
+                  <button onClick={() => setAudioTheme(t.id)} className="w-full text-left pr-10">
                     <p className="text-small font-semibold">{t.name}</p>
                     <p className="text-tiny text-muted-foreground">{t.description}</p>
                   </button>
                   
                   {/* Preview button */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      audioEngine.initialize();
-                      audioEngine.playPreview(t.id);
-                    }}
-                    className="absolute top-2 right-2 w-8 h-8 rounded-lg bg-primary/20 hover:bg-primary/40 flex items-center justify-center text-primary transition-all hover-lift"
-                    aria-label={`Preview ${t.name}`}
-                  >
+                  <button onClick={e => {
+                e.stopPropagation();
+                audioEngine.initialize();
+                audioEngine.playPreview(t.id);
+              }} className="absolute top-2 right-2 w-8 h-8 rounded-lg bg-primary/20 hover:bg-primary/40 flex items-center justify-center text-primary transition-all hover-lift" aria-label={`Preview ${t.name}`}>
                     <Volume2 className="w-4 h-4" />
                   </button>
-                </div>
-              ))}
+                </div>)}
             </div>
           </div>
         </section>
@@ -348,9 +348,7 @@ export function Settings() {
             <h2 className="text-heading-3 mb-2 flex items-center gap-2">
               <SettingsIcon className="w-5 h-5" />
               Audio Calibration Tests
-              {allTestsComplete && (
-                <CheckCircle2 className="w-5 h-5 text-primary ml-auto" />
-              )}
+              {allTestsComplete && <CheckCircle2 className="w-5 h-5 text-primary ml-auto" />}
             </h2>
             <p className="text-small text-muted-foreground">
               Verify that binaural 3D audio is working correctly
@@ -369,51 +367,23 @@ export function Settings() {
                 </div>
 
                 <div className="grid gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => runCalibrationTest('leftRight')}
-                    className="justify-start"
-                  >
-                    {calibrationTests.leftRight && (
-                      <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />
-                    )}
+                  <Button variant="outline" size="sm" onClick={() => runCalibrationTest('leftRight')} className="justify-start">
+                    {calibrationTests.leftRight && <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />}
                     <span className="flex-1 text-left">Left/Right Channel Test</span>
                   </Button>
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => runCalibrationTest('distance')}
-                    className="justify-start"
-                  >
-                    {calibrationTests.distance && (
-                      <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />
-                    )}
+                  <Button variant="outline" size="sm" onClick={() => runCalibrationTest('distance')} className="justify-start">
+                    {calibrationTests.distance && <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />}
                     <span className="flex-1 text-left">Distance Test (Volume)</span>
                   </Button>
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => runCalibrationTest('pitch')}
-                    className="justify-start"
-                  >
-                    {calibrationTests.pitch && (
-                      <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />
-                    )}
+                  <Button variant="outline" size="sm" onClick={() => runCalibrationTest('pitch')} className="justify-start">
+                    {calibrationTests.pitch && <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />}
                     <span className="flex-1 text-left">Vertical Position (Pitch)</span>
                   </Button>
 
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => runCalibrationTest('spatial3D')}
-                    className="justify-start"
-                  >
-                    {calibrationTests.spatial3D && (
-                      <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />
-                    )}
+                  <Button variant="outline" size="sm" onClick={() => runCalibrationTest('spatial3D')} className="justify-start">
+                    {calibrationTests.spatial3D && <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />}
                     <span className="flex-1 text-left">3D Positioning Test</span>
                     <span className="ml-auto text-xs text-muted-foreground">
                       Front, Back, Above, Below
@@ -421,13 +391,11 @@ export function Settings() {
                   </Button>
                 </div>
 
-                {allTestsComplete && (
-                  <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
+                {allTestsComplete && <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
                     <p className="text-small text-primary font-medium">
                       ✓ All tests complete! Your audio is calibrated.
                     </p>
-                  </div>
-                )}
+                  </div>}
               </div>
             </div>
           </div>
@@ -455,10 +423,7 @@ export function Settings() {
                 {theme === 'dark' ? 'Dark mode' : 'Light mode'}
               </p>
             </div>
-            <Switch
-              checked={theme === 'dark'}
-              onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
-            />
+            <Switch checked={theme === 'dark'} onCheckedChange={checked => setTheme(checked ? 'dark' : 'light')} />
           </div>
 
           <div className="flat-card flex items-center justify-between">
@@ -468,10 +433,7 @@ export function Settings() {
                 Minimize animations and transitions
               </p>
             </div>
-            <Switch
-              checked={reduceMotion}
-              onCheckedChange={setReduceMotion}
-            />
+            <Switch checked={reduceMotion} onCheckedChange={setReduceMotion} />
           </div>
         </section>
 
@@ -495,14 +457,10 @@ export function Settings() {
                   Clear tutorial completion status and restart from the beginning
                 </p>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  resetTutorial();
-                  toast.success('Tutorial reset! Visit "How to Play" to start over.');
-                }}
-              >
+              <Button variant="outline" size="sm" onClick={() => {
+              resetTutorial();
+              toast.success('Tutorial reset! Visit "How to Play" to start over.');
+            }}>
                 Reset Tutorial
               </Button>
             </div>
@@ -516,69 +474,42 @@ export function Settings() {
               <Code2 className="w-5 h-5" />
               Cheat Codes
             </h2>
-            <p className="text-small text-muted-foreground">
-              Classic game codes for testing and exploration
-            </p>
+            <p className="text-small text-muted-foreground">Enter codes to modify and expand on your gameplay experience</p>
           </div>
 
           <div className="flat-card space-y-4">
             {/* Code Input */}
             <div className="flex gap-2">
-              <Input
-                type="text"
-                placeholder="Enter code..."
-                value={cheatCodeInput}
-                onChange={(e) => setCheatCodeInput(e.target.value.toUpperCase())}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleCheatCodeSubmit();
-                  }
-                }}
-                className="font-mono flex-1"
-              />
-              <Button 
-                onClick={handleCheatCodeSubmit}
-                disabled={!cheatCodeInput.trim()}
-              >
+              <Input type="text" placeholder="Enter code..." value={cheatCodeInput} onChange={e => setCheatCodeInput(e.target.value.toUpperCase())} onKeyDown={e => {
+              if (e.key === 'Enter') {
+                handleCheatCodeSubmit();
+              }
+            }} className="font-mono flex-1" />
+              <Button onClick={handleCheatCodeSubmit} disabled={!cheatCodeInput.trim()}>
                 Activate
               </Button>
             </div>
 
             {/* Active Cheats Display */}
-            {activeCheats.length > 0 ? (
-              <div className="space-y-2">
+            {activeCheats.length > 0 ? <div className="space-y-2">
                 <Label className="text-sm font-semibold">Active Cheats:</Label>
-                {activeCheats.map((cheat) => (
-                  <div
-                    key={cheat.code}
-                    className="flex items-center justify-between p-3 bg-primary/10 rounded-lg border border-primary/20"
-                  >
+                {activeCheats.map(cheat => <div key={cheat.code} className="flex items-center justify-between p-3 bg-primary/10 rounded-lg border border-primary/20">
                     <div className="flex-1">
                       <p className="text-sm font-medium text-foreground">{cheat.name}</p>
                       <p className="text-xs text-muted-foreground">
                         {cheat.description}
                       </p>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeactivateCheat(cheat.code)}
-                      className="text-xs shrink-0 ml-2"
-                    >
+                    <Button variant="ghost" size="sm" onClick={() => handleDeactivateCheat(cheat.code)} className="text-xs shrink-0 ml-2">
                       Deactivate
                     </Button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs text-muted-foreground italic">
+                  </div>)}
+              </div> : <p className="text-xs text-muted-foreground italic">
                 No active cheats.
-              </p>
-            )}
+              </p>}
           </div>
         </section>
 
       </div>
-    </div>
-  );
+    </div>;
 }
