@@ -151,9 +151,12 @@ export function TutorialOverlay({
                   {/* Interactive Step Indicator */}
                   {(step === 'first-ping' || step === 'audio-cues') && (
                     <div className="mt-4 p-3 bg-primary/10 border border-primary/20 rounded-lg">
-                      <p className="text-sm font-medium text-primary">
-                        👆 Click on the canvas above to interact
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <ChevronDown className="w-4 h-4 text-primary" />
+                        <p className="text-sm font-medium text-primary">
+                          Minimize this panel and click on the canvas to interact
+                        </p>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -210,7 +213,6 @@ export function TutorialOverlay({
                   </Button>
                   <Button
                     onClick={onNext}
-                    disabled={isAudioCuesStep && !allDemoPingsExperienced}
                     className="flex-1"
                   >
                     {stepInfo.action || 'Next'} →
