@@ -66,16 +66,6 @@ export function TutorialGame() {
     audioEngine.initialize(arenaSize.width, arenaSize.height);
   }, []);
 
-  // Auto-minimize for interactive steps
-  useEffect(() => {
-    const interactiveSteps: TutorialStep[] = ['first-ping', 'audio-cues', 'confirm-guess'];
-    if (interactiveSteps.includes(tutorialState.currentStep)) {
-      setIsModalMinimized(true);
-    } else {
-      setIsModalMinimized(false);
-    }
-  }, [tutorialState.currentStep]);
-
   const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -219,14 +209,16 @@ export function TutorialGame() {
           </h1>
         </div>
 
-        {/* Stats */}
-        <GameStats
-          pingsRemaining={pingsRemaining}
-          pingsUsed={pingsUsed}
-          elapsedTime={elapsedTime}
-          finalTime={finalTime}
-          timerEnabled={false}  // Hide timer in tutorial UI
-        />
+        {/* Stats - Match arena width */}
+        <div className="w-[800px] mx-auto">
+          <GameStats
+            pingsRemaining={pingsRemaining}
+            pingsUsed={pingsUsed}
+            elapsedTime={elapsedTime}
+            finalTime={finalTime}
+            timerEnabled={false}  // Hide timer in tutorial UI
+          />
+        </div>
 
         {/* Game Canvas */}
         <div className="relative">
