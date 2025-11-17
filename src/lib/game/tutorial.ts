@@ -42,7 +42,7 @@ export const TUTORIAL_STEPS: Record<TutorialStep, {
   },
   'audio-cues': {
     title: 'Understanding 3D Audio 🎧',
-    description: 'Click any ping marker to replay it and hear the sound again. Notice how the direction and distance change. Click 4 demo pings to experience different positions, then replay them to reinforce your understanding.',
+    description: 'Click each of the 4 demo pings to hear how different positions sound. Notice how LEFT/RIGHT (panning), VOLUME (distance), and PITCH (height) combine to create 3D audio. The reference target at the center helps you understand the spatial relationships.',
     action: 'Continue',
   },
   'multiple-pings': {

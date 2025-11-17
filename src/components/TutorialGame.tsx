@@ -42,6 +42,9 @@ export function TutorialGame() {
   const [isModalMinimized, setIsModalMinimized] = useState(false);
 
   const arenaSize = { width: 800, height: 600 };
+  
+  // Fixed reference target for audio-cues demo (center of arena)
+  const demoReferenceTarget = { x: 400, y: 300 };
 
   // Demo ping positions for audio-cues step
   const demoPings = [
@@ -57,7 +60,7 @@ export function TutorialGame() {
     gamePhase,
   });
   const { pingHistory, pingsRemaining, pingsUsed, handlePing, resetPings } = usePingSystem({
-    initialPings: 5,
+    initialPings: 999,  // Unlimited pings for tutorial exploration
     arenaSize,
     target,
   });
@@ -85,8 +88,8 @@ export function TutorialGame() {
       });
 
       if (clickedDemo) {
-        // Play demo ping sound
-        audioEngine.playPing(clickedDemo.position, getTargetCenter(target), 
+        // Play demo ping sound with fixed reference target
+        audioEngine.playPing(clickedDemo.position, demoReferenceTarget, 
           Math.max(arenaSize.width, arenaSize.height));
         
         // Mark as experienced
@@ -215,7 +218,7 @@ export function TutorialGame() {
           <GameCanvas
             arenaSize={arenaSize}
             target={target}
-            pingHistory={pingHistory}
+            pingHistory={pingHistory.slice(-5)}
             finalGuess={finalGuess}
             gamePhase={gamePhase}
             gameState="playing"
@@ -228,12 +231,12 @@ export function TutorialGame() {
           {/* Demo Ping Overlay for audio-cues step */}
           {tutorialState.currentStep === 'audio-cues' && (
             <div className="absolute inset-0 pointer-events-none z-10">
-              {/* Target location indicator */}
+              {/* Target location indicator - FIXED at center for educational demo */}
               <div
                 className="absolute pointer-events-none z-30"
                 style={{
-                  left: getTargetCenter(target).x,
-                  top: getTargetCenter(target).y,
+                  left: demoReferenceTarget.x,
+                  top: demoReferenceTarget.y,
                   transform: 'translate(-50%, -50%)',
                 }}
               >
@@ -242,7 +245,7 @@ export function TutorialGame() {
                 </div>
                 <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap">
                   <div className="text-xs bg-accent/20 px-3 py-1.5 rounded-full border border-accent/40 text-accent font-semibold">
-                    🎯 TARGET LOCATION
+                    🎯 REFERENCE TARGET
                   </div>
                 </div>
               </div>
@@ -257,6 +260,17 @@ export function TutorialGame() {
                       left: demo.position.x,
                       top: demo.position.y,
                       transform: 'translate(-50%, -50%)',
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      // Play demo ping with fixed reference target
+                      audioEngine.playPing(
+                        demo.position,
+                        demoReferenceTarget,
+                        Math.max(arenaSize.width, arenaSize.height)
+                      );
+                      // Mark as experienced
+                      setDemoPingsExperienced(prev => new Set(prev).add(demo.id));
                     }}
                   >
                     <div className={`relative transition-all ${isExperienced ? 'opacity-50' : 'opacity-100'}`}>
