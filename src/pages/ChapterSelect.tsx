@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { ChapterCard } from '@/components/ChapterCard';
 import { CHAPTERS } from '@/lib/game/chapters';
 import { loadChapterStats } from '@/lib/game/chapterStats';
+import { isCheatActive } from '@/lib/game/cheats';
 import { useEffect, useState } from 'react';
 
 export default function ChapterSelect() {
@@ -43,6 +44,9 @@ export default function ChapterSelect() {
   };
 
   const isChapterUnlocked = (chapterId: number): boolean => {
+    // Check if UNLOCK_ALL cheat is active
+    if (isCheatActive('UNLOCK_ALL')) return true;
+    
     if (chapterId === 1) return true;
     
     // Chapter is unlocked if previous chapter is completed or if current progress is in this chapter
