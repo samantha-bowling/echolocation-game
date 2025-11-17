@@ -2,6 +2,7 @@ import { TutorialStep, TUTORIAL_STEPS } from '@/lib/game/tutorial';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Volume2, ArrowLeftRight, ArrowUpDown, ChevronDown, ChevronUp } from 'lucide-react';
+import { TutorialScoreExample } from './TutorialScoreExample';
 
 export interface TutorialOverlayProps {
   step: TutorialStep;
@@ -200,6 +201,13 @@ export function TutorialOverlay({
                         className="h-2"
                       />
                     </div>
+                  </div>
+                )}
+                
+                {/* Score Example for scoring step */}
+                {step === 'scoring' && (
+                  <div className="mt-4">
+                    <TutorialScoreExample />
                   </div>
                 )}
                 

@@ -52,7 +52,7 @@ export const TUTORIAL_STEPS: Record<TutorialStep, {
   'place-guess': {
     title: 'Place Your Final Guess',
     description: 'When you\'re confident about the target\'s location, click "Place Final Guess" below, then click on the canvas to mark where you think the target is.',
-    action: 'Place Final Guess',
+    action: 'Continue',
   },
   scoring: {
     title: 'Understanding Your Score',

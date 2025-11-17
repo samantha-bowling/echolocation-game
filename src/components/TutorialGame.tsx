@@ -139,11 +139,18 @@ export function TutorialGame() {
   ];
 
   const handleStepChange = (newStep: TutorialStep) => {
-    // Reset game state when manually changing steps
-    resetPings();
+    // Only reset pings if moving to earlier steps or restarting
+    const shouldResetPings = 
+      stepOrder.indexOf(newStep) < stepOrder.indexOf('multiple-pings') ||
+      newStep === 'complete';
+    
+    if (shouldResetPings) {
+      resetPings();
+      resetHints();
+    }
+    
     resetTimer();
     resetPhase();
-    resetHints();
     setDemoPingsExperienced(new Set());
     
     // Update and save tutorial state
@@ -378,11 +385,6 @@ export function TutorialGame() {
       />
 
       {/* Score Example Overlay for scoring step */}
-      {tutorialState.currentStep === 'scoring' && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center p-6">
-          <TutorialScoreExample />
-        </div>
-      )}
     </div>
   );
 }
