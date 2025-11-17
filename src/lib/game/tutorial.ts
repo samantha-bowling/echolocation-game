@@ -5,7 +5,6 @@ export type TutorialStep =
   | 'audio-cues'
   | 'multiple-pings'
   | 'place-guess'
-  | 'confirm-guess'
   | 'scoring'
   | 'complete';
 
@@ -47,22 +46,17 @@ export const TUTORIAL_STEPS: Record<TutorialStep, {
   },
   'multiple-pings': {
     title: 'Triangulate the Target',
-    description: 'You have limited pings to find the target. Use them wisely! After using most of your pings, a helpful hint may appear to guide you.',
-    action: 'Continue pinging',
+    description: 'You have 6 pings to find the target. Use them strategically to narrow down the location. After using most of your pings, a helpful hint may appear to guide you.',
+    action: 'Continue',
   },
   'place-guess': {
     title: 'Place Your Final Guess',
-    description: 'When you\'re confident about the target\'s location, click the button below to place your final guess.',
+    description: 'When you\'re confident about the target\'s location, click "Place Final Guess" below, then click on the canvas to mark where you think the target is.',
     action: 'Place Final Guess',
-  },
-  'confirm-guess': {
-    title: 'Mark the Spot',
-    description: 'Click on the canvas where you think the target is located. You can reposition your guess before confirming.',
-    action: 'Click to guess',
   },
   scoring: {
     title: 'Understanding Your Score',
-    description: 'Your score is based on THREE factors: (1) PROXIMITY - closer to target = higher score, (2) PING EFFICIENCY - unused pings earn bonus points, and (3) TIME - in the real game (not this tutorial), you have 60 seconds per round with a timer that affects your score. The timer is beginner-friendly: early seconds have minimal penalty! Complete all 10 levels in a chapter for a completion bonus.',
+    description: 'Here\'s an example of how scoring works in the game. Your score is based on proximity (closer = higher), ping efficiency (unused pings = bonus), and time (graduated penalties, forgiving at the start).',
     action: 'Continue',
   },
   complete: {
@@ -120,7 +114,6 @@ export function getNextStep(currentStep: TutorialStep, pingCount: number = 0): T
     'audio-cues',
     'multiple-pings',
     'place-guess',
-    'confirm-guess',
     'scoring',
     'complete',
   ];

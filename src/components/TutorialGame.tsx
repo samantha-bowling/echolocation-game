@@ -7,6 +7,7 @@ import { audioEngine } from '@/lib/audio/engine';
 import { GameCanvas } from './GameCanvas';
 import { GameStats } from './GameStats';
 import { TutorialOverlay } from './tutorial/TutorialOverlay';
+import { TutorialScoreExample } from './tutorial/TutorialScoreExample';
 import {
   getTutorialState,
   saveTutorialState,
@@ -17,6 +18,7 @@ import {
 import { useGameTimer } from '@/hooks/useGameTimer';
 import { usePingSystem } from '@/hooks/usePingSystem';
 import { useGamePhase } from '@/hooks/useGamePhase';
+import { useHintSystem } from '@/hooks/useHintSystem';
 
 export function TutorialGame() {
   const navigate = useNavigate();
@@ -59,10 +61,22 @@ export function TutorialGame() {
     enabled: false,  // Tutorial doesn't need a running timer
     gamePhase,
   });
+  
+  // Limited pings for the triangulation step
+  const isTriangulationStep = tutorialState.currentStep === 'multiple-pings';
   const { pingHistory, pingsRemaining, pingsUsed, handlePing, resetPings } = usePingSystem({
-    initialPings: 999,  // Unlimited pings for tutorial exploration
+    initialPings: isTriangulationStep ? 6 : 999,  // 6 pings for triangulation, unlimited for exploration
     arenaSize,
     target,
+  });
+
+  // Enable hints during triangulation step
+  const { currentHint, showHint, dismissHint, resetHints } = useHintSystem({
+    enabled: isTriangulationStep,
+    pingsUsed,
+    totalPings: 6,
+    target,
+    pingHistory,
   });
 
   useEffect(() => {
@@ -99,7 +113,13 @@ export function TutorialGame() {
     }
 
     if (gamePhase === 'pinging') {
-      handlePing(clickPos);
+      const success = handlePing(clickPos);
+      if (success) {
+        setTutorialState(prev => ({
+          ...prev,
+          pingCount: prev.pingCount + 1,
+        }));
+      }
     } else if (gamePhase === 'placing') {
       setFinalGuess(clickPos);
       // Advance tutorial to scoring after placing guess
@@ -114,7 +134,6 @@ export function TutorialGame() {
     'audio-cues',
     'multiple-pings',
     'place-guess',
-    'confirm-guess',
     'scoring',
     'complete',
   ];
@@ -124,6 +143,7 @@ export function TutorialGame() {
     resetPings();
     resetTimer();
     resetPhase();
+    resetHints();
     setDemoPingsExperienced(new Set());
     
     // Update and save tutorial state
@@ -147,7 +167,7 @@ export function TutorialGame() {
     const currentIndex = stepOrder.indexOf(tutorialState.currentStep);
     const nextStep = stepOrder[Math.min(currentIndex + 1, stepOrder.length - 1)];
 
-    if (nextStep === 'confirm-guess') {
+    if (nextStep === 'place-guess') {
       handlePlaceFinalGuess();
     }
 
@@ -190,7 +210,6 @@ export function TutorialGame() {
       'audio-cues',
       'multiple-pings',
       'place-guess',
-      'confirm-guess',
       'scoring',
       'complete',
     ];
@@ -217,8 +236,8 @@ export function TutorialGame() {
             finalGuess={finalGuess}
             gamePhase={gamePhase}
             gameState="playing"
-            showHint={false}
-            currentHint={null}
+            showHint={showHint && isTriangulationStep}
+            currentHint={currentHint}
             onCanvasClick={handleCanvasClick}
             canvasRef={canvasRef}
           />
@@ -351,12 +370,19 @@ export function TutorialGame() {
         onRestartTutorial={handleRestartTutorial}
         isMinimized={isModalMinimized}
         onToggleMinimize={() => setIsModalMinimized(!isModalMinimized)}
+        totalSteps={8}
         currentStepNumber={getStepNumber(tutorialState.currentStep)}
-        totalSteps={9}
         demoPingsExperienced={demoPingsExperienced.size}
         totalDemoPings={4}
         stepOrder={stepOrder}
       />
+
+      {/* Score Example Overlay for scoring step */}
+      {tutorialState.currentStep === 'scoring' && (
+        <div className="fixed inset-0 z-40 flex items-center justify-center p-6">
+          <TutorialScoreExample />
+        </div>
+      )}
     </div>
   );
 }
