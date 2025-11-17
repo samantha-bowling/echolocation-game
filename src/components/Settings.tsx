@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Volume2, Moon, Sun, Headphones, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Volume2, Moon, Sun, Headphones, CheckCircle2, Code2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { audioEngine, AUDIO_THEMES } from '@/lib/audio/engine';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
 import { resetTutorial } from '@/lib/game/tutorial';
+import { activateCheat, deactivateCheat, getActiveCheats } from '@/lib/game/cheats';
 
 export function Settings() {
   const navigate = useNavigate();
@@ -23,6 +25,8 @@ export function Settings() {
     pitch: false,
     spatial3D: false,
   });
+  const [cheatCodeInput, setCheatCodeInput] = useState('');
+  const [activeCheats, setActiveCheats] = useState(getActiveCheats());
 
   useEffect(() => {
     audioEngine.setVolume(volume[0] / 100);
@@ -136,6 +140,33 @@ export function Settings() {
         setCalibrationTests(prev => ({ ...prev, spatial3D: true }));
         break;
     }
+  };
+
+  const handleCheatCodeSubmit = () => {
+    if (!cheatCodeInput.trim()) return;
+    
+    const success = activateCheat(cheatCodeInput);
+    if (success) {
+      toast.success(`Cheat activated: ${cheatCodeInput}`, {
+        description: 'All chapters unlocked! 🎮',
+        duration: 3000,
+      });
+      setCheatCodeInput('');
+      setActiveCheats(getActiveCheats());
+    } else {
+      toast.error('Invalid code', {
+        description: 'Try UNLOCK_ALL to unlock all chapters',
+        duration: 2500,
+      });
+    }
+  };
+
+  const handleDeactivateCheat = (code: string) => {
+    deactivateCheat(code);
+    setActiveCheats(getActiveCheats());
+    toast.info('Cheat deactivated', {
+      description: 'Chapter progression restored to normal',
+    });
   };
 
   const allTestsComplete = Object.values(calibrationTests).every(test => test);
@@ -450,6 +481,75 @@ export function Settings() {
                 Reset Tutorial
               </Button>
             </div>
+          </div>
+        </section>
+
+        {/* Cheat Codes Section */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Code2 className="w-5 h-5 text-primary" />
+            <div>
+              <h2 className="text-heading-3">Cheat Codes</h2>
+              <p className="text-muted-foreground">
+                Classic game codes for testing and exploration
+              </p>
+            </div>
+          </div>
+
+          <div className="flat-card space-y-4">
+            {/* Code Input */}
+            <div className="flex gap-2">
+              <Input
+                type="text"
+                placeholder="Enter code (e.g., UNLOCK_ALL)..."
+                value={cheatCodeInput}
+                onChange={(e) => setCheatCodeInput(e.target.value.toUpperCase())}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleCheatCodeSubmit();
+                  }
+                }}
+                className="font-mono flex-1"
+              />
+              <Button 
+                onClick={handleCheatCodeSubmit}
+                disabled={!cheatCodeInput.trim()}
+              >
+                Activate
+              </Button>
+            </div>
+
+            {/* Active Cheats Display */}
+            {activeCheats.length > 0 ? (
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold">Active Cheats:</Label>
+                {activeCheats.map((cheat) => (
+                  <div
+                    key={cheat.code}
+                    className="flex items-center justify-between p-3 bg-primary/10 rounded-lg border border-primary/20"
+                  >
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-foreground">{cheat.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {cheat.description}
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeactivateCheat(cheat.code)}
+                      className="text-xs shrink-0 ml-2"
+                    >
+                      Deactivate
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground italic">
+                No active cheats. Try entering "UNLOCK_ALL" to unlock all chapters for testing.
+              </p>
+            )}
           </div>
         </section>
 
