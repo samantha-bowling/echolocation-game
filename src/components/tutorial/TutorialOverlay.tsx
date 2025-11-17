@@ -149,12 +149,14 @@ export function TutorialOverlay({
                   </p>
                   
                   {/* Interactive Step Indicator */}
-                  {(step === 'first-ping' || step === 'audio-cues') && (
+                  {(step === 'first-ping' || step === 'audio-cues' || step === 'multiple-pings' || step === 'confirm-guess') && (
                     <div className="mt-4 p-3 bg-primary/10 border border-primary/20 rounded-lg">
                       <div className="flex items-center gap-2">
                         <ChevronDown className="w-4 h-4 text-primary" />
                         <p className="text-sm font-medium text-primary">
-                          Minimize this panel and click on the canvas to interact
+                          {step === 'confirm-guess' 
+                            ? 'Minimize this panel and click where you think the target is' 
+                            : 'Minimize this panel and click on the canvas to interact'}
                         </p>
                       </div>
                     </div>

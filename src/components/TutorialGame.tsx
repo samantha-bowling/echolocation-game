@@ -46,12 +46,12 @@ export function TutorialGame() {
   // Fixed reference target for audio-cues demo (center of arena)
   const demoReferenceTarget = { x: 400, y: 300 };
 
-  // Demo ping positions for audio-cues step
+  // Demo ping positions for audio-cues step - positioned to demonstrate spatial audio
   const demoPings = [
-    { id: 'left-close', position: { x: 100, y: 300 }, label: 'LEFT & CLOSE', description: 'Loud, left speaker' },
+    { id: 'left-close', position: { x: 300, y: 300 }, label: 'LEFT & CLOSE', description: 'Loud, left speaker' },
     { id: 'right-far', position: { x: 700, y: 300 }, label: 'RIGHT & FAR', description: 'Quiet, right speaker' },
-    { id: 'center-top', position: { x: 400, y: 100 }, label: 'ABOVE', description: 'Higher pitch' },
-    { id: 'center-bottom', position: { x: 400, y: 500 }, label: 'BELOW', description: 'Lower pitch' },
+    { id: 'center-top', position: { x: 400, y: 150 }, label: 'ABOVE', description: 'Higher pitch' },
+    { id: 'center-bottom', position: { x: 400, y: 450 }, label: 'BELOW', description: 'Lower pitch' },
   ];
 
   const { gamePhase, finalGuess, setFinalGuess, handlePlaceFinalGuess, resetPhase } = useGamePhase();
@@ -146,11 +146,6 @@ export function TutorialGame() {
   const handleNextStep = () => {
     const currentIndex = stepOrder.indexOf(tutorialState.currentStep);
     const nextStep = stepOrder[Math.min(currentIndex + 1, stepOrder.length - 1)];
-
-    if (nextStep === 'place-guess') {
-      // User should manually click "Place Final Guess" button
-      return;
-    }
 
     if (nextStep === 'confirm-guess') {
       handlePlaceFinalGuess();
