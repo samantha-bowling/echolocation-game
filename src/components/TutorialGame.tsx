@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Target } from 'lucide-react';
 import { generateTargetPosition, getTargetCenter, Position } from '@/lib/game/coords';
 import { audioEngine } from '@/lib/audio/engine';
 import { GameCanvas } from './GameCanvas';
@@ -209,16 +209,6 @@ export function TutorialGame() {
           </h1>
         </div>
 
-        {/* Stats - Match arena width */}
-        <div className="w-[800px] mx-auto">
-          <GameStats
-            pingsRemaining={pingsRemaining}
-            pingsUsed={pingsUsed}
-            elapsedTime={elapsedTime}
-            finalTime={finalTime}
-            timerEnabled={false}  // Hide timer in tutorial UI
-          />
-        </div>
 
         {/* Game Canvas */}
         <div className="relative">
@@ -237,13 +227,32 @@ export function TutorialGame() {
           
           {/* Demo Ping Overlay for audio-cues step */}
           {tutorialState.currentStep === 'audio-cues' && (
-            <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute inset-0 pointer-events-none z-10">
+              {/* Target location indicator */}
+              <div
+                className="absolute pointer-events-none z-30"
+                style={{
+                  left: getTargetCenter(target).x,
+                  top: getTargetCenter(target).y,
+                  transform: 'translate(-50%, -50%)',
+                }}
+              >
+                <div className="w-16 h-16 rounded-full border-2 border-dashed border-accent/60 animate-pulse flex items-center justify-center">
+                  <Target className="w-6 h-6 text-accent" />
+                </div>
+                <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                  <div className="text-xs bg-accent/20 px-3 py-1.5 rounded-full border border-accent/40 text-accent font-semibold">
+                    🎯 TARGET LOCATION
+                  </div>
+                </div>
+              </div>
+              
               {demoPings.map(demo => {
                 const isExperienced = demoPingsExperienced.has(demo.id);
                 return (
                   <div
                     key={demo.id}
-                    className="absolute pointer-events-auto cursor-pointer"
+                    className="absolute pointer-events-auto cursor-pointer hover:scale-110 transition-transform z-20"
                     style={{
                       left: demo.position.x,
                       top: demo.position.y,

@@ -33,7 +33,7 @@ export const TUTORIAL_STEPS: Record<TutorialStep, {
   'first-ping': {
     title: 'Send Your First Ping',
     description: 'Click anywhere on the canvas to send a ping. Listen carefully to the sound - it tells you how close you are to the target.',
-    action: 'Click to ping',
+    action: 'Continue',
   },
   'interpret-sound': {
     title: 'Reading Audio Cues 👂',
