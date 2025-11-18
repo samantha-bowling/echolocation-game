@@ -182,8 +182,7 @@ export function ClassicGame() {
       pingsUsed,
       levelConfig.pings,
       elapsedTime,
-      levelConfig.difficulty,
-      activeBoons,
+      chapter,
       replaysUsed,
       chapterConfig.replaysAvailable
     );

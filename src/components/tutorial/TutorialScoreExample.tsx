@@ -10,7 +10,7 @@ export function TutorialScoreExample() {
         </div>
         <div className="text-left">
           <div className="text-sm text-muted-foreground">Total Score</div>
-          <div className="text-3xl font-bold">1,242</div>
+          <div className="text-3xl font-bold">1,042</div>
         </div>
       </div>
 
@@ -67,16 +67,12 @@ export function TutorialScoreExample() {
             <span className="font-medium text-echo-success">+133</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Early Guess Bonus (2 unused)</span>
-            <span className="font-medium text-echo-success">+200</span>
-          </div>
-          <div className="flex justify-between">
             <span className="text-muted-foreground">Time Performance (28.5s)</span>
             <span className="font-medium text-destructive">-27</span>
           </div>
           <div className="flex justify-between border-t border-border pt-2 font-bold">
             <span>Final Score</span>
-            <span>1,242</span>
+            <span>1,042</span>
           </div>
         </div>
       </div>
@@ -84,8 +80,9 @@ export function TutorialScoreExample() {
       {/* Scoring Tips */}
       <div className="text-xs text-muted-foreground space-y-1">
         <p>• <span className="font-medium">Proximity matters most:</span> 8 points per percent (up to +800)</p>
-        <p>• <span className="font-medium">Save pings:</span> Unused pings give efficiency bonus + early guess bonus</p>
+        <p>• <span className="font-medium">Save pings:</span> Higher efficiency bonus for unused pings</p>
         <p>• <span className="font-medium">Time Performance:</span> Fast times (&lt;15s) earn bonuses, slow times (&gt;40s) get penalties</p>
+        <p>• <span className="font-medium">Chapter Mechanics:</span> In Chapters 2+, master special mechanics for bonus points</p>
         <p>• <span className="font-medium">Achieve B rank or better</span> to progress to the next level</p>
       </div>
     </div>

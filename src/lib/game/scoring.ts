@@ -4,9 +4,7 @@ export interface ScoreComponents {
   pingEfficiencyBonus: number;
   timeScore: number;
   perfectTargetBonus: number;
-  difficultyMultiplier: number;
-  boonBonus: number;
-  earlyGuessBonus: number;
+  chapterMechanicBonus: number;
   replayBonus: number;
 }
 
@@ -21,9 +19,13 @@ export const PING_BONUS_PER_UNUSED = 50;
 const PROXIMITY_POINTS_PER_PERCENT = 8;
 const PING_EFFICIENCY_MAX = 400;
 const PERFECT_TARGET_BONUS = 300;
-const EARLY_GUESS_BONUS_PER_PING = 100;
 const REPLAY_UNUSED_BONUS = 75;
-const BOON_BONUS_PER_BOON = 50;
+
+// Chapter mechanic bonuses
+const MECHANIC_BONUS_CH2_SHRINKING = 100; // Efficient guessing while target is large
+const MECHANIC_BONUS_CH3_MOVING = 100; // Fast adaptation to movement
+const MECHANIC_BONUS_CH4_PHANTOMS = 100; // Ping efficiency (not fooled by phantoms)
+const MECHANIC_BONUS_CH5_COMBINED = 150; // Ultimate challenge completion
 
 /**
  * Calculate unified time score
@@ -43,15 +45,42 @@ function calculateTimeScore(timeSeconds: number): number {
 }
 
 /**
- * Get difficulty multiplier
+ * Calculate chapter-specific mechanic bonus
  */
-function getDifficultyMultiplier(difficulty: 'easy' | 'medium' | 'hard'): number {
-  const multipliers = {
-    easy: 1.0,
-    medium: 1.2,
-    hard: 1.5,
-  };
-  return multipliers[difficulty];
+function calculateChapterMechanicBonus(
+  chapter: number,
+  proximity: number,
+  pingEfficiency: number,
+  timeSeconds: number
+): number {
+  switch (chapter) {
+    case 2: // Shrinking Target - reward early/efficient guessing
+      // Bonus if you maintain high accuracy with good ping efficiency
+      return (proximity >= 85 && pingEfficiency >= 0.3) 
+        ? MECHANIC_BONUS_CH2_SHRINKING 
+        : 0;
+    
+    case 3: // Moving Target - reward fast adaptation
+      // Bonus for quick completion (adapted to movement efficiently)
+      return (timeSeconds <= 30 && proximity >= 80) 
+        ? MECHANIC_BONUS_CH3_MOVING 
+        : 0;
+    
+    case 4: // Phantom Targets - reward ping efficiency
+      // Bonus for high ping efficiency (didn't waste pings on phantoms)
+      return (pingEfficiency >= 0.4 && proximity >= 75) 
+        ? MECHANIC_BONUS_CH4_PHANTOMS 
+        : 0;
+    
+    case 5: // Combined Challenge - flat mastery bonus
+      // Base bonus for facing all mechanics, plus extra for excellence
+      const baseBonus = proximity >= 70 ? MECHANIC_BONUS_CH5_COMBINED : 0;
+      const excellenceBonus = (proximity >= 90 && pingEfficiency >= 0.4) ? 50 : 0;
+      return baseBonus + excellenceBonus;
+    
+    default: // Chapter 1 has no mechanic
+      return 0;
+  }
 }
 
 /**
@@ -62,8 +91,7 @@ export function calculateScore(
   pingsUsed: number,
   totalPings: number,
   timeSeconds: number,
-  difficulty: 'easy' | 'medium' | 'hard' = 'medium',
-  activeBoons: string[] = [],
+  chapter: number = 1,
   replaysUsed: number = 0,
   replaysAvailable?: number
 ): ScoreResult {
@@ -78,13 +106,13 @@ export function calculateScore(
   // Perfect target bonus
   const perfectTargetBonus = proximity === 100 ? PERFECT_TARGET_BONUS : 0;
   
-  // Boon bonus
-  const boonBonus = activeBoons.length * BOON_BONUS_PER_BOON;
-  
-  // Early guess bonus - reward players who guess without using all pings
-  const earlyGuessBonus = unusedPings > 0 
-    ? Math.round(unusedPings * EARLY_GUESS_BONUS_PER_PING)
-    : 0;
+  // Chapter mechanic bonus
+  const chapterMechanicBonus = calculateChapterMechanicBonus(
+    chapter,
+    proximity,
+    pingEfficiency,
+    timeSeconds
+  );
   
   // Replay bonus - reward players who don't use all available replays (only if replays were limited)
   let replayBonus = 0;
@@ -95,20 +123,15 @@ export function calculateScore(
     }
   }
   
-  // Calculate pre-multiplier total
-  const preMultiplierTotal = 
+  // Calculate final total
+  const finalScore = 
     BASE_SCORE + 
     proximityBonus + 
     pingEfficiencyBonus + 
     timeScore + 
     perfectTargetBonus + 
-    boonBonus + 
-    earlyGuessBonus + 
+    chapterMechanicBonus + 
     replayBonus;
-  
-  // Apply difficulty multiplier
-  const difficultyMultiplier = getDifficultyMultiplier(difficulty);
-  const finalScore = Math.round(preMultiplierTotal * difficultyMultiplier);
   
   return {
     total: Math.max(0, finalScore),
@@ -118,9 +141,7 @@ export function calculateScore(
       pingEfficiencyBonus,
       timeScore,
       perfectTargetBonus,
-      difficultyMultiplier,
-      boonBonus,
-      earlyGuessBonus,
+      chapterMechanicBonus,
       replayBonus,
     },
     rank: getRank(Math.max(0, finalScore)),
@@ -300,7 +321,7 @@ export function generateStrategicTips(
   // Ping efficiency tips
   const pingEfficiency = ((totalPings - pingsUsed) / totalPings) * 100;
   if (pingEfficiency < 20) {
-    tips.push(`Save pings! Each unused ping is worth ${EARLY_GUESS_BONUS_PER_PING} points`);
+    tips.push("Save pings! Higher efficiency means better score");
   }
   
   // Time tips - updated for unified time score
@@ -350,20 +371,14 @@ export function calculateCustomScore(
   // Perfect target bonus
   const perfectTargetBonus = proximity === 100 ? PERFECT_TARGET_BONUS : 0;
   
-  // Early guess bonus - reward players who guess without using all pings (not for unlimited)
-  const earlyGuessBonus = totalPings !== Infinity && unusedPings > 0
-    ? Math.round(unusedPings * EARLY_GUESS_BONUS_PER_PING)
-    : 0;
-  
-  // Calculate total (no difficulty multiplier for custom games)
+  // Calculate total (no chapter mechanic bonus for custom games)
   const total = Math.max(
     0,
-    BASE_SCORE +
-    proximityBonus +
-    pingEfficiencyBonus +
-    timeScore +
-    perfectTargetBonus +
-    earlyGuessBonus
+    BASE_SCORE + 
+      proximityBonus + 
+      pingEfficiencyBonus + 
+      timeScore + 
+      perfectTargetBonus
   );
   
   return {
@@ -374,9 +389,7 @@ export function calculateCustomScore(
       pingEfficiencyBonus,
       timeScore,
       perfectTargetBonus,
-      difficultyMultiplier: 1.0, // No multiplier for custom games
-      boonBonus: 0,
-      earlyGuessBonus,
+      chapterMechanicBonus: 0, // No mechanic bonus in custom games
       replayBonus: 0,
     },
     rank: getRank(total),
