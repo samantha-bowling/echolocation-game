@@ -1,6 +1,7 @@
 import { TutorialStep, TUTORIAL_STEPS } from '@/lib/game/tutorial';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { Volume2, ArrowLeftRight, ArrowUpDown, ChevronDown, ChevronUp } from 'lucide-react';
 import { TutorialScoreExample } from './TutorialScoreExample';
 
@@ -110,7 +111,7 @@ export function TutorialOverlay({
             </div>
           ) : (
             // Full modal view
-            <div className="frosted-modal relative shadow-2xl animate-slide-in-from-bottom">
+            <div className="frosted-modal relative shadow-2xl animate-slide-in-from-bottom py-4 px-6">
               {/* Minimize button */}
               {onToggleMinimize && (
                 <button
@@ -142,112 +143,114 @@ export function TutorialOverlay({
               </div>
 
               {/* Content */}
-              <div className="space-y-4">
-                <div>
-                  <h2 className="text-heading-3 mb-2">{stepInfo.title}</h2>
-                  <p className="text-small text-muted-foreground leading-relaxed">
-                    {stepInfo.description}
-                  </p>
-                  
-                  {/* Interactive Step Indicator */}
-                  {(step === 'first-ping' || step === 'audio-cues' || step === 'multiple-pings' || step === 'place-guess') && (
-                    <div className="mt-4 p-3 bg-primary/10 border border-primary/20 rounded-lg">
-                      <div className="flex items-center gap-2">
-                        <ChevronDown className="w-4 h-4 text-primary" />
-                        <p className="text-sm font-medium text-primary">
-                          {step === 'place-guess' 
-                            ? 'Minimize this panel, click "Place Final Guess", then click where you think the target is' 
-                            : 'Minimize this panel and click on the canvas to interact'}
-                        </p>
+              <ScrollArea className="max-h-[60vh] md:max-h-[70vh] pr-4">
+                <div className="space-y-4">
+                  <div>
+                    <h2 className="text-heading-3 mb-2">{stepInfo.title}</h2>
+                    <p className="text-small text-muted-foreground leading-relaxed">
+                      {stepInfo.description}
+                    </p>
+                    
+                    {/* Interactive Step Indicator */}
+                    {(step === 'first-ping' || step === 'audio-cues' || step === 'multiple-pings' || step === 'place-guess') && (
+                      <div className="mt-4 p-3 bg-primary/10 border border-primary/20 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <ChevronDown className="w-4 h-4 text-primary" />
+                          <p className="text-sm font-medium text-primary">
+                            {step === 'place-guess' 
+                              ? 'Minimize this panel, click "Place Final Guess", then click where you think the target is' 
+                              : 'Minimize this panel and click on the canvas to interact'}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Audio Cues Visual Demo */}
+                  {isAudioCuesStep && (
+                    <div className="space-y-3 p-4 bg-secondary/30 rounded-lg border border-border">
+                      <div className="text-sm font-semibold text-foreground mb-2">
+                        What you'll hear:
+                      </div>
+                      <div className="grid grid-cols-3 gap-3 text-xs">
+                        <div className="flex flex-col items-center gap-1.5 p-2 bg-background/50 rounded">
+                          <ArrowLeftRight className="w-4 h-4 text-primary" />
+                          <span className="font-medium text-foreground">Stereo Pan</span>
+                          <span className="text-muted-foreground text-center">Left/Right speaker</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-1.5 p-2 bg-background/50 rounded">
+                          <Volume2 className="w-4 h-4 text-primary" />
+                          <span className="font-medium text-foreground">Volume</span>
+                          <span className="text-muted-foreground text-center">Distance cue</span>
+                        </div>
+                        <div className="flex flex-col items-center gap-1.5 p-2 bg-background/50 rounded">
+                          <ArrowUpDown className="w-4 h-4 text-primary" />
+                          <span className="font-medium text-foreground">Pitch</span>
+                          <span className="text-muted-foreground text-center">High = up, Low = down</span>
+                        </div>
+                      </div>
+
+                      {/* Progress indicator for demo pings */}
+                      <div className="mt-4 space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-muted-foreground">Demo pings experienced</span>
+                          <span className="font-medium text-foreground">
+                            {demoPingsExperienced}/{totalDemoPings}
+                          </span>
+                        </div>
+                        <Progress 
+                          value={(demoPingsExperienced / totalDemoPings) * 100} 
+                          className="h-2"
+                        />
                       </div>
                     </div>
                   )}
+                  
+                  {/* Score Example for scoring step */}
+                  {step === 'scoring' && (
+                    <div className="mt-4">
+                      <TutorialScoreExample />
+                    </div>
+                  )}
                 </div>
-
-                {/* Audio Cues Visual Demo */}
-                {isAudioCuesStep && (
-                  <div className="space-y-3 p-4 bg-secondary/30 rounded-lg border border-border">
-                    <div className="text-sm font-semibold text-foreground mb-2">
-                      What you'll hear:
-                    </div>
-                    <div className="grid grid-cols-3 gap-3 text-xs">
-                      <div className="flex flex-col items-center gap-1.5 p-2 bg-background/50 rounded">
-                        <ArrowLeftRight className="w-4 h-4 text-primary" />
-                        <span className="font-medium text-foreground">Stereo Pan</span>
-                        <span className="text-muted-foreground text-center">Left/Right speaker</span>
-                      </div>
-                      <div className="flex flex-col items-center gap-1.5 p-2 bg-background/50 rounded">
-                        <Volume2 className="w-4 h-4 text-primary" />
-                        <span className="font-medium text-foreground">Volume</span>
-                        <span className="text-muted-foreground text-center">Distance cue</span>
-                      </div>
-                      <div className="flex flex-col items-center gap-1.5 p-2 bg-background/50 rounded">
-                        <ArrowUpDown className="w-4 h-4 text-primary" />
-                        <span className="font-medium text-foreground">Pitch</span>
-                        <span className="text-muted-foreground text-center">High = up, Low = down</span>
-                      </div>
-                    </div>
-
-                    {/* Progress indicator for demo pings */}
-                    <div className="mt-4 space-y-2">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-muted-foreground">Demo pings experienced</span>
-                        <span className="font-medium text-foreground">
-                          {demoPingsExperienced}/{totalDemoPings}
-                        </span>
-                      </div>
-                      <Progress 
-                        value={(demoPingsExperienced / totalDemoPings) * 100} 
-                        className="h-2"
-                      />
-                    </div>
-                  </div>
-                )}
+              </ScrollArea>
                 
-                {/* Score Example for scoring step */}
-                {step === 'scoring' && (
-                  <div className="mt-4">
-                    <TutorialScoreExample />
-                  </div>
-                )}
-                
-                {/* Navigation Buttons */}
-                <div className="flex gap-3 pt-2">
-                  <Button
-                    variant="outline"
-                    onClick={onPrevious}
-                    disabled={currentStepNumber === 1}
-                    className="flex-1"
-                  >
-                    ← Previous
-                  </Button>
-                  <Button
-                    onClick={onNext}
-                    className="flex-1"
-                  >
-                    {stepInfo.action || 'Next'} →
-                  </Button>
-                </div>
-                
-                {/* Footer Navigation */}
-                <div className="flex gap-2">
+              {/* Navigation Buttons */}
+              <div className="flex gap-3 pt-2">
+                <Button
+                  variant="outline"
+                  onClick={onPrevious}
+                  disabled={currentStepNumber === 1}
+                  className="flex-1"
+                >
+                  ← Previous
+                </Button>
+                <Button
+                  onClick={onNext}
+                  className="flex-1"
+                >
+                  {stepInfo.action || 'Next'} →
+                </Button>
+              </div>
+              
+              {/* Footer Navigation */}
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  onClick={onExitToMenu}
+                  className="flex-1 text-muted-foreground hover:text-foreground"
+                >
+                  Exit to Menu
+                </Button>
+                {onRestartTutorial && (
                   <Button
                     variant="ghost"
-                    onClick={onExitToMenu}
+                    onClick={onRestartTutorial}
                     className="flex-1 text-muted-foreground hover:text-foreground"
                   >
-                    Exit to Menu
+                    Restart Tutorial
                   </Button>
-                  {onRestartTutorial && (
-                    <Button
-                      variant="ghost"
-                      onClick={onRestartTutorial}
-                      className="flex-1 text-muted-foreground hover:text-foreground"
-                    >
-                      Restart Tutorial
-                    </Button>
-                  )}
-                </div>
+                )}
               </div>
             </div>
           )}
