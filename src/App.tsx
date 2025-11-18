@@ -12,6 +12,7 @@ import { ClassicGame } from "./components/ClassicGame";
 import { CustomMode } from "./components/CustomMode";
 import { CustomGame } from "./components/CustomGame";
 import { CustomStats } from "./components/CustomStats";
+import { ClassicStats } from "./components/ClassicStats";
 import { Settings } from "./components/Settings";
 import { Credits } from "./components/Credits";
 
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/tutorial" element={<Tutorial />} />
             <Route path="/chapters" element={<ChapterSelect />} />
             <Route path="/classic" element={<ClassicGame />} />
+            <Route path="/classic-stats" element={<ClassicStats />} />
             <Route path="/custom" element={<CustomMode />} />
             <Route path="/custom-game" element={<CustomGame />} />
             <Route path="/custom-stats" element={<CustomStats />} />

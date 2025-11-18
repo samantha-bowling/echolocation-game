@@ -18,6 +18,7 @@ export interface GameCanvasProps {
   targetMoveHistory?: Position[];
   phantomTargets?: PhantomTarget[];
   showTargetMovementIndicator?: boolean;
+  showPingLocations?: boolean;
   onCanvasClick: (e: React.MouseEvent<HTMLDivElement>) => void;
   onPingReplay?: (pingIndex: number) => void;
   replaysRemaining?: number;
@@ -38,6 +39,7 @@ export function GameCanvas({
   targetMoveHistory = [],
   phantomTargets = [],
   showTargetMovementIndicator = false,
+  showPingLocations = true,
   onCanvasClick,
   onPingReplay,
   replaysRemaining,
@@ -187,7 +189,7 @@ export function GameCanvas({
         )}
 
         {/* Ping History */}
-        {pingHistory.map((ping, i) => {
+        {showPingLocations && pingHistory.map((ping, i) => {
           const isReplayable = onPingReplay && (replaysRemaining === undefined || replaysRemaining === -1 || replaysRemaining > 0);
           const hasBeenReplayed = ping.isReplayed;
           

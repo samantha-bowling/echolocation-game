@@ -105,7 +105,7 @@ export function recordCustomGame(
   const stats = loadCustomStats();
   
   stats.totalGames += 1;
-  stats.totalRounds += config.multiRound ? config.numberOfRounds : 1;
+  stats.totalRounds += config.numberOfRounds === -1 ? 1 : (config.numberOfRounds > 1 ? config.numberOfRounds : 1);
   stats.bestScore = Math.max(stats.bestScore, score);
   stats.bestProximity = Math.max(stats.bestProximity, proximity);
   if (config.timerEnabled && timeElapsed > 0) {

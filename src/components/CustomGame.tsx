@@ -56,11 +56,12 @@ export function CustomGame() {
     setTargetMoveCount(prev => prev + 1);
   };
 
-  const { pingHistory, pingsRemaining, pingsUsed, handlePing, resetPings } = usePingSystem({
+  const { pingHistory, pingsRemaining, pingsUsed, replaysRemaining, replaysUsed, handlePing, handleReplayPing, resetPings } = usePingSystem({
     initialPings: config.pingsMode === 'unlimited' ? Infinity : config.pingsCount,
     arenaSize,
     target,
     config,
+    replaysAvailable: config.pingReplaysEnabled ? (config.replaysCount === 0 ? -1 : config.replaysCount) : 0,
     onTargetMove: handleTargetMove,
   });
 
@@ -114,8 +115,8 @@ export function CustomGame() {
     
     setScoreResult({ ...score, hasWon, proximity });
 
-    // Multi-round handling
-    if (config.multiRound && currentRound < config.numberOfRounds) {
+    // Multi-round handling (unlimited = -1, or check against target)
+    if (config.numberOfRounds === -1 || currentRound < config.numberOfRounds) {
       setRoundScores(prev => [...prev, score]);
       setGameState('round-transition');
     } else {
@@ -208,7 +209,8 @@ export function CustomGame() {
             <Radio className="w-5 h-5 text-primary" />
             <p className={cn("font-display font-semibold", isMobile ? "text-lg" : "text-heading-3")}>
               Custom Game
-              {config.multiRound && ` (${currentRound}/${config.numberOfRounds})`}
+              {config.numberOfRounds > 1 && ` (${currentRound}/${config.numberOfRounds})`}
+              {config.numberOfRounds === -1 && ` (Round ${currentRound})`}
             </p>
           </div>
           <Button variant="ghost" size="sm" onClick={() => navigate('/settings')} className="hover-lift">
@@ -243,9 +245,14 @@ export function CustomGame() {
             gameState={gameState}
             showHint={showHint}
             currentHint={currentHint}
-            onCanvasClick={handleCanvasClick}
-            canvasRef={canvasRef}
             targetMoveCount={targetMoveCount}
+            showPingLocations={config.showPingLocations}
+            onCanvasClick={handleCanvasClick}
+            onPingReplay={config.pingReplaysEnabled ? handleReplayPing : undefined}
+            replaysRemaining={replaysRemaining}
+            replaysUsed={replaysUsed}
+            canvasRef={canvasRef}
+          />
             showTargetMovementIndicator={config.movementMode === 'after-pings'}
           />
 

@@ -413,7 +413,8 @@ export function PostRoundSummary({
                     <p>• Timer: {config.timerEnabled ? 'Enabled' : 'Disabled'}</p>
                     <p>• Arena: {config.arenaSize}</p>
                     <p>• Target: {config.targetSize}px</p>
-                    {config.multiRound && <p>• Rounds: {config.numberOfRounds}</p>}
+                    {config.numberOfRounds > 1 && <p>• Rounds: {config.numberOfRounds}</p>}
+                    {config.numberOfRounds === -1 && <p>• Mode: Cozy (Unlimited)</p>}
                     {config.winCondition && config.winCondition.type !== 'none' && (
                       <p>• Challenge: {config.winCondition.type} ({config.winCondition.proximityThreshold}%)</p>
                     )}

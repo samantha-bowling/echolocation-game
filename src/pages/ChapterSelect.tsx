@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Trophy, Target } from 'lucide-react';
+import { ArrowLeft, Trophy, Target, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ChapterCard } from '@/components/ChapterCard';
 import { CHAPTERS } from '@/lib/game/chapters';
@@ -72,6 +72,10 @@ export default function ChapterSelect() {
           <Button variant="ghost" onClick={() => navigate('/')} className="gap-2">
             <ArrowLeft className="w-4 h-4" />
             Back to Menu
+          </Button>
+          <Button variant="outline" onClick={() => navigate('/classic-stats')} className="gap-2">
+            <BarChart3 className="w-4 h-4" />
+            Stats
           </Button>
         </div>
 

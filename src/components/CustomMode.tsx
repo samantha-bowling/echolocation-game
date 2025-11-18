@@ -17,6 +17,9 @@ export function CustomMode() {
   
   const [pingsMode, setPingsMode] = useState<'limited' | 'unlimited'>('limited');
   const [pingsCount, setPingsCount] = useState(5);
+  const [showPingLocations, setShowPingLocations] = useState(true);
+  const [pingReplaysEnabled, setPingReplaysEnabled] = useState(false);
+  const [replaysCount, setReplaysCount] = useState(0);
   const [targetSize, setTargetSize] = useState([100]);
   const [movementMode, setMovementMode] = useState<'static' | 'after-pings'>('static');
   const [movementTrigger, setMovementTrigger] = useState(3);
@@ -25,8 +28,7 @@ export function CustomMode() {
   const [decoys, setDecoys] = useState(false);
   const [theme, setTheme] = useState('sonar');
   const [arenaSize, setArenaSize] = useState<'small' | 'medium' | 'large'>('medium');
-  const [multiRound, setMultiRound] = useState(false);
-  const [numberOfRounds, setNumberOfRounds] = useState(3);
+  const [numberOfRounds, setNumberOfRounds] = useState(1);
   const [hintsEnabled, setHintsEnabled] = useState(false);
   const [hintLevel, setHintLevel] = useState<'basic' | 'detailed'>('basic');
   
@@ -50,6 +52,9 @@ export function CustomMode() {
     const config: CustomGameConfig = {
       pingsMode,
       pingsCount,
+      showPingLocations,
+      pingReplaysEnabled,
+      replaysCount,
       targetSize: targetSize[0],
       movementMode,
       movementTrigger,
@@ -58,7 +63,6 @@ export function CustomMode() {
       noiseLevel: noiseLevel[0],
       decoys,
       arenaSize,
-      multiRound,
       numberOfRounds,
       hintsEnabled,
       hintLevel,
@@ -78,6 +82,9 @@ export function CustomMode() {
     const config: CustomGameConfig = {
       pingsMode,
       pingsCount,
+      showPingLocations,
+      pingReplaysEnabled,
+      replaysCount,
       targetSize: targetSize[0],
       movementMode,
       movementTrigger,
@@ -86,7 +93,6 @@ export function CustomMode() {
       noiseLevel: noiseLevel[0],
       decoys,
       arenaSize,
-      multiRound,
       numberOfRounds,
       hintsEnabled,
       hintLevel,
@@ -106,6 +112,9 @@ export function CustomMode() {
     const config = preset.config;
     setPingsMode(config.pingsMode);
     setPingsCount(config.pingsCount);
+    setShowPingLocations(config.showPingLocations ?? true);
+    setPingReplaysEnabled(config.pingReplaysEnabled ?? false);
+    setReplaysCount(config.replaysCount ?? 0);
     setTargetSize([config.targetSize]);
     setMovementMode(config.movementMode);
     setMovementTrigger(config.movementTrigger || 3);
@@ -114,7 +123,6 @@ export function CustomMode() {
     setNoiseLevel([config.noiseLevel]);
     setDecoys(config.decoys);
     setArenaSize(config.arenaSize);
-    setMultiRound(config.multiRound);
     setNumberOfRounds(config.numberOfRounds);
     setHintsEnabled(config.hintsEnabled);
     setHintLevel(config.hintLevel);
@@ -132,6 +140,9 @@ export function CustomMode() {
     if (decoded) {
       setPingsMode(decoded.pingsMode);
       setPingsCount(decoded.pingsCount);
+      setShowPingLocations(decoded.showPingLocations ?? true);
+      setPingReplaysEnabled(decoded.pingReplaysEnabled ?? false);
+      setReplaysCount(decoded.replaysCount ?? 0);
       setTargetSize([decoded.targetSize]);
       setMovementMode(decoded.movementMode);
       setMovementTrigger(decoded.movementTrigger || 3);
@@ -140,7 +151,6 @@ export function CustomMode() {
       setNoiseLevel([decoded.noiseLevel]);
       setDecoys(decoded.decoys);
       setArenaSize(decoded.arenaSize);
-      setMultiRound(decoded.multiRound);
       setNumberOfRounds(decoded.numberOfRounds);
       setHintsEnabled(decoded.hintsEnabled);
       setHintLevel(decoded.hintLevel);
@@ -170,7 +180,7 @@ export function CustomMode() {
         setMovementTrigger(3);
         setDecoys(false);
         setNoiseLevel([0]);
-        setMultiRound(false);
+        setNumberOfRounds(1);
         setWinConditionType('none');
         toast({
           title: "Easy Mode Loaded",
@@ -190,7 +200,7 @@ export function CustomMode() {
         setMovementTrigger(3);
         setDecoys(false);
         setNoiseLevel([0]);
-        setMultiRound(false);
+        setNumberOfRounds(1);
         setWinConditionType('none');
         toast({
           title: "Normal Mode Loaded",
@@ -210,7 +220,7 @@ export function CustomMode() {
         setMovementTrigger(2);
         setDecoys(false);
         setNoiseLevel([20]);
-        setMultiRound(false);
+        setNumberOfRounds(1);
         setWinConditionType('proximity');
         setProximityThreshold(90);
         toast({
@@ -504,7 +514,67 @@ export function CustomMode() {
             )}
           </div>
 
-          {/* Arena Size */}
+          {/* Ping Configuration */}
+          <div className="flat-card space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label className="text-base">Ping Limit</Label>
+                <p className="text-small text-muted-foreground">
+                  {pingsMode === 'limited' ? `${pingsCount} pings available` : 'Unlimited pings'}
+                </p>
+              </div>
+              <Switch checked={pingsMode === 'unlimited'} onCheckedChange={(v) => setPingsMode(v ? 'unlimited' : 'limited')} />
+            </div>
+            
+            {pingsMode === 'limited' && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-small">Number of Pings</Label>
+                  <span className="text-heading-3 font-mono">{pingsCount}</span>
+                </div>
+                <Slider
+                  value={[pingsCount]}
+                  onValueChange={(v) => setPingsCount(v[0])}
+                  min={1}
+                  max={20}
+                  step={1}
+                />
+              </div>
+            )}
+
+            <div className="flex items-center justify-between pt-2 border-t border-border">
+              <div className="space-y-1">
+                <Label className="text-small">Show Ping Locations</Label>
+                <p className="text-tiny text-muted-foreground">Display visual markers</p>
+              </div>
+              <Switch checked={showPingLocations} onCheckedChange={setShowPingLocations} />
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t border-border">
+              <div className="space-y-1">
+                <Label className="text-small">Ping Replays</Label>
+                <p className="text-tiny text-muted-foreground">Replay previous pings</p>
+              </div>
+              <Switch checked={pingReplaysEnabled} onCheckedChange={setPingReplaysEnabled} />
+            </div>
+
+            {pingReplaysEnabled && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-tiny">Replays Available</Label>
+                  <span className="text-sm font-mono">{replaysCount === 0 ? '∞' : replaysCount}</span>
+                </div>
+                <Slider
+                  value={[replaysCount]}
+                  onValueChange={(v) => setReplaysCount(v[0])}
+                  min={0}
+                  max={10}
+                  step={1}
+                />
+                <p className="text-tiny text-muted-foreground">0 = unlimited</p>
+              </div>
+            )}
+          </div>
           <div className="flat-card space-y-4">
             <Label className="text-base">Arena Size</Label>
             <div className="grid grid-cols-3 gap-2">
@@ -605,50 +675,77 @@ export function CustomMode() {
             <Switch checked={decoys} onCheckedChange={setDecoys} />
           </div>
 
-          {/* Multi-Round Mode */}
+          {/* Rounds Selector */}
           <div className="flat-card space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Label className="text-base">Multi-Round Mode</Label>
-                <p className="text-small text-muted-foreground">
-                  {multiRound 
-                    ? `Play ${numberOfRounds} rounds with cumulative scoring`
-                    : 'Single round mode'
-                  }
-                </p>
-              </div>
-              <Switch checked={multiRound} onCheckedChange={setMultiRound} />
+            <div className="space-y-1">
+              <Label className="text-base">Rounds</Label>
+              <p className="text-small text-muted-foreground">
+                {numberOfRounds === -1 
+                  ? 'Cozy Mode - Play unlimited rounds'
+                  : numberOfRounds === 1
+                    ? 'Single round mode'
+                    : `Play ${numberOfRounds} rounds with cumulative scoring`
+                }
+              </p>
             </div>
             
-            {multiRound && (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label className="text-small">Number of Rounds</Label>
-                  <span className="text-heading-3 font-mono">{numberOfRounds}</span>
-                </div>
-                <Slider
-                  value={[numberOfRounds]}
-                  onValueChange={(v) => setNumberOfRounds(v[0])}
-                  min={2}
-                  max={10}
-                  step={1}
-                  className="w-full"
-                />
-                <div className="flex gap-2">
-                  {[2, 3, 5, 7, 10].map(n => (
-                    <Button
-                      key={n}
-                      variant={numberOfRounds === n ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setNumberOfRounds(n)}
-                      className="flex-1"
-                    >
-                      {n}
-                    </Button>
-                  ))}
-                </div>
+            <div className="space-y-3">
+              <div className="grid grid-cols-4 gap-2">
+                <Button
+                  variant={numberOfRounds === 1 ? 'default' : 'outline'}
+                  onClick={() => setNumberOfRounds(1)}
+                  size="sm"
+                >
+                  1
+                </Button>
+                <Button
+                  variant={numberOfRounds === 3 ? 'default' : 'outline'}
+                  onClick={() => setNumberOfRounds(3)}
+                  size="sm"
+                >
+                  3
+                </Button>
+                <Button
+                  variant={numberOfRounds === 5 ? 'default' : 'outline'}
+                  onClick={() => setNumberOfRounds(5)}
+                  size="sm"
+                >
+                  5
+                </Button>
+                <Button
+                  variant={numberOfRounds === 10 ? 'default' : 'outline'}
+                  onClick={() => setNumberOfRounds(10)}
+                  size="sm"
+                >
+                  10
+                </Button>
               </div>
-            )}
+              <div className="grid grid-cols-3 gap-2">
+                <Button
+                  variant={numberOfRounds === 25 ? 'default' : 'outline'}
+                  onClick={() => setNumberOfRounds(25)}
+                  size="sm"
+                >
+                  25
+                </Button>
+                <Button
+                  variant={numberOfRounds === 50 ? 'default' : 'outline'}
+                  onClick={() => setNumberOfRounds(50)}
+                  size="sm"
+                >
+                  50
+                </Button>
+                <Button
+                  variant={numberOfRounds === -1 ? 'default' : 'outline'}
+                  onClick={() => setNumberOfRounds(-1)}
+                  size="sm"
+                  className="col-span-1"
+                >
+                  <Infinity className="w-4 h-4 mr-1" />
+                  Cozy
+                </Button>
+              </div>
+            </div>
           </div>
 
           {/* Theme */}
