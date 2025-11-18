@@ -298,18 +298,6 @@ export function PostRoundSummary({
             )}
           </div>
             
-            {/* Multiplier */}
-            {score.components.difficultyMultiplier !== 1.0 && (
-              <div className="pt-2 border-t border-border/50">
-                <div className="flex justify-between items-center text-small">
-                  <span className="text-muted-foreground">Difficulty Multiplier</span>
-                  <span className="font-mono text-accent">
-                    ×{score.components.difficultyMultiplier.toFixed(1)}
-                  </span>
-                </div>
-              </div>
-            )}
-            
             {/* Final Total */}
             <div className="pt-3 border-t-2 border-accent/30">
               <div className="flex justify-between items-center">
