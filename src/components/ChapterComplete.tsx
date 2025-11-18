@@ -1,7 +1,8 @@
-import { Trophy, Star, Radio, Clock, ArrowRight, Home, Award } from 'lucide-react';
+import { Trophy, Star, Radio, Clock, ArrowRight, Home, Award, Target, Zap, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { ChapterConfig, CHAPTERS } from '@/lib/game/chapters';
-import { ChapterStats, getCompletionBonusTier } from '@/lib/game/chapterStats';
+import { ChapterStats } from '@/lib/game/chapterStats';
 
 interface ChapterCompleteProps {
   chapter: ChapterConfig;
@@ -34,7 +35,7 @@ export function ChapterComplete({
       }}
     >
       <div
-        className="relative max-w-3xl w-full bg-card/95 backdrop-blur-sm rounded-2xl border-2 p-8 shadow-2xl"
+        className="relative max-w-4xl w-full max-h-[90vh] bg-card/95 backdrop-blur-sm rounded-2xl border-2 shadow-2xl overflow-hidden flex flex-col"
         style={{
           borderColor: chapter.theme.primary,
         }}
@@ -113,33 +114,6 @@ export function ChapterComplete({
             <div className="text-sm text-muted-foreground">Total Time</div>
           </div>
         </div>
-
-        {/* Completion Bonus */}
-        {stats.completionBonus && (
-          <div className="flat-card bg-gradient-to-br from-accent/20 to-primary/20 border-2 border-accent/50 mb-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Award className="w-8 h-8 text-accent" />
-                <div>
-                  <div className="text-heading-3 font-bold text-accent">
-                    Chapter Completion Bonus
-                  </div>
-                  <div className="text-small text-muted-foreground">
-                    {getCompletionBonusTier(stats.avgScore)} Tier Achievement
-                  </div>
-                </div>
-              </div>
-              <div className="text-heading-1 font-bold text-accent">
-                +{stats.completionBonus}
-              </div>
-            </div>
-            {stats.avgScore < 2600 && (
-              <div className="mt-3 pt-3 border-t border-border/50 text-xs text-muted-foreground">
-                💡 Replay levels to improve your average score for a higher tier bonus!
-              </div>
-            )}
-          </div>
-        )}
 
         {/* Next Chapter Unlock */}
         {!isLastChapter && nextChapter && (
