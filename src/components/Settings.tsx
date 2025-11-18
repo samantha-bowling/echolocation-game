@@ -471,7 +471,7 @@ export function Settings() {
                 <Label className="text-sm font-semibold">Active Cheats:</Label>
                 {activeCheats.map(cheat => <div key={cheat.code} className={`flex items-center justify-between p-3 rounded-lg border transition-all duration-300 ${
                   cheat.special 
-                    ? 'bg-gradient-to-r from-primary/10 via-purple-500/10 to-primary/10 border-primary/30 shadow-lg shadow-primary/5 animate-pulse-slow'
+                    ? 'bg-gradient-to-r from-primary/10 via-purple-500/10 to-primary/10 border-primary/30 shadow-lg shadow-primary/5'
                     : 'bg-primary/10 border-primary/20'
                 }`}>
                     <div className="flex-1">
