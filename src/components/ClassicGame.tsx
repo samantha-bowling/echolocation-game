@@ -373,7 +373,7 @@ export function ClassicGame() {
       )}
 
       {/* Header with Navigation and Stats */}
-      <div className="absolute top-0 left-0 right-0 z-20 p-3 md:p-4 space-y-3">
+      <div className="w-full p-3 md:p-4 space-y-3 flex-shrink-0">
         {/* Row 1: Navigation + Actions */}
         <div className="flex items-center justify-between">
           {/* Menu Button */}
