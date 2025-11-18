@@ -2,8 +2,7 @@ export interface ScoreComponents {
   base: number;
   proximityBonus: number;
   pingEfficiencyBonus: number;
-  timePenalty: number;
-  speedBonus: number;
+  timeScore: number;
   perfectTargetBonus: number;
   difficultyMultiplier: number;
   boonBonus: number;
@@ -17,48 +16,30 @@ export interface ScoreResult {
   rank: string;
 }
 
-const BASE_SCORE = 1000;
+const BASE_SCORE = 200;
 export const PING_BONUS_PER_UNUSED = 50;
-const PROXIMITY_POINTS_PER_PERCENT = 4;
-const PING_EFFICIENCY_MAX = 300;
-const TIME_PENALTY_PER_SECOND = 2; // Legacy constant, replaced by tiered system
-const MAX_TIME_PENALTY = 500;
-const SPEED_BONUS_THRESHOLD = 15;
-const SPEED_BONUS_MAX = 250;
-const PERFECT_TARGET_BONUS = 200;
-const EARLY_GUESS_BONUS_PER_PING = 75;
-const REPLAY_UNUSED_BONUS = 50;
-
-// Time penalty brackets - graduated system for better new player retention
-const TIME_PENALTY_BRACKETS = [
-  { maxTime: 20, rate: 1 },  // 0-20s: gentle 1 pt/s (learning zone)
-  { maxTime: 40, rate: 2 },  // 21-40s: moderate 2 pts/s
-  { maxTime: 60, rate: 3 },  // 41-60s: significant 3 pts/s
-  { maxTime: Infinity, rate: 4 }, // 61+s: strong 4 pts/s (push to improve)
-];
+const PROXIMITY_POINTS_PER_PERCENT = 8;
+const PING_EFFICIENCY_MAX = 400;
+const PERFECT_TARGET_BONUS = 300;
+const EARLY_GUESS_BONUS_PER_PING = 100;
+const REPLAY_UNUSED_BONUS = 75;
+const BOON_BONUS_PER_BOON = 50;
 
 /**
- * Calculate time penalty using graduated brackets
- * More forgiving for new players, stronger incentive for veterans
+ * Calculate unified time score
+ * Positive for fast times (<15s), zero/minimal for average (15-40s), negative for slow (>40s)
  */
-function calculateTimePenalty(timeSeconds: number): number {
-  let totalPenalty = 0;
-  let remainingTime = timeSeconds;
-  
-  for (let i = 0; i < TIME_PENALTY_BRACKETS.length; i++) {
-    const bracket = TIME_PENALTY_BRACKETS[i];
-    const prevMax = i > 0 ? TIME_PENALTY_BRACKETS[i - 1].maxTime : 0;
-    const timeInBracket = Math.min(remainingTime, bracket.maxTime - prevMax);
-    
-    if (timeInBracket > 0) {
-      totalPenalty += timeInBracket * bracket.rate;
-      remainingTime -= timeInBracket;
-    }
-    
-    if (remainingTime <= 0) break;
+function calculateTimeScore(timeSeconds: number): number {
+  if (timeSeconds < 15) {
+    // Fast completion: +300 at 0s, scaling down to 0 at 15s
+    return Math.round(((15 - timeSeconds) / 15) * 300);
+  } else if (timeSeconds < 40) {
+    // Average time: small penalty, -2 pts/s
+    return -Math.round((timeSeconds - 15) * 2);
+  } else {
+    // Slow time: -50 base penalty, then -4 pts/s
+    return -50 - Math.round((timeSeconds - 40) * 4);
   }
-  
-  return Math.round(totalPenalty);
 }
 
 /**
@@ -92,18 +73,13 @@ export function calculateScore(
   // Calculate individual components
   const proximityBonus = Math.round(proximity * PROXIMITY_POINTS_PER_PERCENT);
   const pingEfficiencyBonus = Math.round(pingEfficiency * PING_EFFICIENCY_MAX);
-  const timePenalty = Math.min(MAX_TIME_PENALTY, calculateTimePenalty(timeSeconds));
-  
-  // Speed bonus: max points if completed very quickly
-  const speedBonus = timeSeconds < SPEED_BONUS_THRESHOLD
-    ? Math.round(((SPEED_BONUS_THRESHOLD - timeSeconds) / SPEED_BONUS_THRESHOLD) * SPEED_BONUS_MAX)
-    : 0;
+  const timeScore = calculateTimeScore(timeSeconds);
   
   // Perfect target bonus
   const perfectTargetBonus = proximity === 100 ? PERFECT_TARGET_BONUS : 0;
   
   // Boon bonus
-  const boonBonus = activeBoons.length * 25;
+  const boonBonus = activeBoons.length * BOON_BONUS_PER_BOON;
   
   // Early guess bonus - reward players who guess without using all pings
   const earlyGuessBonus = unusedPings > 0 
@@ -120,40 +96,34 @@ export function calculateScore(
   }
   
   // Calculate pre-multiplier total
-  const preMultiplierTotal = Math.max(
-    0,
-    BASE_SCORE +
-    proximityBonus +
-    pingEfficiencyBonus +
-    speedBonus +
-    perfectTargetBonus +
-    boonBonus +
-    earlyGuessBonus +
-    replayBonus -
-    timePenalty
-  );
+  const preMultiplierTotal = 
+    BASE_SCORE + 
+    proximityBonus + 
+    pingEfficiencyBonus + 
+    timeScore + 
+    perfectTargetBonus + 
+    boonBonus + 
+    earlyGuessBonus + 
+    replayBonus;
   
   // Apply difficulty multiplier
   const difficultyMultiplier = getDifficultyMultiplier(difficulty);
-  const total = Math.round(preMultiplierTotal * difficultyMultiplier);
-  
-  const components: ScoreComponents = {
-    base: BASE_SCORE,
-    proximityBonus,
-    pingEfficiencyBonus,
-    timePenalty,
-    speedBonus,
-    perfectTargetBonus,
-    difficultyMultiplier,
-    boonBonus,
-    earlyGuessBonus,
-    replayBonus,
-  };
+  const finalScore = Math.round(preMultiplierTotal * difficultyMultiplier);
   
   return {
-    total,
-    components,
-    rank: getRank(total),
+    total: Math.max(0, finalScore),
+    components: {
+      base: BASE_SCORE,
+      proximityBonus,
+      pingEfficiencyBonus,
+      timeScore,
+      perfectTargetBonus,
+      difficultyMultiplier,
+      boonBonus,
+      earlyGuessBonus,
+      replayBonus,
+    },
+    rank: getRank(Math.max(0, finalScore)),
   };
 }
 
@@ -163,14 +133,14 @@ export interface RankInfo {
 }
 
 export const RANK_THRESHOLDS: RankInfo[] = [
-  { rank: 'SS', threshold: 2800 },
-  { rank: 'S+', threshold: 2600 },
-  { rank: 'S', threshold: 2400 },
-  { rank: 'A+', threshold: 2000 },
-  { rank: 'A', threshold: 1700 },
-  { rank: 'B+', threshold: 1400 },
-  { rank: 'B', threshold: 1100 },
-  { rank: 'C', threshold: 800 },
+  { rank: 'SS', threshold: 2400 },
+  { rank: 'S+', threshold: 2100 },
+  { rank: 'S', threshold: 1800 },
+  { rank: 'A+', threshold: 1500 },
+  { rank: 'A', threshold: 1200 },
+  { rank: 'B+', threshold: 1000 },
+  { rank: 'B', threshold: 800 },
+  { rank: 'C', threshold: 500 },
   { rank: 'D', threshold: 0 },
 ];
 
@@ -182,6 +152,15 @@ export function getRank(score: number): string {
     if (score >= threshold) return rank;
   }
   return 'D';
+}
+
+/**
+ * Check if player can progress to next level
+ * Requires B rank or better (800+ points)
+ */
+export function canProgressToNextLevel(rank: string): boolean {
+  const progressionRanks = ['SS', 'S+', 'S', 'A+', 'A', 'B+', 'B'];
+  return progressionRanks.includes(rank);
 }
 
 /**
@@ -321,24 +300,24 @@ export function generateStrategicTips(
   // Ping efficiency tips
   const pingEfficiency = ((totalPings - pingsUsed) / totalPings) * 100;
   if (pingEfficiency < 20) {
-    tips.push(`Save pings! Each unused ping is worth ${PING_BONUS_PER_UNUSED} points`);
+    tips.push(`Save pings! Each unused ping is worth ${EARLY_GUESS_BONUS_PER_PING} points`);
   }
   
-  // Time tips
-  if (timeElapsed > 30) {
-    tips.push("Work faster to reduce time penalty (you lose 2 points per second)");
+  // Time tips - updated for unified time score
+  if (timeElapsed > 40) {
+    tips.push("Work faster! Time over 40s incurs significant penalties");
   } else if (timeElapsed > 15 && timeElapsed < 20) {
-    tips.push("You're close to the speed bonus threshold (under 15 seconds)!");
+    tips.push("Complete in under 15 seconds to earn time bonus points!");
   }
   
   // Speed bonus opportunity
-  if (timeElapsed >= 15 && score.components.speedBonus === 0) {
-    tips.push("Complete in under 15 seconds to earn a speed bonus!");
+  if (timeElapsed >= 15 && score.components.timeScore <= 0) {
+    tips.push("Aim for under 15 seconds to earn up to +300 time bonus!");
   }
   
   // Perfect target opportunity
   if (proximity >= 95 && proximity < 100) {
-    tips.push("So close to 100% for the Perfect Target bonus (+200 pts)!");
+    tips.push(`So close to 100% for the Perfect Target bonus (+${PERFECT_TARGET_BONUS} pts)!`);
   }
   
   return tips.slice(0, 2); // Show max 2 tips
@@ -365,20 +344,13 @@ export function calculateCustomScore(
     ? 0 
     : Math.round(pingEfficiency * PING_EFFICIENCY_MAX);
   
-  // Time penalty: 0 if timer disabled, tiered if enabled
-  const timePenalty = timerEnabled
-    ? Math.min(MAX_TIME_PENALTY, calculateTimePenalty(timeSeconds))
-    : 0;
-  
-  // Speed bonus: 0 if timer disabled
-  const speedBonus = timerEnabled && timeSeconds < SPEED_BONUS_THRESHOLD
-    ? Math.round(((SPEED_BONUS_THRESHOLD - timeSeconds) / SPEED_BONUS_THRESHOLD) * SPEED_BONUS_MAX)
-    : 0;
+  // Time score: 0 if timer disabled
+  const timeScore = timerEnabled ? calculateTimeScore(timeSeconds) : 0;
   
   // Perfect target bonus
   const perfectTargetBonus = proximity === 100 ? PERFECT_TARGET_BONUS : 0;
   
-  // Early guess bonus
+  // Early guess bonus - reward players who guess without using all pings (not for unlimited)
   const earlyGuessBonus = totalPings !== Infinity && unusedPings > 0
     ? Math.round(unusedPings * EARLY_GUESS_BONUS_PER_PING)
     : 0;
@@ -389,46 +361,56 @@ export function calculateCustomScore(
     BASE_SCORE +
     proximityBonus +
     pingEfficiencyBonus +
-    speedBonus +
+    timeScore +
     perfectTargetBonus +
-    earlyGuessBonus -
-    timePenalty
+    earlyGuessBonus
   );
-  
-  const components: ScoreComponents = {
-    base: BASE_SCORE,
-    proximityBonus,
-    pingEfficiencyBonus,
-    timePenalty,
-    speedBonus,
-    perfectTargetBonus,
-    difficultyMultiplier: 1.0, // No multiplier for custom
-    boonBonus: 0,
-    earlyGuessBonus,
-    replayBonus: 0, // No replay bonus for custom games
-  };
   
   return {
     total,
-    components,
+    components: {
+      base: BASE_SCORE,
+      proximityBonus,
+      pingEfficiencyBonus,
+      timeScore,
+      perfectTargetBonus,
+      difficultyMultiplier: 1.0, // No multiplier for custom games
+      boonBonus: 0,
+      earlyGuessBonus,
+      replayBonus: 0,
+    },
     rank: getRank(total),
   };
 }
 
 /**
- * Check if player met the win condition
+ * Check win condition for custom games
  */
 export function checkWinCondition(
   proximity: number,
-  winCondition?: { type: 'none' | 'proximity'; proximityThreshold?: number }
+  pingsUsed: number,
+  timeSeconds: number,
+  totalScore: number,
+  winCondition?: {
+    type: 'proximity' | 'pings' | 'time' | 'score';
+    proximityThreshold?: number;
+    maxPings?: number;
+    maxTime?: number;
+    minScore?: number;
+  }
 ): boolean {
-  if (!winCondition || winCondition.type === 'none') {
-    return true; // Free play - always pass
+  if (!winCondition) return true;
+
+  switch (winCondition.type) {
+    case 'proximity':
+      return proximity >= (winCondition.proximityThreshold || 80);
+    case 'pings':
+      return pingsUsed <= (winCondition.maxPings || 5);
+    case 'time':
+      return timeSeconds <= (winCondition.maxTime || 30);
+    case 'score':
+      return totalScore >= (winCondition.minScore || 1000);
+    default:
+      return true;
   }
-  
-  if (winCondition.type === 'proximity') {
-    return proximity >= (winCondition.proximityThreshold || 80);
-  }
-  
-  return true;
 }
