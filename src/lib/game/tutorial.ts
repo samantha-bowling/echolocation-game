@@ -56,7 +56,7 @@ export const TUTORIAL_STEPS: Record<TutorialStep, {
   },
   scoring: {
     title: 'Understanding Your Score',
-    description: 'Here\'s an example of how scoring works in the game. Your score is based on proximity (closer = higher), ping efficiency (unused pings = bonus), and time (graduated penalties, forgiving at the start).',
+    description: 'Your score is based on proximity (8 points per %, primary factor), ping efficiency, early guess bonus (100 pts per unused ping), and time performance (unified bonus/penalty). Achieve B rank (800+ points) or better to progress!',
     action: 'Continue',
   },
   complete: {

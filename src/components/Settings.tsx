@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Volume2, Moon, Sun, Headphones, CheckCircle2, Code2, Settings as SettingsIcon, Palette, GraduationCap } from 'lucide-react';
+import { ArrowLeft, Volume2, Moon, Sun, Headphones, CheckCircle2, Code2, Settings as SettingsIcon, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
@@ -9,7 +9,6 @@ import { Input } from '@/components/ui/input';
 import { audioEngine, AUDIO_THEMES } from '@/lib/audio/engine';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
-import { resetTutorial } from '@/lib/game/tutorial';
 import { activateCheat, deactivateCheat, getActiveCheats } from '@/lib/game/cheats';
 export function Settings() {
   const navigate = useNavigate();
@@ -434,36 +433,6 @@ export function Settings() {
               </p>
             </div>
             <Switch checked={reduceMotion} onCheckedChange={setReduceMotion} />
-          </div>
-        </section>
-
-        {/* Tutorial Section */}
-        <section className="space-y-4">
-          <div>
-            <h2 className="text-heading-3 mb-2 flex items-center gap-2">
-              <GraduationCap className="w-5 h-5" />
-              Tutorial
-            </h2>
-            <p className="text-small text-muted-foreground">
-              Reset your tutorial progress to see the introduction again
-            </p>
-          </div>
-
-          <div className="flat-card space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium">Reset Tutorial</p>
-                <p className="text-xs text-muted-foreground">
-                  Clear tutorial completion status and restart from the beginning
-                </p>
-              </div>
-              <Button variant="outline" size="sm" onClick={() => {
-              resetTutorial();
-              toast.success('Tutorial reset! Visit "How to Play" to start over.');
-            }}>
-                Reset Tutorial
-              </Button>
-            </div>
           </div>
         </section>
 
