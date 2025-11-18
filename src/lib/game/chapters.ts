@@ -53,8 +53,7 @@ export const CHAPTERS: ChapterConfig[] = [
       secondary: 'hsl(217, 91%, 70%)',
       accent: 'hsl(217, 91%, 50%)',
     },
-    replaysAvailable: undefined,
-    boonUnlock: 'sharper_ears',
+    replaysAvailable: -1, // Unlimited replays for learning
   },
   {
     id: 2,
@@ -72,8 +71,7 @@ export const CHAPTERS: ChapterConfig[] = [
       secondary: 'hsl(280, 91%, 70%)',
       accent: 'hsl(280, 91%, 50%)',
     },
-    replaysAvailable: 5,
-    boonUnlock: 'wide_net',
+    replaysAvailable: 0,
   },
   {
     id: 3,
@@ -91,8 +89,7 @@ export const CHAPTERS: ChapterConfig[] = [
       secondary: 'hsl(30, 91%, 70%)',
       accent: 'hsl(30, 91%, 50%)',
     },
-    replaysAvailable: 3,
-    boonUnlock: 'echo_memory',
+    replaysAvailable: 0,
   },
   {
     id: 4,
@@ -109,8 +106,7 @@ export const CHAPTERS: ChapterConfig[] = [
       secondary: 'hsl(350, 91%, 70%)',
       accent: 'hsl(350, 91%, 50%)',
     },
-    replaysAvailable: 2,
-    boonUnlock: 'phantom_sight',
+    replaysAvailable: 0,
   },
   {
     id: 5,
@@ -132,8 +128,7 @@ export const CHAPTERS: ChapterConfig[] = [
       secondary: 'hsl(45, 91%, 80%)',
       accent: 'hsl(45, 91%, 60%)',
     },
-    replaysAvailable: 1,
-    boonUnlock: 'master_sonar',
+    replaysAvailable: 0,
   },
 ];
 

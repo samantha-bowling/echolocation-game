@@ -160,7 +160,7 @@ export function GameStats({
       )}
 
       {/* Replays Remaining (when available) */}
-      {replaysAvailable !== undefined && (
+      {replaysAvailable !== undefined && (replaysAvailable > 0 || replaysAvailable === -1) && (
         <div className="flat-card bg-accent/10 backdrop-blur-sm border-accent/20 p-4">
           <div className="flex flex-col items-center text-center space-y-1">
             <div className="flex items-center gap-2 mb-0.5">
@@ -173,7 +173,7 @@ export function GameStats({
               "text-2xl font-display font-semibold",
               replaysRemaining === 0 ? 'text-muted-foreground' : 'text-accent'
             )}>
-              {replaysRemaining === Infinity ? '∞' : replaysRemaining}
+              {replaysRemaining === -1 ? '∞' : replaysRemaining}
             </div>
           </div>
         </div>
