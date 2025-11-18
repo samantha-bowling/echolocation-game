@@ -56,7 +56,7 @@ export const TUTORIAL_STEPS: Record<TutorialStep, {
   },
   scoring: {
     title: 'Understanding Your Score',
-    description: 'Your score is based on proximity (8 points per %, primary factor), ping efficiency, early guess bonus (100 pts per unused ping), and time performance (unified bonus/penalty). Achieve B rank (800+ points) or better to progress!',
+    description: 'Your score is based on proximity (8 points per %, most important), ping efficiency (save your pings!), and time performance (fast = bonus, slow = penalty). In Chapters 2-5, you\'ll earn special mechanic bonuses for mastering each chapter\'s unique challenge. Achieve B rank (800+ points) or better to progress!',
     action: 'Continue',
   },
   complete: {

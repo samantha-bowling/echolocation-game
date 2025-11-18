@@ -248,15 +248,6 @@ export function PostRoundSummary({
                 />
               )}
               
-              {score.components.earlyGuessBonus > 0 && (
-                <ScoreBreakdownItem 
-                  label="Early Guess Bonus"
-                  value={score.components.earlyGuessBonus}
-                  isPositive={true}
-                  detail={`Guessed ${totalPings - pingsUsed} pings early`}
-                  highlight={true}
-                />
-              )}
               
               {score.components.timeScore !== 0 && (
                 <ScoreBreakdownItem 
@@ -276,11 +267,13 @@ export function PostRoundSummary({
                 />
               )}
               
-            {score.components.boonBonus > 0 && (
+            {score.components.chapterMechanicBonus > 0 && (
               <ScoreBreakdownItem 
-                label="Boon Bonus"
-                value={score.components.boonBonus}
+                label="Chapter Mechanic Bonus"
+                value={score.components.chapterMechanicBonus}
                 isPositive={true}
+                detail="Mastery of chapter's special mechanic"
+                highlight={true}
               />
             )}
 
