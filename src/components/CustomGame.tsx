@@ -108,8 +108,8 @@ export function CustomGame() {
     );
     
     // Check win condition
-    const hasWon = config.winCondition 
-      ? checkWinCondition(proximity, config.winCondition)
+    const hasWon = config.winCondition && config.winCondition.type !== 'none'
+      ? checkWinCondition(proximity, pingsUsed, finalTime ?? elapsedTime, score.total, config.winCondition as any)
       : true;
     
     setScoreResult({ ...score, hasWon, proximity });

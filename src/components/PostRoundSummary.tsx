@@ -2,7 +2,7 @@ import { Trophy, Clock, Target, Zap, Lightbulb, Share2, Copy, Check, X, Volume2,
 import { Button } from '@/components/ui/button';
 import { InfoTooltip } from '@/components/InfoTooltip';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { getNextRankInfo, getPointsToNextRank, getProgressToNextRank, generateStrategicTips, getRankColor, RANK_THRESHOLDS } from '@/lib/game/scoring';
+import { getNextRankInfo, getPointsToNextRank, getProgressToNextRank, generateStrategicTips, getRankColor, RANK_THRESHOLDS, canProgressToNextLevel } from '@/lib/game/scoring';
 import { CustomGameConfig, encodeConfigToShareCode } from '@/lib/game/customConfig';
 import { useState } from 'react';
 
@@ -43,7 +43,7 @@ export function PostRoundSummary({
   replaysUsed = 0,
   replaysAvailable,
 }: PostRoundSummaryProps) {
-  const success = proximity >= 80;
+  const success = isCustomGame ? (passedCondition ?? false) : canProgressToNextLevel(score.rank);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
 
@@ -166,9 +166,11 @@ export function PostRoundSummary({
           </TooltipProvider>
           <p className="text-heading-2">{score.flavorText}</p>
           <p className="text-muted-foreground">
-            {success 
-              ? `Proximity ≥80% - Level Complete!` 
-              : `${proximity}% Proximity - Need 80% to advance`
+            {isCustomGame 
+              ? (success ? 'Win Condition Met!' : 'Win Condition Not Met')
+              : (success 
+                  ? `${score.rank} Rank - Advancing to Next Level!` 
+                  : `${score.rank} Rank - Need B Rank or better to advance`)
             }
           </p>
         </div>
@@ -256,11 +258,11 @@ export function PostRoundSummary({
                 />
               )}
               
-              {score.components.speedBonus > 0 && (
+              {score.components.timeScore !== 0 && (
                 <ScoreBreakdownItem 
-                  label="Speed Bonus"
-                  value={score.components.speedBonus}
-                  isPositive={true}
+                  label={score.components.timeScore > 0 ? "Time Bonus" : "Time Penalty"}
+                  value={Math.abs(score.components.timeScore)}
+                  isPositive={score.components.timeScore > 0}
                   detail={`Completed in ${timeElapsed.toFixed(1)}s`}
                 />
               )}
@@ -302,21 +304,6 @@ export function PostRoundSummary({
               />
             )}
           </div>
-            
-            {/* Negative Components - Red theme */}
-            {score.components.timePenalty > 0 && (
-              <div className="space-y-2 pt-2 border-t border-border/50">
-                <div className="text-xs font-semibold text-rose-400 uppercase tracking-wide">
-                  Deductions
-                </div>
-                <ScoreBreakdownItem 
-                  label="Time Penalty"
-                  value={score.components.timePenalty}
-                  isPositive={false}
-                  detail={`${timeElapsed.toFixed(1)}s × 2`}
-                />
-              </div>
-            )}
             
             {/* Multiplier */}
             {score.components.difficultyMultiplier !== 1.0 && (
