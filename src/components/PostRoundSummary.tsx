@@ -1,7 +1,8 @@
 import { Trophy, Clock, Target, Zap, Lightbulb, Share2, Copy, Check, X, Volume2, PartyPopper, HeartCrack } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { InfoTooltip } from '@/components/InfoTooltip';
-import { getNextRankInfo, getPointsToNextRank, getProgressToNextRank, generateStrategicTips, getRankColor } from '@/lib/game/scoring';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { getNextRankInfo, getPointsToNextRank, getProgressToNextRank, generateStrategicTips, getRankColor, RANK_THRESHOLDS } from '@/lib/game/scoring';
 import { CustomGameConfig, encodeConfigToShareCode } from '@/lib/game/customConfig';
 import { useState } from 'react';
 
@@ -130,17 +131,39 @@ export function PostRoundSummary({
 
         {/* Rank */}
         <div className="text-center space-y-2">
-          <div 
-            className={`inline-flex items-center justify-center w-20 h-20 rounded-full text-3xl font-display font-bold border-2 ${
-              getRankColor(score.rank).bg
-            } ${
-              getRankColor(score.rank).text
-            } ${
-              getRankColor(score.rank).border
-            }`}
-          >
-            {score.rank}
-          </div>
+          <TooltipProvider>
+            <Tooltip delayDuration={200}>
+              <TooltipTrigger asChild>
+                <div 
+                  className={`inline-flex items-center justify-center w-20 h-20 rounded-full text-3xl font-display font-bold border-2 cursor-help ${
+                    getRankColor(score.rank).bg
+                  } ${
+                    getRankColor(score.rank).text
+                  } ${
+                    getRankColor(score.rank).border
+                  }`}
+                >
+                  {score.rank}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-xs">
+                <div className="space-y-1.5">
+                  <p className="text-xs font-semibold mb-2">Rank Thresholds</p>
+                  {RANK_THRESHOLDS.map(({ rank, threshold }) => (
+                    <div 
+                      key={rank}
+                      className={`flex justify-between text-xs ${
+                        rank === score.rank ? 'font-bold text-accent' : 'text-muted-foreground'
+                      }`}
+                    >
+                      <span>{rank}:</span>
+                      <span>{threshold}+ points</span>
+                    </div>
+                  ))}
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           <p className="text-heading-2">{score.flavorText}</p>
           <p className="text-muted-foreground">
             {success 
@@ -148,49 +171,6 @@ export function PostRoundSummary({
               : `${proximity}% Proximity - Need 80% to advance`
             }
           </p>
-        </div>
-
-        {/* Rank Progression */}
-        <div className="flat-card space-y-3">
-          <div className="flex items-center justify-between text-tiny text-muted-foreground">
-            <span>CURRENT RANK</span>
-            <span>NEXT RANK</span>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <div className={`flex items-center justify-center w-12 h-12 rounded-lg text-xl font-display font-bold border ${
-              getRankColor(score.rank).bg
-            } ${
-              getRankColor(score.rank).text
-            } ${
-              getRankColor(score.rank).border
-            }`}>
-              {score.rank}
-            </div>
-            
-            <div className="flex-1 space-y-1">
-              <div className="h-2 bg-border rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-500"
-                  style={{ width: `${getProgressToNextRank(score.total, score.rank)}%` }}
-                />
-              </div>
-              <div className="flex justify-between text-tiny">
-                <span className="text-foreground font-mono">{score.total}</span>
-                {getNextRankInfo(score.rank) && (
-                  <span className="text-muted-foreground">
-                    {getNextRankInfo(score.rank)!.threshold} for {getNextRankInfo(score.rank)!.rank}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-          
-          {getPointsToNextRank(score.total, score.rank) > 0 && (
-            <p className="text-tiny text-center text-muted-foreground">
-              <span className="text-accent font-semibold">+{getPointsToNextRank(score.total, score.rank)}</span> points to rank up
-            </p>
-          )}
         </div>
 
         {/* Score */}
