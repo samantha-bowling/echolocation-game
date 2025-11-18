@@ -436,6 +436,9 @@ export function ClassicGame() {
             showHint={showHint}
             currentHint={currentHint}
             onCanvasClick={handleCanvasClick}
+            onPingReplay={handleReplayPing}
+            replaysRemaining={replaysRemaining}
+            replaysUsed={replaysUsed}
           />
 
           {/* Action Buttons */}

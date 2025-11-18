@@ -188,7 +188,7 @@ export function GameCanvas({
 
         {/* Ping History */}
         {pingHistory.map((ping, i) => {
-          const isReplayable = onPingReplay && (replaysRemaining === undefined || replaysRemaining > 0);
+          const isReplayable = onPingReplay && (replaysRemaining === undefined || replaysRemaining === -1 || replaysRemaining > 0);
           const hasBeenReplayed = ping.isReplayed;
           
           return (
