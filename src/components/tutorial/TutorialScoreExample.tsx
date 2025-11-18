@@ -80,10 +80,12 @@ export function TutorialScoreExample() {
       {/* Scoring Tips */}
       <div className="text-xs text-muted-foreground space-y-1">
         <p>• <span className="font-medium">Proximity matters most:</span> 8 points per percent (up to +800)</p>
-        <p>• <span className="font-medium">Save pings:</span> Higher efficiency bonus for unused pings</p>
-        <p>• <span className="font-medium">Time Performance:</span> Fast times (&lt;15s) earn bonuses, slow times (&gt;40s) get penalties</p>
-        <p>• <span className="font-medium">Chapter Mechanics:</span> In Chapters 2+, master special mechanics for bonus points</p>
-        <p>• <span className="font-medium">Achieve B rank or better</span> to progress to the next level</p>
+        <p>• <span className="font-medium">Save pings:</span> Higher efficiency bonus for unused pings (up to +400)</p>
+        <p>• <span className="font-medium">Time Performance:</span> Fast times (&lt;10s) earn bonuses, slow times (&gt;30s) get penalties</p>
+        <p>• <span className="font-medium">Chapter Mechanics:</span> In Chapters 2+, master special mechanics for +100-200 bonus points</p>
+        <p>• <span className="font-medium">Boss Levels:</span> Level 10 of each chapter is extra challenging and awards +150 bonus for B rank or better</p>
+        <p>• <span className="font-medium">No Participation Points:</span> Scores are skill-based—completion is its own reward!</p>
+        <p>• <span className="font-medium">Achieve B rank or better</span> (800+ points) to progress to the next level</p>
       </div>
     </div>
   );
