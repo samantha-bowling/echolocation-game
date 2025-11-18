@@ -179,7 +179,14 @@ export function getRank(score: number): string {
  * Check if player can progress to next level
  * Requires B rank or better (800+ points)
  */
-export function canProgressToNextLevel(rank: string): boolean {
+export function canProgressToNextLevel(rank: string, isBossLevel: boolean = false): boolean {
+  if (isBossLevel) {
+    // Boss levels (Level 10) require A rank or better
+    const bossProgressionRanks = ['SS', 'S+', 'S', 'A+', 'A'];
+    return bossProgressionRanks.includes(rank);
+  }
+  
+  // Regular levels require B rank or better
   const progressionRanks = ['SS', 'S+', 'S', 'A+', 'A', 'B+', 'B'];
   return progressionRanks.includes(rank);
 }

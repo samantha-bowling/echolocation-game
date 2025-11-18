@@ -187,12 +187,11 @@ export function ClassicGame() {
       chapterConfig.replaysAvailable
     );
 
-    // Update chapter stats
-    const updatedChapterStats = updateChapterStats(chapter, level, pingsUsed, scoreData.total, elapsedTime);
+    // Update chapter stats with rank
+    const updatedChapterStats = updateChapterStats(chapter, level, pingsUsed, scoreData.total, elapsedTime, scoreData.rank);
 
-    // Check if chapter was just completed (level 10) to award completion bonus
+    // Check if chapter was just completed (level 10)
     const isChapterComplete = (level % 10 === 0);
-    const completionBonus = isChapterComplete ? (updatedChapterStats.completionBonus || 0) : 0;
 
     setScoreResult({
       score: scoreData,
@@ -200,7 +199,6 @@ export function ClassicGame() {
       pingsUsed,
       totalPings: levelConfig.pings,
       timeElapsed: elapsedTime,
-      completionBonus,
     });
 
     localStorage.setItem('echo_classic_progress', JSON.stringify({
@@ -509,12 +507,11 @@ export function ClassicGame() {
       {/* Summary Modal */}
       {gameState === 'summary' && scoreResult && showSummaryModal && (
         <PostRoundSummary
-          score={scoreResult.score}
+          score={{ ...scoreResult.score, level }}
           proximity={scoreResult.proximity}
           pingsUsed={scoreResult.pingsUsed}
           totalPings={scoreResult.totalPings}
           timeElapsed={scoreResult.timeElapsed}
-          completionBonus={scoreResult.completionBonus}
           onNext={handleNextLevel}
           onRetry={handleRetry}
           onMenu={() => navigate('/')}

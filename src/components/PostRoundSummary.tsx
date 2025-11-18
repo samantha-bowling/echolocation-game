@@ -43,7 +43,9 @@ export function PostRoundSummary({
   replaysUsed = 0,
   replaysAvailable,
 }: PostRoundSummaryProps) {
-  const success = isCustomGame ? (passedCondition ?? false) : canProgressToNextLevel(score.rank);
+  // Detect boss level (Level 10, 20, 30, etc.) - only for classic mode
+  const isBossLevel = !isCustomGame && (typeof score.level === 'number' ? score.level % 10 === 0 : false);
+  const success = isCustomGame ? (passedCondition ?? false) : canProgressToNextLevel(score.rank, isBossLevel);
   const [showShareDialog, setShowShareDialog] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
 
@@ -169,8 +171,11 @@ export function PostRoundSummary({
             {isCustomGame 
               ? (success ? 'Win Condition Met!' : 'Win Condition Not Met')
               : (success 
-                  ? `${score.rank} Rank - Advancing to Next Level!` 
-                  : `${score.rank} Rank - Need B Rank or better to advance`)
+                  ? (isBossLevel ? `${score.rank} Rank - Boss Defeated!` : `${score.rank} Rank - Advancing to Next Level!`)
+                  : (isBossLevel 
+                      ? `${score.rank} Rank - Need A Rank or better to defeat boss` 
+                      : `${score.rank} Rank - Need B Rank or better to advance`)
+              )
             }
           </p>
         </div>
@@ -283,16 +288,6 @@ export function PostRoundSummary({
                 value={score.components.replayBonus}
                 isPositive={true}
                 detail={`${(replaysAvailable || 0) - replaysUsed} replays unused`}
-                highlight={true}
-              />
-            )}
-
-            {completionBonus > 0 && (
-              <ScoreBreakdownItem 
-                label="Chapter Complete!"
-                value={completionBonus}
-                isPositive={true}
-                detail="All 10 levels finished"
                 highlight={true}
               />
             )}
