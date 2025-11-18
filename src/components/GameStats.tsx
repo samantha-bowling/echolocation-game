@@ -1,9 +1,17 @@
-import { Radio, Sparkles, Volume2 } from 'lucide-react';
+import { Radio, Volume2 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
-import { InfoTooltip } from './InfoTooltip';
 import { getChapterConfig } from '@/lib/game/chapters';
 import { Progress } from '@/components/ui/progress';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Button } from '@/components/ui/button';
+import { Boon } from '@/lib/game/boons';
+import { getHeaderBadges, getBadgeClasses } from '@/lib/game/headerBadges';
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export interface GameStatsProps {
   pingsRemaining: number;
@@ -18,6 +26,7 @@ export interface GameStatsProps {
     chapter: number;
     level: number;
   };
+  activeBoon?: Boon;
 }
 
 export function GameStats({
@@ -30,12 +39,19 @@ export function GameStats({
   replaysRemaining,
   replaysAvailable,
   levelInfo,
+  activeBoon,
 }: GameStatsProps) {
   const isMobile = useIsMobile();
   
-  // Check if this is a boss level
-  const isBossLevel = levelInfo ? levelInfo.level % 10 === 0 : false;
-
+  // Generate badges using registry
+  const badges = levelInfo ? getHeaderBadges(
+    levelInfo.level,
+    levelInfo.chapter,
+    getChapterConfig(levelInfo.chapter).specialMechanic
+  ) : [];
+  
+  const maxVisibleBadges = isMobile ? 1 : 3;
+  
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
@@ -50,69 +66,133 @@ export function GameStats({
   };
 
   return (
-    <div className={cn(
-      "grid gap-3",
-      levelInfo 
-        ? (isMobile ? "grid-cols-2" : "grid-cols-4")
-        : timerEnabled 
-          ? (isMobile ? "grid-cols-2" : "grid-cols-3")
-          : "grid-cols-2"  // Tutorial mode: only pings, no timer, no level
-    )}>
-      {/* Level Info (Classic Mode Only) */}
+    <div className="space-y-3">
+      {/* Tier 1: Progress Banner (Classic Mode Only) */}
       {levelInfo && (
         <div className="flat-card bg-secondary/50 backdrop-blur-sm">
-          <div className="flex items-center gap-2 mb-1">
-            <div className="text-tiny text-muted-foreground uppercase tracking-wider font-medium">
-              Progress
-            </div>
-            {isBossLevel && (
-              <div className="text-tiny font-bold text-accent bg-accent/20 px-2 py-0.5 rounded">
-                BOSS LEVEL
+          <div className={cn(
+            "flex gap-4",
+            isMobile ? "flex-col items-start" : "items-center justify-between"
+          )}>
+            {/* Left: Chapter + Level */}
+            <div className={cn(
+              "flex flex-col gap-1",
+              isMobile && "w-full"
+            )}>
+              <div className="text-2xl font-display font-semibold text-foreground truncate">
+                {getChapterConfig(levelInfo.chapter).name}
               </div>
-            )}
-            {(() => {
-              const chapterConfig = getChapterConfig(levelInfo.chapter);
-              if (chapterConfig.specialMechanic) {
-                const mechanicDescriptions: Record<string, string> = {
-                  shrinking_target: 'Target shrinks after each ping',
-                  moving_target: 'Target moves after each ping',
-                  phantom_targets: 'Decoy targets appear',
-                  combined_challenge: 'All mechanics combined!',
-                };
-                return (
-                  <div className="flex items-center gap-1">
-                    <Sparkles className="w-3.5 h-3.5 text-primary" />
-                    <InfoTooltip content={mechanicDescriptions[chapterConfig.specialMechanic] || chapterConfig.specialMechanic} />
-                  </div>
-                );
-              }
-              return null;
-            })()}
-          </div>
-          <div className="text-xl font-display font-semibold text-foreground">
-            {getChapterConfig(levelInfo.chapter).name}
-          </div>
-          <div className="text-sm text-muted-foreground">
-            Level {levelInfo.level}
-          </div>
-          {/* Mini Progress Bar */}
-          <div className="mt-2 space-y-1">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Chapter</span>
-              <span className="font-medium text-foreground">
-                {((levelInfo.level - 1) % 10) + 1}/10
-              </span>
+              <div className="text-sm text-muted-foreground">
+                Level {levelInfo.level}
+              </div>
             </div>
-            <Progress 
-              value={((((levelInfo.level - 1) % 10) + 1) / 10) * 100} 
-              className="h-1.5"
-            />
+
+            {/* Center: Progress Bar + Active Boon */}
+            <div className={cn(
+              "space-y-2",
+              isMobile ? "w-full" : "flex-1 max-w-md px-6"
+            )}>
+              {/* Progress Bar */}
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground">Chapter Progress</span>
+                  <span className="font-medium text-foreground">
+                    {((levelInfo.level - 1) % 10) + 1}/10
+                  </span>
+                </div>
+                <Progress 
+                  value={((((levelInfo.level - 1) % 10) + 1) / 10) * 100} 
+                  className="h-2"
+                />
+              </div>
+              
+              {/* Active Boon Indicator */}
+              {activeBoon && (
+                <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                  <span className="text-lg">{activeBoon.icon}</span>
+                  <span>
+                    Active: <span className="text-foreground font-medium">{activeBoon.name}</span>
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Right: Badges with Overflow */}
+            <div className={cn(
+              "flex items-center gap-2 flex-shrink-0",
+              isMobile && "w-full flex-wrap"
+            )}>
+              {badges.slice(0, maxVisibleBadges).map(badge => (
+                badge.tooltip ? (
+                  <Tooltip key={badge.id}>
+                    <TooltipTrigger asChild>
+                      <div className={getBadgeClasses(badge.variant)}>
+                        {badge.icon}
+                        <span>{badge.label}</span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{badge.tooltip}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <div key={badge.id} className={getBadgeClasses(badge.variant)}>
+                    {badge.icon}
+                    <span>{badge.label}</span>
+                  </div>
+                )
+              ))}
+              
+              {badges.length > maxVisibleBadges && (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-8 px-2 text-tiny">
+                      +{badges.length - maxVisibleBadges}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-2">
+                    <div className="flex flex-col gap-2">
+                      {badges.slice(maxVisibleBadges).map(badge => (
+                        badge.tooltip ? (
+                          <Tooltip key={badge.id}>
+                            <TooltipTrigger asChild>
+                              <div className={getBadgeClasses(badge.variant)}>
+                                {badge.icon}
+                                <span>{badge.label}</span>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>{badge.tooltip}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : (
+                          <div key={badge.id} className={getBadgeClasses(badge.variant)}>
+                            {badge.icon}
+                            <span>{badge.label}</span>
+                          </div>
+                        )
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              )}
+            </div>
           </div>
         </div>
       )}
 
-      {/* Pings Stat */}
-      <div className="flat-card bg-primary/10 backdrop-blur-sm border-primary/20 p-4">
+      {/* Tier 2: Stats Row */}
+      <div className={cn(
+        "grid gap-3",
+        levelInfo 
+          ? (isMobile ? "grid-cols-2" : "grid-cols-4")
+          : timerEnabled 
+            ? (isMobile ? "grid-cols-2" : "grid-cols-3")
+            : "grid-cols-2"  // Tutorial mode: only pings, no timer, no level
+      )}>
+
+        {/* Pings Stat */}
+        <div className="flat-card bg-primary/10 backdrop-blur-sm border-primary/20 p-4">
         <div className="flex flex-col items-center text-center space-y-1">
           <div className="flex items-center gap-2 mb-0.5">
             <Radio className="w-3.5 h-3.5 text-primary" />
@@ -127,57 +207,58 @@ export function GameStats({
           )}>
             {pingsMode === 'unlimited' ? pingsUsed : pingsRemaining}
           </div>
-        </div>
-      </div>
-
-      {/* Timer (if enabled) */}
-      {timerEnabled && (
-        <div className="flat-card bg-accent/10 backdrop-blur-sm border-accent/20">
-          <div className="text-tiny text-muted-foreground uppercase tracking-wider font-medium mb-1">
-            Time
-          </div>
-          <div className={cn(
-            "text-xl font-display font-semibold font-mono",
-            finalTime !== null ? 'text-foreground' : getTimeColor(elapsedTime)
-          )}>
-            {formatTime(finalTime ?? elapsedTime)}
           </div>
         </div>
-      )}
 
-      {/* Total Pings Used (for unlimited mode or as additional stat) */}
-      {(pingsMode === 'limited' || !timerEnabled) && (
-        <div className="flat-card bg-secondary/50 backdrop-blur-sm p-4">
-          <div className="flex flex-col items-center text-center space-y-1">
-            <div className="text-tiny text-muted-foreground uppercase tracking-wider font-medium mb-0.5">
-              Pings Used
-            </div>
-            <div className="text-2xl font-display font-semibold text-foreground">
-              {pingsUsed}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Replays Remaining (when available) */}
-      {replaysAvailable !== undefined && (replaysAvailable > 0 || replaysAvailable === -1) && (
-        <div className="flat-card bg-accent/10 backdrop-blur-sm border-accent/20 p-4">
-          <div className="flex flex-col items-center text-center space-y-1">
-            <div className="flex items-center gap-2 mb-0.5">
-              <Volume2 className="w-3.5 h-3.5 text-accent" />
-              <div className="text-tiny text-muted-foreground uppercase tracking-wider font-medium">
-                Replays
-              </div>
+        {/* Timer (if enabled) */}
+        {timerEnabled && (
+          <div className="flat-card bg-accent/10 backdrop-blur-sm border-accent/20">
+            <div className="text-tiny text-muted-foreground uppercase tracking-wider font-medium mb-1">
+              Time
             </div>
             <div className={cn(
-              "text-2xl font-display font-semibold",
-              replaysRemaining === 0 ? 'text-muted-foreground' : 'text-accent'
+              "text-xl font-display font-semibold font-mono",
+              finalTime !== null ? 'text-foreground' : getTimeColor(elapsedTime)
             )}>
-              {replaysRemaining === -1 ? '∞' : replaysRemaining}
+              {formatTime(finalTime ?? elapsedTime)}
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* Total Pings Used (for unlimited mode or as additional stat) */}
+        {(pingsMode === 'limited' || !timerEnabled) && (
+          <div className="flat-card bg-secondary/50 backdrop-blur-sm p-4">
+            <div className="flex flex-col items-center text-center space-y-1">
+              <div className="text-tiny text-muted-foreground uppercase tracking-wider font-medium mb-0.5">
+                Pings Used
+              </div>
+              <div className="text-2xl font-display font-semibold text-foreground">
+                {pingsUsed}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Replays Remaining (when available) */}
+        {replaysAvailable !== undefined && (replaysAvailable > 0 || replaysAvailable === -1) && (
+          <div className="flat-card bg-accent/10 backdrop-blur-sm border-accent/20 p-4">
+            <div className="flex flex-col items-center text-center space-y-1">
+              <div className="flex items-center gap-2 mb-0.5">
+                <Volume2 className="w-3.5 h-3.5 text-accent" />
+                <div className="text-tiny text-muted-foreground uppercase tracking-wider font-medium">
+                  Replays
+                </div>
+              </div>
+              <div className={cn(
+                "text-2xl font-display font-semibold",
+                replaysRemaining === 0 ? 'text-muted-foreground' : 'text-accent'
+              )}>
+                {replaysRemaining === -1 ? '∞' : replaysRemaining}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
