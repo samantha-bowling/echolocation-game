@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Lightbulb, BarChart3 } from 'lucide-react';
+import { ArrowLeft, Lightbulb, BarChart3, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { generateTargetPosition, getTargetCenter, Position, PhantomTarget, generatePhantomTargets } from '@/lib/game/coords';
 import { calculateProximity } from '@/lib/game/distance';
@@ -19,7 +19,8 @@ import { useGamePhase } from '@/hooks/useGamePhase';
 import { useHintSystem } from '@/hooks/useHintSystem';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { updateChapterStats, loadChapterStats, getSeenChapterIntros } from '@/lib/game/chapterStats';
-import { getUnlockedBoons, applyBoonEffects } from '@/lib/game/boons';
+import { getUnlockedBoons, applyBoonEffects, getRandomBoonByArchetype, type Boon } from '@/lib/game/boons';
+import { isCheatActive } from '@/lib/game/cheats';
 import { cn } from '@/lib/utils';
 
 export function ClassicGame() {
@@ -49,12 +50,15 @@ export function ClassicGame() {
   const [showSummaryModal, setShowSummaryModal] = useState(true);
   const [showBoonSelection, setShowBoonSelection] = useState(false);
   const [activeBoons, setActiveBoons] = useState<string[]>([]);
+  const [boonChoices, setBoonChoices] = useState<{ precision: Boon; efficiency: Boon; adaptability: Boon } | null>(null);
   const [completedChapters, setCompletedChapters] = useState<number[]>(() => {
     const stats = loadChapterStats();
     return Object.values(stats)
       .filter(s => s.levelsCompleted === 10)
       .map((_, idx) => idx + 1);
   });
+
+  const canSwapBoons = isCheatActive('SWAP_BOONS');
 
   const chapter = getChapterFromLevel(level);
   const levelConfig = getLevelConfig(chapter, level);
@@ -286,7 +290,40 @@ export function ClassicGame() {
 
   const handleContinueAfterChapterComplete = () => {
     setShowChapterComplete(false);
+    
+    // Show boon selection after chapters 1-4 (for next chapter)
+    const nextChapter = chapter + 1;
+    if (nextChapter >= 2 && nextChapter <= 5) {
+      const precisionBoon = getRandomBoonByArchetype('precision', activeBoons);
+      const efficiencyBoon = getRandomBoonByArchetype('efficiency', activeBoons);
+      const adaptabilityBoon = getRandomBoonByArchetype('adaptability', activeBoons);
+      
+      setBoonChoices({ precision: precisionBoon, efficiency: efficiencyBoon, adaptability: adaptabilityBoon });
+      setShowBoonSelection(true);
+    } else {
+      handleNextLevel();
+    }
+  };
+
+  const handleBoonConfirm = (selectedBoonId: string) => {
+    setActiveBoons([selectedBoonId]); // Replace with single boon
+    setShowBoonSelection(false);
     handleNextLevel();
+  };
+
+  const handleBoonSkip = () => {
+    setActiveBoons([]);
+    setShowBoonSelection(false);
+    handleNextLevel();
+  };
+
+  const handleSwapBoonClick = () => {
+    const precisionBoon = getRandomBoonByArchetype('precision', activeBoons);
+    const efficiencyBoon = getRandomBoonByArchetype('efficiency', activeBoons);
+    const adaptabilityBoon = getRandomBoonByArchetype('adaptability', activeBoons);
+    
+    setBoonChoices({ precision: precisionBoon, efficiency: efficiencyBoon, adaptability: adaptabilityBoon });
+    setShowBoonSelection(true);
   };
 
   const handleRepositionGuessWithTimer = () => {
@@ -300,30 +337,18 @@ export function ClassicGame() {
       {showChapterIntro && (
         <ChapterIntro
           chapter={chapterConfig}
-          onClose={() => {
-            setShowChapterIntro(false);
-            // After intro, show boon selection for chapters 2-5
-            const unlockedBoons = getUnlockedBoons(completedChapters);
-            if (chapter >= 2 && chapter <= 5 && unlockedBoons.length > 0) {
-              setShowBoonSelection(true);
-            }
-          }}
+          onClose={() => setShowChapterIntro(false)}
         />
       )}
 
       {/* Boon Selection Modal */}
-      {showBoonSelection && (
+      {showBoonSelection && boonChoices && (
         <BoonSelection
-          availableBoons={getUnlockedBoons(completedChapters)}
-          maxSelections={chapter === 2 ? 1 : 2}
-          onConfirm={(selectedBoonIds) => {
-            setActiveBoons(selectedBoonIds);
-            setShowBoonSelection(false);
-          }}
-          onSkip={() => {
-            setActiveBoons([]);
-            setShowBoonSelection(false);
-          }}
+          precisionBoon={boonChoices.precision}
+          efficiencyBoon={boonChoices.efficiency}
+          adaptabilityBoon={boonChoices.adaptability}
+          onConfirm={handleBoonConfirm}
+          onSkip={handleBoonSkip}
           chapterName={chapterConfig.name}
         />
       )}
@@ -333,22 +358,7 @@ export function ClassicGame() {
         <ChapterComplete
           chapter={chapterConfig}
           stats={loadChapterStats()[chapter]}
-          onContinue={() => {
-            setShowChapterComplete(false);
-            setChapterTransition(chapterConfig.name);
-            setTimeout(() => {
-              setChapterTransition(null);
-              setShowChapterIntro(true);
-              
-              // After chapter intro, show boon selection for chapters 2-5
-              const unlockedBoons = getUnlockedBoons(completedChapters);
-              if (chapter >= 2 && chapter <= 5 && unlockedBoons.length > 0) {
-                setTimeout(() => {
-                  setShowBoonSelection(true);
-                }, 500);
-              }
-            }, 2000);
-          }}
+          onContinue={handleContinueAfterChapterComplete}
           onMainMenu={() => navigate('/')}
         />
       )}
@@ -382,18 +392,32 @@ export function ClassicGame() {
           timerEnabled={true}
           levelInfo={{ chapter, level }}
           replaysRemaining={replaysRemaining}
-          replaysAvailable={chapterConfig.replaysAvailable}
+          replaysAvailable={boonEffects.replays}
         />
 
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setShowHint(!showHint)}
-          className="gap-2"
-        >
-          <Lightbulb className={cn('w-4 h-4', showHint && 'text-accent')} />
-          {!isMobile && 'Hint'}
-        </Button>
+        <div className="flex gap-2">
+          {canSwapBoons && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSwapBoonClick}
+              className="gap-2"
+            >
+              <Sparkles className="w-4 h-4" />
+              {!isMobile && 'Change Boon'}
+            </Button>
+          )}
+          
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowHint(!showHint)}
+            className="gap-2"
+          >
+            <Lightbulb className={cn('w-4 h-4', showHint && 'text-accent')} />
+            {!isMobile && 'Hint'}
+          </Button>
+        </div>
       </div>
 
       {/* Game Canvas */}

@@ -12,6 +12,12 @@ export const CHEAT_CODES: CheatCode[] = [
     description: 'Unlock all 5 chapters for immediate access',
     category: 'progression',
   },
+  {
+    code: 'SWAP_BOONS',
+    name: 'Unlimited Boon Swapping',
+    description: 'Change your active boon at any time during gameplay',
+    category: 'gameplay',
+  },
 ];
 
 export function activateCheat(code: string): boolean {

@@ -37,7 +37,7 @@ export function usePingSystem({
   const [pingHistory, setPingHistory] = useState<StoredPing[]>([]);
   const [pingsRemaining, setPingsRemaining] = useState(initialPings);
   const [pingsUsed, setPingsUsed] = useState(0);
-  const [replaysRemaining, setReplaysRemaining] = useState(replaysAvailable ?? Infinity);
+  const [replaysRemaining, setReplaysRemaining] = useState(replaysAvailable ?? 0);
   const [replaysUsed, setReplaysUsed] = useState(0);
 
   const handlePing = (clickPos: Position) => {
@@ -132,7 +132,7 @@ export function usePingSystem({
   };
 
   const handleReplayPing = (pingIndex: number) => {
-    if (replaysRemaining <= 0 && replaysAvailable !== undefined) return false;
+    if (replaysRemaining !== -1 && replaysRemaining <= 0) return false;
     if (pingIndex < 0 || pingIndex >= pingHistory.length) return false;
     
     const originalPing = pingHistory[pingIndex];
@@ -144,8 +144,8 @@ export function usePingSystem({
       Math.max(arenaSize.width, arenaSize.height)
     );
     
-    // Update replay counts
-    if (replaysAvailable !== undefined) {
+    // Update replay counts (unless unlimited)
+    if (replaysAvailable !== undefined && replaysRemaining !== -1) {
       setReplaysRemaining(prev => prev - 1);
     }
     setReplaysUsed(prev => prev + 1);
@@ -163,7 +163,7 @@ export function usePingSystem({
     setPingHistory([]);
     setPingsRemaining(initialPings);
     setPingsUsed(0);
-    setReplaysRemaining(replaysAvailable ?? Infinity);
+    setReplaysRemaining(replaysAvailable ?? 0);
     setReplaysUsed(0);
   };
 
