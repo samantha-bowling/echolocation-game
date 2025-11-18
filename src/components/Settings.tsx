@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Volume2, Moon, Sun, Headphones, CheckCircle2, Code2, Settings as SettingsIcon, Palette } from 'lucide-react';
+import { ArrowLeft, Volume2, Moon, Sun, Headphones, CheckCircle2, Code2, Settings as SettingsIcon, Palette, BookOpen, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
@@ -10,6 +10,7 @@ import { audioEngine, AUDIO_THEMES } from '@/lib/audio/engine';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
 import { activateCheat, deactivateCheat, getActiveCheats } from '@/lib/game/cheats';
+import { CheatReferenceDialog } from '@/components/CheatReferenceDialog';
 export function Settings() {
   const navigate = useNavigate();
   const {
@@ -27,6 +28,7 @@ export function Settings() {
   });
   const [cheatCodeInput, setCheatCodeInput] = useState('');
   const [activeCheats, setActiveCheats] = useState(getActiveCheats());
+  const [showCheatReference, setShowCheatReference] = useState(false);
   useEffect(() => {
     audioEngine.setVolume(volume[0] / 100);
   }, [volume]);
@@ -178,15 +180,20 @@ export function Settings() {
     if (!cheatCodeInput.trim()) return;
     const success = activateCheat(cheatCodeInput);
     if (success) {
+      const normalizedCode = cheatCodeInput.toUpperCase().trim();
+      const isKonamiCode = normalizedCode === 'UP_UP_DOWN_DOWN_LEFT_RIGHT_LEFT_RIGHT_B_A_START';
+      
       toast.success(`Cheat activated: ${cheatCodeInput}`, {
-        description: 'All chapters unlocked! 🎮',
+        description: isKonamiCode 
+          ? 'Click "View All" to see all available cheats! 🕹️'
+          : 'Cheat code successfully activated! 🎮',
         duration: 3000
       });
       setCheatCodeInput('');
       setActiveCheats(getActiveCheats());
     } else {
       toast.error('Invalid code', {
-        description: 'Try UNLOCK_ALL to unlock all chapters',
+        description: 'Check your spelling and try again',
         duration: 2500
       });
     }
@@ -462,16 +469,37 @@ export function Settings() {
             {/* Active Cheats Display */}
             {activeCheats.length > 0 ? <div className="space-y-2">
                 <Label className="text-sm font-semibold">Active Cheats:</Label>
-                {activeCheats.map(cheat => <div key={cheat.code} className="flex items-center justify-between p-3 bg-primary/10 rounded-lg border border-primary/20">
+                {activeCheats.map(cheat => <div key={cheat.code} className={`flex items-center justify-between p-3 rounded-lg border transition-all duration-300 ${
+                  cheat.special 
+                    ? 'bg-gradient-to-r from-primary/10 via-purple-500/10 to-primary/10 border-primary/30 shadow-lg shadow-primary/5 animate-pulse-slow'
+                    : 'bg-primary/10 border-primary/20'
+                }`}>
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-foreground">{cheat.name}</p>
+                      <div className="flex items-center gap-2">
+                        {cheat.special && <Sparkles className="w-4 h-4 text-purple-400" />}
+                        <p className="text-sm font-medium text-foreground">{cheat.name}</p>
+                      </div>
                       <p className="text-xs text-muted-foreground">
                         {cheat.description}
                       </p>
                     </div>
-                    <Button variant="ghost" size="sm" onClick={() => handleDeactivateCheat(cheat.code)} className="text-xs shrink-0 ml-2">
-                      Deactivate
-                    </Button>
+                    
+                    <div className="flex items-center gap-2 shrink-0 ml-2">
+                      {cheat.special && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowCheatReference(true)}
+                          className="text-xs bg-primary/5 hover:bg-primary/10 border-primary/30"
+                        >
+                          <BookOpen className="w-3 h-3 mr-1" />
+                          View All
+                        </Button>
+                      )}
+                      <Button variant="ghost" size="sm" onClick={() => handleDeactivateCheat(cheat.code)} className="text-xs">
+                        Deactivate
+                      </Button>
+                    </div>
                   </div>)}
               </div> : <p className="text-xs text-muted-foreground italic">
                 No active cheats.
@@ -480,5 +508,11 @@ export function Settings() {
         </section>
 
       </div>
+
+      {/* Cheat Reference Dialog */}
+      <CheatReferenceDialog
+        open={showCheatReference}
+        onOpenChange={setShowCheatReference}
+      />
     </div>;
 }

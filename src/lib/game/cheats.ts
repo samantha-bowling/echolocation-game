@@ -2,10 +2,18 @@ export interface CheatCode {
   code: string;
   name: string;
   description: string;
-  category: 'progression' | 'gameplay' | 'debug';
+  category: 'progression' | 'gameplay' | 'debug' | 'meta';
+  special?: boolean;
 }
 
 export const CHEAT_CODES: CheatCode[] = [
+  {
+    code: 'UP_UP_DOWN_DOWN_LEFT_RIGHT_LEFT_RIGHT_B_A_START',
+    name: 'Cheat Code Reference',
+    description: 'View all available cheat codes',
+    category: 'meta',
+    special: true,
+  },
   {
     code: 'UNLOCK_ALL',
     name: 'Unlock All Chapters',
@@ -43,4 +51,8 @@ export function isCheatActive(code: string): boolean {
 
 export function getActiveCheats(): CheatCode[] {
   return CHEAT_CODES.filter(cheat => isCheatActive(cheat.code));
+}
+
+export function getAllCheats(): CheatCode[] {
+  return CHEAT_CODES;
 }

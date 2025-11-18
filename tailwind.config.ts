@@ -90,6 +90,7 @@ export default {
         "ripple": "ripple 0.4s ease-out",
         "fade-in": "fade-in 0.15s ease-out",
         "scale-in": "scale-in 0.09s ease-out",
+        "pulse-slow": "pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite",
       },
       transitionDuration: {
         'snap': '90ms',
