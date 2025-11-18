@@ -19,7 +19,7 @@ import { useGamePhase } from '@/hooks/useGamePhase';
 import { useHintSystem } from '@/hooks/useHintSystem';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { updateChapterStats, loadChapterStats, getSeenChapterIntros } from '@/lib/game/chapterStats';
-import { getUnlockedBoons, applyBoonEffects, getRandomBoonByArchetype, type Boon } from '@/lib/game/boons';
+import { getUnlockedBoons, applyBoonEffects, getRandomBoonByArchetype, type Boon, getBoonById } from '@/lib/game/boons';
 import { isCheatActive } from '@/lib/game/cheats';
 import { cn } from '@/lib/utils';
 
@@ -372,52 +372,62 @@ export function ClassicGame() {
         </div>
       )}
 
-      {/* Header */}
-      <div className="w-full p-4 flex items-center justify-between gap-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate('/')}
-          className="gap-2"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          {!isMobile && 'Menu'}
-        </Button>
+      {/* Header with Navigation and Stats */}
+      <div className="absolute top-0 left-0 right-0 z-20 p-3 md:p-4 space-y-3">
+        {/* Row 1: Navigation + Actions */}
+        <div className="flex items-center justify-between">
+          {/* Menu Button */}
+          <button
+            onClick={() => navigate('/chapters')}
+            className="flat-card p-2 hover:bg-accent/20 transition-all"
+          >
+            <ArrowLeft className="w-5 h-5 text-foreground" />
+          </button>
 
+          {/* Action Buttons */}
+          <div className="flex items-center gap-2">
+            {/* Change Boon button */}
+            {canSwapBoons && (
+              <button
+                onClick={handleSwapBoonClick}
+                className="flat-card px-3 py-2 hover:bg-primary/20 transition-all flex items-center gap-2"
+              >
+                <Sparkles className="w-4 h-4 text-primary" />
+                <span className="text-sm font-medium text-foreground hidden md:inline">
+                  Change Boon
+                </span>
+              </button>
+            )}
+
+            {/* Hint Button */}
+            <button
+              onClick={() => setShowHint(!showHint)}
+              className="flat-card p-2 transition-all flex items-center gap-2 hover:bg-accent/20"
+            >
+              <Lightbulb className={cn(
+                "w-5 h-5",
+                showHint ? "text-accent" : "text-foreground"
+              )} />
+            </button>
+          </div>
+        </div>
+
+        {/* Row 2-3: Full-Width GameStats */}
         <GameStats
           pingsRemaining={pingsRemaining}
           pingsUsed={pingsUsed}
           elapsedTime={elapsedTime}
           finalTime={finalTime}
           timerEnabled={true}
-          levelInfo={{ chapter, level }}
+          pingsMode="limited"
           replaysRemaining={replaysRemaining}
           replaysAvailable={boonEffects.replays}
+          levelInfo={{
+            chapter,
+            level,
+          }}
+          activeBoon={activeBoons.length > 0 ? getBoonById(activeBoons[0]) : undefined}
         />
-
-        <div className="flex gap-2">
-          {canSwapBoons && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleSwapBoonClick}
-              className="gap-2"
-            >
-              <Sparkles className="w-4 h-4" />
-              {!isMobile && 'Change Boon'}
-            </Button>
-          )}
-          
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowHint(!showHint)}
-            className="gap-2"
-          >
-            <Lightbulb className={cn('w-4 h-4', showHint && 'text-accent')} />
-            {!isMobile && 'Hint'}
-          </Button>
-        </div>
       </div>
 
       {/* Game Canvas */}
