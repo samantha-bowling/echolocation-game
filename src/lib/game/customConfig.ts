@@ -2,6 +2,11 @@ export interface CustomGameConfig {
   // Pings
   pingsMode: 'limited' | 'unlimited';
   pingsCount: number;
+  showPingLocations: boolean; // Show visual ping markers
+  
+  // Ping Replays
+  pingReplaysEnabled: boolean;
+  replaysCount: number;
   
   // Target
   targetSize: number;
@@ -25,8 +30,7 @@ export interface CustomGameConfig {
     proximityThreshold?: number;
   };
 
-  // Multi-Round
-  multiRound: boolean;
+  // Rounds: number (1-100) or -1 for unlimited "cozy mode"
   numberOfRounds: number;
 
   // Hints
@@ -37,6 +41,9 @@ export interface CustomGameConfig {
 export const DEFAULT_CUSTOM_CONFIG: CustomGameConfig = {
   pingsMode: 'limited',
   pingsCount: 5,
+  showPingLocations: true,
+  pingReplaysEnabled: false,
+  replaysCount: 0,
   targetSize: 100,
   movementMode: 'static',
   movementTrigger: 3,
@@ -48,8 +55,7 @@ export const DEFAULT_CUSTOM_CONFIG: CustomGameConfig = {
   winCondition: {
     type: 'none',
   },
-  multiRound: false,
-  numberOfRounds: 3,
+  numberOfRounds: 1,
   hintsEnabled: false,
   hintLevel: 'basic',
 };
@@ -122,11 +128,13 @@ export function encodeConfigToShareCode(config: CustomGameConfig): string {
   try {
     const compact = {
       p: config.pingsMode === 'unlimited' ? -1 : config.pingsCount,
+      pl: config.showPingLocations ? 1 : 0,
+      re: config.pingReplaysEnabled ? 1 : 0,
+      rc: config.replaysCount,
       t: config.timerEnabled ? 1 : 0,
       m: config.movementMode === 'static' ? 0 : config.movementTrigger,
       a: config.arenaSize === 'small' ? 0 : config.arenaSize === 'medium' ? 1 : 2,
       s: config.targetSize,
-      mr: config.multiRound ? 1 : 0,
       n: config.numberOfRounds,
       h: config.hintsEnabled ? 1 : 0,
       hl: config.hintLevel === 'basic' ? 0 : 1,
@@ -159,13 +167,15 @@ export function decodeShareCodeToConfig(shareCode: string): CustomGameConfig | n
     const config: CustomGameConfig = {
       pingsMode: compact.p === -1 ? 'unlimited' : 'limited',
       pingsCount: compact.p === -1 ? DEFAULT_CUSTOM_CONFIG.pingsCount : compact.p,
+      showPingLocations: compact.pl === 1,
+      pingReplaysEnabled: compact.re === 1,
+      replaysCount: compact.rc ?? 0,
       timerEnabled: compact.t === 1,
       movementMode: compact.m === 0 ? 'static' : 'after-pings',
       movementTrigger: compact.m === 0 ? DEFAULT_CUSTOM_CONFIG.movementTrigger : compact.m,
       arenaSize: compact.a === 0 ? 'small' : compact.a === 1 ? 'medium' : 'large',
       targetSize: compact.s,
-      multiRound: compact.mr === 1,
-      numberOfRounds: compact.n,
+      numberOfRounds: compact.n ?? 1,
       hintsEnabled: compact.h === 1,
       hintLevel: compact.hl === 0 ? 'basic' : 'detailed',
       winCondition: compact.wc === 'none' ? { type: 'none' } : {
