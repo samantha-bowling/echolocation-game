@@ -252,7 +252,6 @@ export function CustomGame() {
             replaysRemaining={replaysRemaining}
             replaysUsed={replaysUsed}
             canvasRef={canvasRef}
-          />
             showTargetMovementIndicator={config.movementMode === 'after-pings'}
           />
 

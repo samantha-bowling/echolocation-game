@@ -422,6 +422,58 @@ export function CustomMode() {
             </p>
           </div>
 
+          {/* Ping Location Visibility */}
+          <div className="flat-card flex items-center justify-between">
+            <div className="space-y-1">
+              <Label className="text-base">Show Ping Locations</Label>
+              <p className="text-small text-muted-foreground">
+                {showPingLocations 
+                  ? 'Visual markers show where you pinged'
+                  : '🔥 Hardcore: Only audio feedback, no visual markers!'
+                }
+              </p>
+            </div>
+            <Switch checked={showPingLocations} onCheckedChange={setShowPingLocations} />
+          </div>
+
+          {/* Ping Replays */}
+          <div className="flat-card space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label className="text-base">Ping Replays</Label>
+                <p className="text-small text-muted-foreground">
+                  {pingReplaysEnabled 
+                    ? `Replay previous pings (${replaysCount === 0 ? 'Unlimited' : replaysCount})`
+                    : 'No replays - remember your pings!'
+                  }
+                </p>
+              </div>
+              <Switch checked={pingReplaysEnabled} onCheckedChange={setPingReplaysEnabled} />
+            </div>
+            
+            {pingReplaysEnabled && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-small text-muted-foreground">Replay Count</Label>
+                  <span className="text-base font-mono">{replaysCount === 0 ? '∞' : replaysCount}</span>
+                </div>
+                <Slider
+                  value={[replaysCount]}
+                  onValueChange={([v]) => setReplaysCount(v)}
+                  min={0}
+                  max={10}
+                  step={1}
+                  className="w-full"
+                />
+                <p className="text-tiny text-muted-foreground text-center">
+                  {replaysCount === 0 && '♾️ Unlimited replays'}
+                  {replaysCount === 1 && '1 replay available'}
+                  {replaysCount > 1 && `${replaysCount} replays available`}
+                </p>
+              </div>
+            )}
+          </div>
+
           {/* Target Size */}
           <div className="flat-card space-y-4">
             <div className="flex items-center justify-between">
