@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Play, Save, Trash2, Lightbulb, Download, BarChart3, Target, Zap, Infinity } from 'lucide-react';
+import { ArrowLeft, Play, Save, Trash2, Lightbulb, Download, BarChart3, Target, Zap, Infinity, Gamepad2, MapPin, Volume2, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
@@ -388,343 +388,13 @@ export function CustomMode() {
         )}
 
         <div className="space-y-6">
-          {/* Pings */}
-          <div className="flat-card space-y-4">
-            <div className="flex items-center justify-between">
-              <Label className="text-base">Number of Pings</Label>
-              <div className="flex items-center gap-3">
-                <Input
-                  type="number"
-                  min={1}
-                  max={999}
-                  value={pingsMode === 'unlimited' ? '' : pingsCount}
-                  onChange={(e) => setPingsCount(Math.max(1, parseInt(e.target.value) || 1))}
-                  disabled={pingsMode === 'unlimited'}
-                  className="w-20 h-9 text-center font-mono"
-                  placeholder="∞"
-                />
-                <div className="flex items-center gap-2">
-                  <Switch
-                    checked={pingsMode === 'unlimited'}
-                    onCheckedChange={(checked) => setPingsMode(checked ? 'unlimited' : 'limited')}
-                  />
-                  <Label className="text-small text-muted-foreground cursor-pointer" onClick={() => setPingsMode(pingsMode === 'unlimited' ? 'limited' : 'unlimited')}>
-                    Unlimited
-                  </Label>
-                </div>
-              </div>
+          {/* Game Rules Section */}
+          <div className="space-y-2 mb-4 pt-8">
+            <div className="flex items-center gap-2">
+              <Gamepad2 className="w-5 h-5 text-primary" />
+              <h3 className="text-heading-3">Game Rules</h3>
             </div>
-            <p className="text-tiny text-muted-foreground">
-              {pingsMode === 'unlimited' 
-                ? 'Use as many pings as you need - no ping efficiency bonus'
-                : 'Ping efficiency bonus: earn points for unused pings'
-              }
-            </p>
-          </div>
-
-          {/* Ping Location Visibility */}
-          <div className="flat-card flex items-center justify-between">
-            <div className="space-y-1">
-              <Label className="text-base">Show Ping Locations</Label>
-              <p className="text-small text-muted-foreground">
-                {showPingLocations 
-                  ? 'Visual markers show where you pinged'
-                  : '🔥 Hardcore: Only audio feedback, no visual markers!'
-                }
-              </p>
-            </div>
-            <Switch checked={showPingLocations} onCheckedChange={setShowPingLocations} />
-          </div>
-
-          {/* Ping Replays */}
-          <div className="flat-card space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Label className="text-base">Ping Replays</Label>
-                <p className="text-small text-muted-foreground">
-                  {pingReplaysEnabled 
-                    ? `Replay previous pings (${replaysCount === 0 ? 'Unlimited' : replaysCount})`
-                    : 'No replays - remember your pings!'
-                  }
-                </p>
-              </div>
-              <Switch checked={pingReplaysEnabled} onCheckedChange={setPingReplaysEnabled} />
-            </div>
-            
-            {pingReplaysEnabled && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label className="text-small text-muted-foreground">Replay Count</Label>
-                  <span className="text-base font-mono">{replaysCount === 0 ? '∞' : replaysCount}</span>
-                </div>
-                <Slider
-                  value={[replaysCount]}
-                  onValueChange={([v]) => setReplaysCount(v)}
-                  min={0}
-                  max={10}
-                  step={1}
-                  className="w-full"
-                />
-                <p className="text-tiny text-muted-foreground text-center">
-                  {replaysCount === 0 && '♾️ Unlimited replays'}
-                  {replaysCount === 1 && '1 replay available'}
-                  {replaysCount > 1 && `${replaysCount} replays available`}
-                </p>
-              </div>
-            )}
-          </div>
-
-          {/* Target Size */}
-          <div className="flat-card space-y-4">
-            <div className="flex items-center justify-between">
-              <Label className="text-base">Target Size</Label>
-              <span className="text-heading-3 font-mono">{targetSize[0]}px</span>
-            </div>
-            
-            <Slider
-              value={targetSize}
-              onValueChange={setTargetSize}
-              min={30}
-              max={200}
-              step={5}
-              className="w-full"
-            />
-            
-            {/* Visual Preview */}
-            <div className="flex items-center justify-center py-6 bg-muted/30 rounded-lg border border-border relative">
-              <div className="absolute top-2 left-3 text-tiny text-muted-foreground">
-                Preview (actual size)
-              </div>
-              <div 
-                className="rounded-full border-2 border-primary/50 bg-primary/10 transition-all duration-300"
-                style={{
-                  width: `${targetSize[0]}px`,
-                  height: `${targetSize[0]}px`,
-                }}
-              />
-            </div>
-            
-            <p className="text-tiny text-muted-foreground text-center">
-              {targetSize[0] < 60 && '🔥 Expert: Very small target!'}
-              {targetSize[0] >= 60 && targetSize[0] < 100 && '💪 Hard: Challenging size'}
-              {targetSize[0] >= 100 && targetSize[0] < 140 && '👌 Medium: Balanced difficulty'}
-              {targetSize[0] >= 140 && '🌱 Easy: Large target'}
-            </p>
-          </div>
-
-          {/* Timer Toggle */}
-          <div className="flat-card flex items-center justify-between">
-            <div className="space-y-1">
-              <Label className="text-base">Timer</Label>
-              <p className="text-small text-muted-foreground">
-                {timerEnabled 
-                  ? 'Time penalty applies (-2 pts/sec, max -500)'
-                  : 'Casual mode - take your time!'
-                }
-              </p>
-            </div>
-            <Switch checked={timerEnabled} onCheckedChange={setTimerEnabled} />
-          </div>
-
-          {/* Hints Toggle */}
-          <div className="flat-card space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <Lightbulb className="w-4 h-4 text-primary" />
-                  <Label className="text-base">Hints</Label>
-                </div>
-                <p className="text-small text-muted-foreground">
-                  {hintsEnabled 
-                    ? `Get ${hintLevel} hints after using 60% of pings`
-                    : 'No hints - pure skill mode'
-                  }
-                </p>
-              </div>
-              <Switch checked={hintsEnabled} onCheckedChange={setHintsEnabled} />
-            </div>
-            
-            {hintsEnabled && (
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  variant={hintLevel === 'basic' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setHintLevel('basic')}
-                  className="w-full"
-                >
-                  Basic
-                </Button>
-                <Button
-                  variant={hintLevel === 'detailed' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setHintLevel('detailed')}
-                  className="w-full"
-                >
-                  Detailed
-                </Button>
-              </div>
-            )}
-          </div>
-
-          {/* Ping Configuration */}
-          <div className="flat-card space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <Label className="text-base">Ping Limit</Label>
-                <p className="text-small text-muted-foreground">
-                  {pingsMode === 'limited' ? `${pingsCount} pings available` : 'Unlimited pings'}
-                </p>
-              </div>
-              <Switch checked={pingsMode === 'unlimited'} onCheckedChange={(v) => setPingsMode(v ? 'unlimited' : 'limited')} />
-            </div>
-            
-            {pingsMode === 'limited' && (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label className="text-small">Number of Pings</Label>
-                  <span className="text-heading-3 font-mono">{pingsCount}</span>
-                </div>
-                <Slider
-                  value={[pingsCount]}
-                  onValueChange={(v) => setPingsCount(v[0])}
-                  min={1}
-                  max={20}
-                  step={1}
-                />
-              </div>
-            )}
-
-            <div className="flex items-center justify-between pt-2 border-t border-border">
-              <div className="space-y-1">
-                <Label className="text-small">Show Ping Locations</Label>
-                <p className="text-tiny text-muted-foreground">Display visual markers</p>
-              </div>
-              <Switch checked={showPingLocations} onCheckedChange={setShowPingLocations} />
-            </div>
-
-            <div className="flex items-center justify-between pt-2 border-t border-border">
-              <div className="space-y-1">
-                <Label className="text-small">Ping Replays</Label>
-                <p className="text-tiny text-muted-foreground">Replay previous pings</p>
-              </div>
-              <Switch checked={pingReplaysEnabled} onCheckedChange={setPingReplaysEnabled} />
-            </div>
-
-            {pingReplaysEnabled && (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <Label className="text-tiny">Replays Available</Label>
-                  <span className="text-sm font-mono">{replaysCount === 0 ? '∞' : replaysCount}</span>
-                </div>
-                <Slider
-                  value={[replaysCount]}
-                  onValueChange={(v) => setReplaysCount(v[0])}
-                  min={0}
-                  max={10}
-                  step={1}
-                />
-                <p className="text-tiny text-muted-foreground">0 = unlimited</p>
-              </div>
-            )}
-          </div>
-          <div className="flat-card space-y-4">
-            <Label className="text-base">Arena Size</Label>
-            <div className="grid grid-cols-3 gap-2">
-              {(Object.entries(ARENA_PRESETS) as [keyof typeof ARENA_PRESETS, typeof ARENA_PRESETS[keyof typeof ARENA_PRESETS]][]).map(([size, preset]) => (
-                <button
-                  key={size}
-                  onClick={() => setArenaSize(size)}
-                  className={`p-3 rounded-xl border-2 transition-all text-center ${
-                    arenaSize === size
-                      ? 'border-primary bg-primary/10'
-                      : 'border-border hover:border-foreground/20'
-                  }`}
-                >
-                  <p className="text-small font-semibold capitalize">{size}</p>
-                  <p className="text-tiny text-muted-foreground">{preset.label}</p>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Movement */}
-          <div className="flat-card space-y-4">
-            <Label className="text-base">Target Movement</Label>
-            
-            <div className="grid grid-cols-1 gap-2">
-              <button
-                onClick={() => setMovementMode('static')}
-                className={`p-3 rounded-xl border-2 transition-all text-left ${
-                  movementMode === 'static'
-                    ? 'border-primary bg-primary/10'
-                    : 'border-border hover:border-foreground/20'
-                }`}
-              >
-                <p className="text-small font-semibold">Static Target</p>
-                <p className="text-tiny text-muted-foreground">Target stays in one place</p>
-              </button>
-              
-              <button
-                onClick={() => setMovementMode('after-pings')}
-                className={`p-3 rounded-xl border-2 transition-all text-left ${
-                  movementMode === 'after-pings'
-                    ? 'border-primary bg-primary/10'
-                    : 'border-border hover:border-foreground/20'
-                }`}
-              >
-                <p className="text-small font-semibold">Move After Pings</p>
-                <p className="text-tiny text-muted-foreground">
-                  Target relocates after you've used {movementTrigger} pings
-                </p>
-              </button>
-            </div>
-            
-            {movementMode === 'after-pings' && (
-              <div className="pt-2 space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label className="text-small">Move after</Label>
-                  <span className="text-small font-mono">{movementTrigger} pings</span>
-                </div>
-                <Slider
-                  value={[movementTrigger]}
-                  onValueChange={(v) => setMovementTrigger(v[0])}
-                  min={2}
-                  max={pingsMode === 'unlimited' ? 10 : Math.max(2, pingsCount - 1)}
-                  step={1}
-                  className="w-full"
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Noise */}
-          <div className="flat-card space-y-4">
-            <div className="flex items-center justify-between">
-              <Label className="text-base">Noise Level</Label>
-              <span className="text-heading-3 font-mono">{noiseLevel[0]}%</span>
-            </div>
-            <Slider
-              value={noiseLevel}
-              onValueChange={setNoiseLevel}
-              min={0}
-              max={50}
-              step={5}
-              className="w-full"
-            />
-            <p className="text-tiny text-muted-foreground">
-              Random interference in audio feedback
-            </p>
-          </div>
-
-          {/* Decoys */}
-          <div className="flat-card flex items-center justify-between">
-            <div className="space-y-1">
-              <Label className="text-base">Decoy Sounds</Label>
-              <p className="text-small text-muted-foreground">
-                False echoes to mislead you
-              </p>
-            </div>
-            <Switch checked={decoys} onCheckedChange={setDecoys} />
+            <p className="text-small text-muted-foreground">Configure core gameplay settings</p>
           </div>
 
           {/* Rounds Selector */}
@@ -800,7 +470,261 @@ export function CustomMode() {
             </div>
           </div>
 
-          {/* Theme */}
+          {/* Win Conditions */}
+          <div className="flat-card space-y-4">
+            <div className="space-y-1">
+              <Label className="text-base">Win Condition</Label>
+              <p className="text-small text-muted-foreground">
+                {winConditionType === 'none' 
+                  ? 'No requirements - play for score only'
+                  : `Must be within ${proximityThreshold}% to complete the round`
+                }
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 gap-2">
+              <button
+                onClick={() => setWinConditionType('none')}
+                className={`p-3 rounded-xl border-2 transition-all text-left ${
+                  winConditionType === 'none'
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border hover:border-foreground/20'
+                }`}
+              >
+                <p className="text-small font-semibold">No Requirement</p>
+                <p className="text-tiny text-muted-foreground">
+                  Just play for the highest score possible
+                </p>
+              </button>
+              
+              <button
+                onClick={() => setWinConditionType('proximity')}
+                className={`p-3 rounded-xl border-2 transition-all text-left ${
+                  winConditionType === 'proximity'
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border hover:border-foreground/20'
+                }`}
+              >
+                <p className="text-small font-semibold">Proximity Requirement</p>
+                <p className="text-tiny text-muted-foreground">
+                  Must get close enough to the target to proceed
+                </p>
+              </button>
+            </div>
+            
+            {winConditionType === 'proximity' && (
+              <div className="pt-2 space-y-2 border-t border-border">
+                <div className="flex items-center justify-between">
+                  <Label className="text-small">Required Proximity</Label>
+                  <span className="text-base font-mono">{proximityThreshold}%</span>
+                </div>
+                <Slider
+                  value={[proximityThreshold]}
+                  onValueChange={(v) => setProximityThreshold(v[0])}
+                  min={50}
+                  max={95}
+                  step={5}
+                  className="w-full"
+                />
+                <p className="text-tiny text-muted-foreground">
+                  Higher = must be closer to target
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Timer */}
+          <div className="flat-card flex items-center justify-between">
+            <div className="space-y-1">
+              <Label className="text-base">Timer</Label>
+              <p className="text-small text-muted-foreground">
+                {timerEnabled ? 'Time tracking enabled' : 'Relaxed mode - no timer'}
+              </p>
+            </div>
+            <Switch checked={timerEnabled} onCheckedChange={setTimerEnabled} />
+          </div>
+
+          {/* Ping Configuration Section */}
+          <div className="space-y-2 mb-4 pt-8">
+            <div className="flex items-center gap-2">
+              <MapPin className="w-5 h-5 text-primary" />
+              <h3 className="text-heading-3">Ping Configuration</h3>
+            </div>
+            <p className="text-small text-muted-foreground">Control how you locate the target</p>
+          </div>
+
+          {/* Consolidated Ping Settings */}
+          <div className="flat-card space-y-4">
+            {/* Ping Mode */}
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label className="text-base">Ping Mode</Label>
+                <p className="text-small text-muted-foreground">
+                  {pingsMode === 'limited' ? `${pingsCount} pings available` : 'Unlimited pings'}
+                </p>
+              </div>
+              <Switch checked={pingsMode === 'unlimited'} onCheckedChange={(v) => setPingsMode(v ? 'unlimited' : 'limited')} />
+            </div>
+            
+            {/* Ping Count (only if limited) */}
+            {pingsMode === 'limited' && (
+              <div className="space-y-3 pt-4 border-t border-border">
+                <div className="flex items-center justify-between">
+                  <Label className="text-base">Number of Pings</Label>
+                  <span className="text-heading-3 font-mono">{pingsCount}</span>
+                </div>
+                <Slider
+                  value={[pingsCount]}
+                  onValueChange={(v) => setPingsCount(v[0])}
+                  min={1}
+                  max={20}
+                  step={1}
+                  className="w-full"
+                />
+              </div>
+            )}
+
+            {/* Show Ping Locations */}
+            <div className="flex items-center justify-between pt-4 border-t border-border">
+              <div className="space-y-1">
+                <Label className="text-base">Show Ping Locations</Label>
+                <p className="text-small text-muted-foreground">
+                  {showPingLocations 
+                    ? 'Visual markers show where you pinged'
+                    : '🔥 Hardcore: Audio only, no visual markers!'
+                  }
+                </p>
+              </div>
+              <Switch checked={showPingLocations} onCheckedChange={setShowPingLocations} />
+            </div>
+
+            {/* Ping Replays */}
+            <div className="space-y-3 pt-4 border-t border-border">
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label className="text-base">Ping Replays</Label>
+                  <p className="text-small text-muted-foreground">
+                    {pingReplaysEnabled 
+                      ? `Replay previous pings (${replaysCount === 0 ? 'Unlimited' : replaysCount})`
+                      : 'No replays - remember your pings!'
+                    }
+                  </p>
+                </div>
+                <Switch checked={pingReplaysEnabled} onCheckedChange={setPingReplaysEnabled} />
+              </div>
+              
+              {pingReplaysEnabled && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-small">Replay Count</Label>
+                    <span className="text-base font-mono">{replaysCount === 0 ? '∞' : replaysCount}</span>
+                  </div>
+                  <Slider
+                    value={[replaysCount]}
+                    onValueChange={(v) => setReplaysCount(v[0])}
+                    min={0}
+                    max={10}
+                    step={1}
+                    className="w-full"
+                  />
+                  <p className="text-tiny text-muted-foreground text-center">
+                    {replaysCount === 0 && '♾️ Unlimited replays'}
+                    {replaysCount === 1 && '1 replay available'}
+                    {replaysCount > 1 && `${replaysCount} replays available`}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Target Settings Section */}
+          <div className="space-y-2 mb-4 pt-8">
+            <div className="flex items-center gap-2">
+              <Target className="w-5 h-5 text-primary" />
+              <h3 className="text-heading-3">Target Settings</h3>
+            </div>
+            <p className="text-small text-muted-foreground">Configure target size and behavior</p>
+          </div>
+
+          {/* Target Size */}
+          <div className="flat-card space-y-4">
+            <div className="flex items-center justify-between">
+              <Label className="text-base">Target Size</Label>
+              <span className="text-heading-3 font-mono">{targetSize[0]}px</span>
+            </div>
+            <Slider
+              value={targetSize}
+              onValueChange={setTargetSize}
+              min={40}
+              max={150}
+              step={10}
+              className="w-full"
+            />
+            <p className="text-tiny text-muted-foreground">
+              Larger targets are easier to locate
+            </p>
+          </div>
+
+          {/* Target Movement */}
+          <div className="flat-card space-y-4">
+            <Label className="text-base">Target Movement</Label>
+            
+            <div className="grid grid-cols-1 gap-2">
+              <button
+                onClick={() => setMovementMode('static')}
+                className={`p-3 rounded-xl border-2 transition-all text-left ${
+                  movementMode === 'static'
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border hover:border-foreground/20'
+                }`}
+              >
+                <p className="text-small font-semibold">Static Target</p>
+                <p className="text-tiny text-muted-foreground">Target stays in one place</p>
+              </button>
+              
+              <button
+                onClick={() => setMovementMode('after-pings')}
+                className={`p-3 rounded-xl border-2 transition-all text-left ${
+                  movementMode === 'after-pings'
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border hover:border-foreground/20'
+                }`}
+              >
+                <p className="text-small font-semibold">Move After Pings</p>
+                <p className="text-tiny text-muted-foreground">
+                  Target relocates after you've used {movementTrigger} pings
+                </p>
+              </button>
+            </div>
+            
+            {movementMode === 'after-pings' && (
+              <div className="pt-2 space-y-2 border-t border-border">
+                <div className="flex items-center justify-between">
+                  <Label className="text-small">Move after</Label>
+                  <span className="text-small font-mono">{movementTrigger} pings</span>
+                </div>
+                <Slider
+                  value={[movementTrigger]}
+                  onValueChange={(v) => setMovementTrigger(v[0])}
+                  min={2}
+                  max={pingsMode === 'unlimited' ? 10 : Math.max(2, pingsCount - 1)}
+                  step={1}
+                  className="w-full"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Audio Settings Section */}
+          <div className="space-y-2 mb-4 pt-8">
+            <div className="flex items-center gap-2">
+              <Volume2 className="w-5 h-5 text-primary" />
+              <h3 className="text-heading-3">Audio Settings</h3>
+            </div>
+            <p className="text-small text-muted-foreground">Customize sound feedback and difficulty</p>
+          </div>
+
+          {/* Sound Theme */}
           <div className="flat-card space-y-4">
             <Label className="text-base">Sound Theme</Label>
             <div className="grid grid-cols-2 gap-2">
@@ -819,6 +743,105 @@ export function CustomMode() {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Noise Level */}
+          <div className="flat-card space-y-4">
+            <div className="flex items-center justify-between">
+              <Label className="text-base">Noise Level</Label>
+              <span className="text-heading-3 font-mono">{noiseLevel[0]}%</span>
+            </div>
+            <Slider
+              value={noiseLevel}
+              onValueChange={setNoiseLevel}
+              min={0}
+              max={50}
+              step={5}
+              className="w-full"
+            />
+            <p className="text-tiny text-muted-foreground">
+              Random interference in audio feedback
+            </p>
+          </div>
+
+          {/* Decoy Sounds */}
+          <div className="flat-card flex items-center justify-between">
+            <div className="space-y-1">
+              <Label className="text-base">Decoy Sounds</Label>
+              <p className="text-small text-muted-foreground">
+                False echoes to mislead you
+              </p>
+            </div>
+            <Switch checked={decoys} onCheckedChange={setDecoys} />
+          </div>
+
+          {/* Advanced Settings Section */}
+          <div className="space-y-2 mb-4 pt-8">
+            <div className="flex items-center gap-2">
+              <Settings className="w-5 h-5 text-primary" />
+              <h3 className="text-heading-3">Advanced Settings</h3>
+            </div>
+            <p className="text-small text-muted-foreground">Fine-tune your experience</p>
+          </div>
+
+          {/* Arena Size */}
+          <div className="flat-card space-y-4">
+            <Label className="text-base">Arena Size</Label>
+            <div className="grid grid-cols-3 gap-2">
+              {(Object.entries(ARENA_PRESETS) as [keyof typeof ARENA_PRESETS, typeof ARENA_PRESETS[keyof typeof ARENA_PRESETS]][]).map(([size, preset]) => (
+                <button
+                  key={size}
+                  onClick={() => setArenaSize(size)}
+                  className={`p-3 rounded-xl border-2 transition-all text-center ${
+                    arenaSize === size
+                      ? 'border-primary bg-primary/10'
+                      : 'border-border hover:border-foreground/20'
+                  }`}
+                >
+                  <p className="text-small font-semibold capitalize">{size}</p>
+                  <p className="text-tiny text-muted-foreground">{preset.label}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Hints */}
+          <div className="flat-card space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <Label className="text-base">Hints</Label>
+                <p className="text-small text-muted-foreground">
+                  {hintsEnabled 
+                    ? hintLevel === 'detailed' 
+                      ? 'Detailed guidance'
+                      : 'Basic help' 
+                    : 'No hints - pure skill mode'
+                  }
+                </p>
+              </div>
+              <Switch checked={hintsEnabled} onCheckedChange={setHintsEnabled} />
+            </div>
+            
+            {hintsEnabled && (
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  variant={hintLevel === 'basic' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setHintLevel('basic')}
+                  className="w-full"
+                >
+                  Basic
+                </Button>
+                <Button
+                  variant={hintLevel === 'detailed' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setHintLevel('detailed')}
+                  className="w-full"
+                >
+                  Detailed
+                </Button>
+              </div>
+            )}
           </div>
         </div>
 
