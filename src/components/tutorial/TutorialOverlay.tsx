@@ -111,7 +111,7 @@ export function TutorialOverlay({
             </div>
           ) : (
             // Full modal view
-            <div className="frosted-modal relative shadow-2xl animate-slide-in-from-bottom py-4 px-6">
+            <div className="frosted-modal relative shadow-2xl animate-slide-in-from-bottom py-4 px-6 flex flex-col max-h-[90vh]">
               {/* Minimize button */}
               {onToggleMinimize && (
                 <button
@@ -143,8 +143,8 @@ export function TutorialOverlay({
               </div>
 
               {/* Content */}
-              <ScrollArea className="max-h-[60vh] md:max-h-[70vh] pr-4">
-                <div className="space-y-4">
+              <ScrollArea className="flex-1 min-h-0 pr-4">
+                <div className="space-y-4 pb-4">
                   <div>
                     <h2 className="text-heading-3 mb-2">{stepInfo.title}</h2>
                     <p className="text-small text-muted-foreground leading-relaxed">
@@ -216,7 +216,7 @@ export function TutorialOverlay({
               </ScrollArea>
                 
               {/* Navigation Buttons */}
-              <div className="flex gap-3 pt-2">
+              <div className="flex gap-3 pt-2 shrink-0">
                 <Button
                   variant="outline"
                   onClick={onPrevious}
@@ -234,7 +234,7 @@ export function TutorialOverlay({
               </div>
               
               {/* Footer Navigation */}
-              <div className="flex gap-2">
+              <div className="flex gap-2 shrink-0">
                 <Button
                   variant="ghost"
                   onClick={onExitToMenu}
