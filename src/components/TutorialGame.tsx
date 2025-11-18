@@ -64,7 +64,7 @@ export function TutorialGame() {
   
   // Limited pings for the triangulation step
   const isTriangulationStep = tutorialState.currentStep === 'multiple-pings';
-  const { pingHistory, pingsRemaining, pingsUsed, handlePing, resetPings } = usePingSystem({
+  const { pingHistory, pingsRemaining, pingsUsed, handlePing, handleReplayPing, replaysRemaining, replaysUsed: replaysUsedCount, resetPings } = usePingSystem({
     initialPings: isTriangulationStep ? 6 : 999,  // 6 pings for triangulation, unlimited for exploration
     arenaSize,
     target,
@@ -246,6 +246,9 @@ export function TutorialGame() {
             showHint={showHint && isTriangulationStep}
             currentHint={currentHint}
             onCanvasClick={handleCanvasClick}
+            onPingReplay={handleReplayPing}
+            replaysRemaining={replaysRemaining}
+            replaysUsed={replaysUsedCount}
             canvasRef={canvasRef}
           />
           
