@@ -240,7 +240,7 @@ export function PostRoundSummary({
                   label="Accuracy Bonus"
                   value={score.components.proximityBonus}
                   isPositive={true}
-                  detail={`${proximity.toFixed(1)}% proximity × 4`}
+                  detail={`${proximity.toFixed(1)}% proximity × 6`}
                 />
               )}
               

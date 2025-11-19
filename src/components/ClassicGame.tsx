@@ -174,7 +174,7 @@ export function ClassicGame() {
     if (!finalGuess) return;
 
     const targetCenter = getTargetCenter(target);
-    const maxDistance = Math.sqrt(arenaSize.width ** 2 + arenaSize.height ** 2);
+    const maxDistance = Math.sqrt(arenaSize.width ** 2 + arenaSize.height ** 2) * 0.7;
     const distance = calculateProximity(finalGuess, targetCenter, maxDistance);
     const proximity = distance; // calculateProximity already returns 0-100
     const scoreData = calculateScore(

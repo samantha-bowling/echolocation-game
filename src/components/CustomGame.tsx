@@ -98,7 +98,7 @@ export function CustomGame() {
     if (!finalGuess) return;
     
     const targetCenter = getTargetCenter(target);
-    const proximity = calculateProximity(finalGuess, targetCenter, Math.max(arenaSize.width, arenaSize.height));
+    const proximity = calculateProximity(finalGuess, targetCenter, Math.sqrt(arenaSize.width ** 2 + arenaSize.height ** 2) * 0.7);
     const totalPings = config.pingsMode === 'unlimited' ? 10 : config.pingsCount;
     const score = calculateCustomScore(
       proximity, 
