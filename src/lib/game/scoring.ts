@@ -15,10 +15,10 @@ export interface ScoreResult {
   rank: string;
 }
 
-const BASE_SCORE = 200;
+const BASE_SCORE = 0;
 export const PING_BONUS_PER_UNUSED = 50;
 const PROXIMITY_POINTS_PER_PERCENT = 5;
-const PING_EFFICIENCY_MAX = 400;
+const PING_EFFICIENCY_MAX = 200;
 const PERFECT_TARGET_BONUS = 300;
 const REPLAY_UNUSED_BONUS = 75;
 const HINT_PENALTY = -100; // Penalty for using hints (Chapters 2-5 only)
@@ -165,14 +165,18 @@ export interface RankInfo {
 }
 
 export const RANK_THRESHOLDS: RankInfo[] = [
-  { rank: 'SS', threshold: 2400 },
-  { rank: 'S+', threshold: 2100 },
-  { rank: 'S', threshold: 1800 },
-  { rank: 'A+', threshold: 1500 },
-  { rank: 'A', threshold: 1200 },
-  { rank: 'B+', threshold: 1000 },
-  { rank: 'B', threshold: 800 },
+  { rank: 'SS', threshold: 1500 },
+  { rank: 'S+', threshold: 1350 },
+  { rank: 'S', threshold: 1200 },
+  { rank: 'S-', threshold: 1100 },
+  { rank: 'A+', threshold: 1000 },
+  { rank: 'A', threshold: 900 },
+  { rank: 'A-', threshold: 800 },
+  { rank: 'B+', threshold: 750 },
+  { rank: 'B', threshold: 700 },
+  { rank: 'C+', threshold: 600 },
   { rank: 'C', threshold: 500 },
+  { rank: 'C-', threshold: 400 },
   { rank: 'D', threshold: 0 },
 ];
 

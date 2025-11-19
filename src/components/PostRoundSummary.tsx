@@ -252,7 +252,7 @@ export function PostRoundSummary({
                   value={score.components.pingEfficiencyBonus}
                   isPositive={true}
                   detail={`${totalPings - pingsUsed} unused pings`}
-                  tooltip="Bonus for conserving pings. Each unused ping adds to your score, up to +400 points maximum."
+                  tooltip="Bonus for conserving pings. Each unused ping adds to your score, up to +200 points maximum."
                 />
               )}
               
