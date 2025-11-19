@@ -229,20 +229,13 @@ export function PostRoundSummary({
                 Earned Points
               </div>
               
-                <ScoreBreakdownItem
-                  label="Base Score"
-                  value={score.components.base}
-                  isPositive={true}
-                  tooltip="Starting points awarded to all players"
-                />
-              
               {score.components.proximityBonus > 0 && (
                 <ScoreBreakdownItem 
-                  label="Accuracy Bonus"
+                  label="Accuracy Score"
                   value={score.components.proximityBonus}
                   isPositive={true}
                   detail={`${proximity.toFixed(1)}% proximity × 5`}
-                  tooltip="Points based on how close your guess was to the target. Perfect accuracy (100%) awards +500 points."
+                  tooltip="Core scoring component based on proximity. Each 1% of accuracy awards 5 points, up to +500 for perfect accuracy."
                 />
               )}
               
@@ -259,11 +252,11 @@ export function PostRoundSummary({
               
               {score.components.timeScore !== 0 && (
                 <ScoreBreakdownItem 
-                  label={score.components.timeScore > 0 ? "Time Bonus" : "Time Penalty"}
-                  value={Math.abs(score.components.timeScore)}
+                  label="Time Score"
+                  value={score.components.timeScore}
                   isPositive={score.components.timeScore > 0}
                   detail={`Completed in ${timeElapsed.toFixed(1)}s`}
-                  tooltip="Complete in under 15 seconds for bonus points. Times over 40 seconds incur penalties."
+                  tooltip="Core scoring component based on completion speed. Fast times (<10s) add points, slow times (>30s) subtract points."
                 />
               )}
               

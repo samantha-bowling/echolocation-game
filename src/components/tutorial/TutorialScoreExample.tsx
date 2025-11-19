@@ -55,7 +55,7 @@ export function TutorialScoreExample() {
         
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Proximity Bonus (92% × 5)</span>
+            <span className="text-muted-foreground">Accuracy Score (92% × 5)</span>
             <span className="font-medium text-echo-success">+460</span>
           </div>
           <div className="flex justify-between">
@@ -63,7 +63,7 @@ export function TutorialScoreExample() {
             <span className="font-medium text-echo-success">+66</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Time Performance (28.5s)</span>
+            <span className="text-muted-foreground">Time Score (28.5s)</span>
             <span className="font-medium text-destructive">-15</span>
           </div>
           <div className="flex justify-between border-t border-border pt-2 font-bold">
