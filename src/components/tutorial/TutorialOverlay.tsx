@@ -2,8 +2,9 @@ import { TutorialStep, TUTORIAL_STEPS } from '@/lib/game/tutorial';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Volume2, ArrowLeftRight, ArrowUpDown, ChevronDown, ChevronUp } from 'lucide-react';
+import { Volume2, ArrowLeftRight, ArrowUpDown, ChevronDown, ChevronUp, Target, Zap, Clock, Trophy } from 'lucide-react';
 import { TutorialScoreExample } from './TutorialScoreExample';
+import { ScoreResult, getRankColor } from '@/lib/game/scoring';
 
 export interface TutorialOverlayProps {
   step: TutorialStep;
@@ -20,6 +21,11 @@ export interface TutorialOverlayProps {
   demoPingsExperienced?: number;
   totalDemoPings?: number;
   stepOrder: TutorialStep[];
+  actualScore?: ScoreResult | null;
+  proximity?: number | null;
+  pingsUsed?: number;
+  totalPings?: number;
+  timeElapsed?: number;
 }
 
 export function TutorialOverlay({
@@ -37,6 +43,11 @@ export function TutorialOverlay({
   demoPingsExperienced = 0,
   totalDemoPings = 4,
   stepOrder,
+  actualScore,
+  proximity,
+  pingsUsed = 0,
+  totalPings = 6,
+  timeElapsed = 0,
 }: TutorialOverlayProps) {
   const stepInfo = TUTORIAL_STEPS[step];
 
@@ -206,10 +217,123 @@ export function TutorialOverlay({
                     </div>
                   )}
                   
-                  {/* Score Example for scoring step */}
-                  {step === 'scoring' && (
+                  {/* Actual Score Display for scoring step */}
+                  {step === 'scoring' && actualScore && (
                     <div className="mt-4">
-                      <TutorialScoreExample />
+                      <div className="space-y-4 animate-scale-in">
+                        {/* Rank and Total Score */}
+                        <div className="flex items-center justify-center gap-3">
+                          <div className={`flex items-center justify-center w-16 h-16 rounded-lg ${getRankColor(actualScore.rank).bg} border-2 ${getRankColor(actualScore.rank).border}`}>
+                            <span className={`text-3xl font-bold ${getRankColor(actualScore.rank).text}`}>
+                              {actualScore.rank}
+                            </span>
+                          </div>
+                          <div className="text-left">
+                            <div className="text-sm text-muted-foreground">Your Score</div>
+                            <div className="text-3xl font-bold">{actualScore.total}</div>
+                          </div>
+                        </div>
+
+                        {/* Stats Grid */}
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="flat-card p-3 space-y-1">
+                            <div className="flex items-center gap-2">
+                              <Target className="w-4 h-4 text-primary" />
+                              <span className="text-xs text-muted-foreground">Proximity</span>
+                            </div>
+                            <div className="text-2xl font-bold">{proximity?.toFixed(0)}%</div>
+                          </div>
+
+                          <div className="flat-card p-3 space-y-1">
+                            <div className="flex items-center gap-2">
+                              <Zap className="w-4 h-4 text-primary" />
+                              <span className="text-xs text-muted-foreground">Pings</span>
+                            </div>
+                            <div className="text-2xl font-bold">{pingsUsed}/{totalPings}</div>
+                          </div>
+
+                          <div className="flat-card p-3 space-y-1">
+                            <div className="flex items-center gap-2">
+                              <Clock className="w-4 h-4 text-primary" />
+                              <span className="text-xs text-muted-foreground">Time</span>
+                            </div>
+                            <div className="text-2xl font-bold">{timeElapsed.toFixed(1)}s</div>
+                          </div>
+
+                          <div className="flat-card p-3 space-y-1">
+                            <div className="flex items-center gap-2">
+                              <Trophy className="w-4 h-4 text-primary" />
+                              <span className="text-xs text-muted-foreground">Bonuses</span>
+                            </div>
+                            <div className="text-2xl font-bold text-echo-success">
+                              {actualScore.components.pingEfficiencyBonus + actualScore.components.perfectTargetBonus > 0 
+                                ? `+${actualScore.components.pingEfficiencyBonus + actualScore.components.perfectTargetBonus}`
+                                : '0'}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Score Breakdown */}
+                        <div className="flat-card p-4 space-y-2">
+                          <h3 className="text-sm font-semibold mb-3">Your Score Breakdown</h3>
+                          
+                          <div className="space-y-2 text-sm">
+                            {actualScore.components.proximityBonus > 0 && (
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">
+                                  Accuracy Score ({proximity?.toFixed(0)}% × 5)
+                                </span>
+                                <span className="font-medium text-echo-success">
+                                  +{actualScore.components.proximityBonus}
+                                </span>
+                              </div>
+                            )}
+                            {actualScore.components.pingEfficiencyBonus > 0 && (
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">
+                                  Ping Efficiency ({totalPings - pingsUsed} unused)
+                                </span>
+                                <span className="font-medium text-echo-success">
+                                  +{actualScore.components.pingEfficiencyBonus}
+                                </span>
+                              </div>
+                            )}
+                            {actualScore.components.timeScore !== 0 && (
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">
+                                  Time Score ({timeElapsed.toFixed(1)}s)
+                                </span>
+                                <span className={`font-medium ${actualScore.components.timeScore > 0 ? 'text-echo-success' : 'text-destructive'}`}>
+                                  {actualScore.components.timeScore > 0 ? '+' : ''}{actualScore.components.timeScore}
+                                </span>
+                              </div>
+                            )}
+                            {actualScore.components.perfectTargetBonus > 0 && (
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Perfect Target</span>
+                                <span className="font-medium text-echo-success">
+                                  +{actualScore.components.perfectTargetBonus}
+                                </span>
+                              </div>
+                            )}
+                            <div className="flex justify-between border-t border-border pt-2 font-bold">
+                              <span>Final Score</span>
+                              <span>{actualScore.total}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Scoring Tips */}
+                        <div className="text-xs text-muted-foreground space-y-1">
+                          <p>• <span className="font-medium">Accuracy is mandatory:</span> 5 points per percent proximity (up to +500)</p>
+                          <p>• <span className="font-medium">Conserve pings:</span> Unused pings increase your efficiency bonus (up to +200)</p>
+                          <p>• <span className="font-medium">Time Performance:</span> Fast times (&lt;15s) earn bonuses, slow times (&gt;40s) get heavy penalties</p>
+                          <p>• <span className="font-medium">Chapter Mechanics:</span> In Chapters 2+, master special mechanics for +100-200 bonus points</p>
+                          <p>• <span className="font-medium">Boss Levels:</span> Level 10 of each chapter awards +150 bonus for A rank or better</p>
+                          <p>• <span className="font-medium">No Base Score:</span> Your performance is everything—accuracy is the foundation!</p>
+                          <p>• <span className="font-medium">Achieve B rank or better</span> (700+ points) to progress to the next level</p>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>

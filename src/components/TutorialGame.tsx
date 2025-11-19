@@ -19,6 +19,8 @@ import { useGameTimer } from '@/hooks/useGameTimer';
 import { usePingSystem } from '@/hooks/usePingSystem';
 import { useGamePhase } from '@/hooks/useGamePhase';
 import { useHintSystem } from '@/hooks/useHintSystem';
+import { calculateScore } from '@/lib/game/scoring';
+import { calculateProximity } from '@/lib/game/distance';
 
 export function TutorialGame() {
   const navigate = useNavigate();
@@ -150,7 +152,11 @@ export function TutorialGame() {
     }
     
     resetTimer();
-    resetPhase();
+    
+    // Preserve finalGuess when viewing scoring step
+    if (newStep !== 'scoring' && tutorialState.currentStep !== 'scoring') {
+      resetPhase();
+    }
     setDemoPingsExperienced(new Set());
     
     // Update and save tutorial state
@@ -222,6 +228,28 @@ export function TutorialGame() {
     ];
     return steps.indexOf(step) + 1;
   };
+
+  // Calculate actual score when on scoring step
+  const actualProximity = finalGuess 
+    ? calculateProximity(
+        finalGuess,
+        getTargetCenter(target),
+        Math.sqrt(arenaSize.width * arenaSize.width + arenaSize.height * arenaSize.height)
+      )
+    : null;
+
+  const actualScore = tutorialState.currentStep === 'scoring' && finalGuess && actualProximity !== null
+    ? calculateScore(
+        actualProximity, // proximity 0-100
+        pingHistory.length, // pingsUsed
+        6, // totalPings
+        finalTime || elapsedTime, // timeSeconds
+        1, // chapter (tutorial is like chapter 1)
+        tutorialState.replaysUsed, // replaysUsed
+        undefined, // replaysAvailable (tutorial has unlimited replays)
+        false // hintUsed (tutorial doesn't penalize hints)
+      )
+    : null;
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start p-6 pb-80 echo-dots">
@@ -385,6 +413,11 @@ export function TutorialGame() {
         demoPingsExperienced={demoPingsExperienced.size}
         totalDemoPings={4}
         stepOrder={stepOrder}
+        actualScore={actualScore}
+        proximity={actualProximity}
+        pingsUsed={pingHistory.length}
+        totalPings={6}
+        timeElapsed={finalTime || elapsedTime}
       />
 
       {/* Score Example Overlay for scoring step */}
