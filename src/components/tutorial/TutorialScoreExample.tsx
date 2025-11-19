@@ -77,7 +77,7 @@ export function TutorialScoreExample() {
       <div className="text-xs text-muted-foreground space-y-1">
         <p>• <span className="font-medium">Accuracy is mandatory:</span> 5 points per percent proximity (up to +500)</p>
         <p>• <span className="font-medium">Conserve pings:</span> Unused pings increase your efficiency bonus (up to +200)</p>
-        <p>• <span className="font-medium">Time Performance:</span> Fast times (&lt;10s) earn bonuses, slow times (&gt;30s) get penalties</p>
+        <p>• <span className="font-medium">Time Performance:</span> Fast times (&lt;15s) earn bonuses, slow times (&gt;40s) get heavy penalties</p>
         <p>• <span className="font-medium">Chapter Mechanics:</span> In Chapters 2+, master special mechanics for +100-200 bonus points</p>
         <p>• <span className="font-medium">Boss Levels:</span> Level 10 of each chapter awards +150 bonus for A rank or better</p>
         <p>• <span className="font-medium">No Base Score:</span> Your performance is everything—accuracy is the foundation!</p>
