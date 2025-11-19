@@ -242,7 +242,7 @@ export function TutorialGame() {
             pingHistory={pingHistory.slice(-5)}
             finalGuess={finalGuess}
             gamePhase={gamePhase}
-            gameState="playing"
+            gameState={tutorialState.currentStep === 'scoring' ? 'summary' : 'playing'}
             showHint={showHint && isTriangulationStep}
             currentHint={currentHint}
             onCanvasClick={handleCanvasClick}
