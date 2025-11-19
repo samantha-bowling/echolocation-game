@@ -6,6 +6,7 @@ export interface ScoreComponents {
   perfectTargetBonus: number;
   chapterMechanicBonus: number;
   replayBonus: number;
+  hintPenalty: number;
 }
 
 export interface ScoreResult {
@@ -16,10 +17,11 @@ export interface ScoreResult {
 
 const BASE_SCORE = 200;
 export const PING_BONUS_PER_UNUSED = 50;
-const PROXIMITY_POINTS_PER_PERCENT = 6;
+const PROXIMITY_POINTS_PER_PERCENT = 5;
 const PING_EFFICIENCY_MAX = 400;
 const PERFECT_TARGET_BONUS = 300;
 const REPLAY_UNUSED_BONUS = 75;
+const HINT_PENALTY = -100; // Penalty for using hints (Chapters 2-5 only)
 
 // Chapter mechanic bonuses
 const MECHANIC_BONUS_CH2_SHRINKING = 100; // Efficient guessing while target is large
@@ -93,7 +95,8 @@ export function calculateScore(
   timeSeconds: number,
   chapter: number = 1,
   replaysUsed: number = 0,
-  replaysAvailable?: number
+  replaysAvailable?: number,
+  hintUsed: boolean = false
 ): ScoreResult {
   const unusedPings = totalPings - pingsUsed;
   const pingEfficiency = unusedPings / totalPings;
@@ -122,6 +125,12 @@ export function calculateScore(
       replayBonus = replaysUnused * REPLAY_UNUSED_BONUS;
     }
   }
+
+  // Hint penalty (Chapters 2-5 only)
+  let hintPenalty = 0;
+  if (hintUsed && chapter > 1) {
+    hintPenalty = HINT_PENALTY;
+  }
   
   // Calculate final total
   const finalScore = 
@@ -131,7 +140,8 @@ export function calculateScore(
     timeScore + 
     perfectTargetBonus + 
     chapterMechanicBonus + 
-    replayBonus;
+    replayBonus +
+    hintPenalty;
   
   return {
     total: Math.max(0, finalScore),
@@ -143,6 +153,7 @@ export function calculateScore(
       perfectTargetBonus,
       chapterMechanicBonus,
       replayBonus,
+      hintPenalty,
     },
     rank: getRank(Math.max(0, finalScore)),
   };
@@ -398,6 +409,7 @@ export function calculateCustomScore(
       perfectTargetBonus,
       chapterMechanicBonus: 0, // No mechanic bonus in custom games
       replayBonus: 0,
+      hintPenalty: 0, // No hint penalty in custom games
     },
     rank: getRank(total),
   };
