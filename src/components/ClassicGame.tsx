@@ -44,6 +44,7 @@ export function ClassicGame() {
   const [gameState, setGameState] = useState<'playing' | 'summary'>('playing');
   const [scoreResult, setScoreResult] = useState<any>(null);
   const [showHint, setShowHint] = useState(false);
+  const [hintUsed, setHintUsed] = useState(false);
   const [showChapterIntro, setShowChapterIntro] = useState(false);
   const [showChapterComplete, setShowChapterComplete] = useState(false);
   const [chapterTransition, setChapterTransition] = useState<string | null>(null);
@@ -184,7 +185,8 @@ export function ClassicGame() {
       elapsedTime,
       chapter,
       replaysUsed,
-      chapterConfig.replaysAvailable
+      chapterConfig.replaysAvailable,
+      hintUsed
     );
 
     // Update chapter stats with rank
@@ -283,6 +285,8 @@ export function ClassicGame() {
     setGameState('playing');
     setScoreResult(null);
     setShowSummaryModal(true);
+    setShowHint(false);
+    setHintUsed(false);
   };
 
   const handleContinueAfterChapterComplete = () => {
@@ -398,7 +402,12 @@ export function ClassicGame() {
 
             {/* Hint Button */}
             <button
-              onClick={() => setShowHint(!showHint)}
+              onClick={() => {
+                setShowHint(!showHint);
+                if (!showHint && !hintUsed) {
+                  setHintUsed(true);
+                }
+              }}
               className="flat-card p-2 transition-all flex items-center gap-2 hover:bg-accent/20"
             >
               <Lightbulb className={cn(

@@ -229,18 +229,20 @@ export function PostRoundSummary({
                 Earned Points
               </div>
               
-              <ScoreBreakdownItem 
-                label="Base Score"
-                value={score.components.base}
-                isPositive={true}
-              />
+                <ScoreBreakdownItem
+                  label="Base Score"
+                  value={score.components.base}
+                  isPositive={true}
+                  tooltip="Starting points awarded to all players"
+                />
               
               {score.components.proximityBonus > 0 && (
                 <ScoreBreakdownItem 
                   label="Accuracy Bonus"
                   value={score.components.proximityBonus}
                   isPositive={true}
-                  detail={`${proximity.toFixed(1)}% proximity × 6`}
+                  detail={`${proximity.toFixed(1)}% proximity × 5`}
+                  tooltip="Points based on how close your guess was to the target. Perfect accuracy (100%) awards +500 points."
                 />
               )}
               
@@ -250,6 +252,7 @@ export function PostRoundSummary({
                   value={score.components.pingEfficiencyBonus}
                   isPositive={true}
                   detail={`${totalPings - pingsUsed} unused pings`}
+                  tooltip="Bonus for conserving pings. Each unused ping adds to your score, up to +400 points maximum."
                 />
               )}
               
@@ -260,6 +263,7 @@ export function PostRoundSummary({
                   value={Math.abs(score.components.timeScore)}
                   isPositive={score.components.timeScore > 0}
                   detail={`Completed in ${timeElapsed.toFixed(1)}s`}
+                  tooltip="Complete in under 15 seconds for bonus points. Times over 40 seconds incur penalties."
                 />
               )}
               
@@ -269,6 +273,7 @@ export function PostRoundSummary({
                   value={score.components.perfectTargetBonus}
                   isPositive={true}
                   highlight={true}
+                  tooltip="Awarded for 100% accuracy - landing your guess exactly on the target center."
                 />
               )}
               
@@ -279,6 +284,7 @@ export function PostRoundSummary({
                 isPositive={true}
                 detail="Mastery of chapter's special mechanic"
                 highlight={true}
+                tooltip="Special bonus for mastering this chapter's unique mechanic. Requires specific performance thresholds."
               />
             )}
 
@@ -289,6 +295,16 @@ export function PostRoundSummary({
                 isPositive={true}
                 detail={`${(replaysAvailable || 0) - replaysUsed} replays unused`}
                 highlight={true}
+                tooltip="Bonus for conserving ping replays. Each unused replay adds points."
+              />
+            )}
+
+            {score.components.hintPenalty < 0 && (
+              <ScoreBreakdownItem 
+                label="Hint Penalty"
+                value={Math.abs(score.components.hintPenalty)}
+                isPositive={false}
+                tooltip="Penalty for using the hint system. Chapter 1 is penalty-free for learning."
               />
             )}
           </div>
@@ -437,20 +453,25 @@ function ScoreBreakdownItem({
   value, 
   isPositive, 
   detail,
-  highlight 
+  highlight,
+  tooltip 
 }: { 
   label: string; 
   value: number; 
   isPositive: boolean; 
   detail?: string;
   highlight?: boolean;
+  tooltip?: string;
 }) {
   return (
     <div className={`flex justify-between items-start gap-2 p-2 rounded-lg transition-colors ${
       highlight ? 'bg-accent/10 border border-accent/30' : 'hover:bg-white/5'
     }`}>
       <div className="flex-1">
-        <div className="text-small font-medium">{label}</div>
+        <div className="text-small font-medium flex items-center gap-2">
+          {label}
+          {tooltip && <InfoTooltip content={tooltip} />}
+        </div>
         {detail && (
           <div className="text-xs text-muted-foreground">{detail}</div>
         )}
