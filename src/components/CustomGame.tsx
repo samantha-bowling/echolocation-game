@@ -160,7 +160,7 @@ export function CustomGame() {
     if (config.numberOfRounds === -1 || currentRound < config.numberOfRounds) {
       setRoundScores(prev => [...prev, score]);
       setGameState('round-transition');
-      setShowSummaryModal(false); // Initially show canvas, not modal
+      setShowSummaryModal(true); // Auto-show modal like Classic mode
     } else {
       // Final round or single round
       setRoundScores(prev => [...prev, score]);
