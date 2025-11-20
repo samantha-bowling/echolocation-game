@@ -268,7 +268,7 @@ export function GameCanvas({
         )}
 
         {/* Show target after guess is confirmed (for debugging/reveal) */}
-        {gameState === 'summary' && (
+        {(gameState === 'summary' || gameState === 'round-transition') && (
           <>
             {/* Real Target circle */}
             <div
