@@ -17,6 +17,8 @@ import { useGamePhase } from '@/hooks/useGamePhase';
 import { useHintSystem } from '@/hooks/useHintSystem';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
+import { saveGameSession, clearGameSession, loadGameSession } from '@/lib/game/customSession';
+import { toast } from '@/hooks/use-toast';
 
 export function CustomGame() {
   const location = useLocation();
@@ -24,7 +26,9 @@ export function CustomGame() {
   const isMobile = useIsMobile();
   const canvasRef = useRef<HTMLDivElement>(null);
   
-  const config = (location.state?.config as CustomGameConfig) || DEFAULT_CUSTOM_CONFIG;
+  // Check for resumed session first, then location.state config
+  const resumedSession = location.state?.resumeSession ? loadGameSession() : null;
+  const config = (location.state?.config as CustomGameConfig) || resumedSession?.config || DEFAULT_CUSTOM_CONFIG;
   
   const arenaSize = useMemo(() => {
     const configSize = getArenaDimensions(config.arenaSize);
@@ -36,14 +40,16 @@ export function CustomGame() {
     return configSize;
   }, [isMobile, config.arenaSize]);
 
-  const [gameState, setGameState] = useState<'playing' | 'round-transition' | 'summary'>('playing');
-  const [currentRound, setCurrentRound] = useState(1);
-  const [roundScores, setRoundScores] = useState<any[]>([]);
-  const [target, setTarget] = useState(() => 
-    generateTargetPosition(arenaSize, config.targetSize)
+  const [gameState, setGameState] = useState<'playing' | 'round-transition' | 'summary'>(
+    resumedSession?.gameState || 'playing'
   );
-  const [scoreResult, setScoreResult] = useState<any>(null);
-  const [targetMoveCount, setTargetMoveCount] = useState(0);
+  const [currentRound, setCurrentRound] = useState(resumedSession?.currentRound || 1);
+  const [roundScores, setRoundScores] = useState<any[]>(resumedSession?.roundScores || []);
+  const [target, setTarget] = useState(() => 
+    resumedSession?.target || generateTargetPosition(arenaSize, config.targetSize)
+  );
+  const [scoreResult, setScoreResult] = useState<any>(resumedSession ? null : null);
+  const [targetMoveCount, setTargetMoveCount] = useState(resumedSession?.targetMoveCount || 0);
   const [showSummaryModal, setShowSummaryModal] = useState(false);
 
   const { gamePhase, finalGuess, setFinalGuess, handlePlaceFinalGuess, handleRepositionGuess, handleGoBackToPinging, resetPhase } = useGamePhase();
@@ -78,6 +84,39 @@ export function CustomGame() {
     audioEngine.initialize(arenaSize.width, arenaSize.height);
     audioEngine.setTheme(config.theme);
   }, [config.theme, arenaSize]);
+
+  // Auto-save session on critical state changes
+  useEffect(() => {
+    if (gameState === 'summary') return; // Don't save completed games
+    
+    const sessionData = {
+      config,
+      gameState,
+      currentRound,
+      roundScores,
+      target,
+      pingHistory: pingHistory || [],
+      finalGuess,
+      pingsUsed,
+      elapsedTime,
+      finalTime,
+      targetMoveCount,
+      gamePhase,
+      timestamp: Date.now(),
+    };
+    
+    saveGameSession(sessionData);
+  }, [config, gameState, currentRound, roundScores, target, pingHistory, finalGuess, pingsUsed, gamePhase, targetMoveCount]);
+
+  // Show toast on successful resume
+  useEffect(() => {
+    if (resumedSession) {
+      toast({
+        title: 'Game Resumed',
+        description: `Continuing from Round ${resumedSession.currentRound}`,
+      });
+    }
+  }, []);
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (gameState === 'summary') return;
@@ -140,6 +179,18 @@ export function CustomGame() {
   };
 
   const handleNextRound = () => {
+    // Record stats for the completed round
+    if (scoreResult) {
+      recordCustomGame(
+        config,
+        scoreResult.total,
+        scoreResult.proximity,
+        pingsUsed,
+        finalTime ?? elapsedTime,
+        scoreResult.hasWon
+      );
+    }
+
     const nextRound = currentRound + 1;
     setCurrentRound(nextRound);
     setTarget(generateTargetPosition(arenaSize, config.targetSize));
@@ -153,6 +204,7 @@ export function CustomGame() {
   };
 
   const handleRetry = () => {
+    clearGameSession();
     setCurrentRound(1);
     setRoundScores([]);
     setTarget(generateTargetPosition(arenaSize, config.targetSize));
@@ -164,7 +216,15 @@ export function CustomGame() {
     setScoreResult(null);
   };
 
+  const handleQuitGame = () => {
+    clearGameSession();
+    navigate('/custom-mode');
+  };
+
   if (gameState === 'summary' && scoreResult) {
+    // Clear session when game is complete
+    clearGameSession();
+    
     const totalScore = roundScores.reduce((sum, s) => sum + s.total, 0);
     
     return (
@@ -189,7 +249,7 @@ export function CustomGame() {
     <div className="min-h-screen flex flex-col bg-background">
       <header className="border-b border-border p-4">
         <div className={cn("mx-auto flex items-center justify-between", isMobile ? "max-w-full" : "max-w-6xl")}>
-          <Button variant="ghost" size="sm" onClick={() => navigate('/')} className="hover-lift">
+          <Button variant="ghost" size="sm" onClick={handleQuitGame} className="hover-lift">
             <ArrowLeft className="w-4 h-4 mr-2" />
             {!isMobile && 'Menu'}
           </Button>

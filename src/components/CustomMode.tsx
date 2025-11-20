@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Play, Save, Trash2, Lightbulb, Download, BarChart3, Target, Zap, Infinity, Gamepad2, MapPin, Volume2, Settings } from 'lucide-react';
+import { ArrowLeft, Play, Save, Trash2, Lightbulb, Download, BarChart3, Target, Zap, Infinity, Gamepad2, MapPin, Volume2, Settings, PlayCircle, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
@@ -8,9 +8,10 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AUDIO_THEMES } from '@/lib/audio/engine';
-import { CustomGameConfig, validateCustomConfig, ARENA_PRESETS, loadCustomPresets, saveCustomPreset, deleteCustomPreset, CustomPreset, decodeShareCodeToConfig } from '@/lib/game/customConfig';
+import { CustomGameConfig, validateCustomConfig, ARENA_PRESETS, loadCustomPresets, saveCustomPreset, deleteCustomPreset, CustomPreset, decodeShareCodeToConfig, DEFAULT_CUSTOM_CONFIG } from '@/lib/game/customConfig';
 import { toast } from '@/hooks/use-toast';
 import { InfoTooltip } from '@/components/InfoTooltip';
+import { hasActiveSession, loadGameSession, clearGameSession, loadLastConfig, saveLastConfig, clearLastConfig, getSessionAge } from '@/lib/game/customSession';
 
 export function CustomMode() {
   const navigate = useNavigate();
@@ -46,7 +47,34 @@ export function CustomMode() {
 
   useEffect(() => {
     setPresets(loadCustomPresets());
+    
+    // Load last used config on mount
+    const lastConfig = loadLastConfig();
+    if (lastConfig) {
+      loadConfigIntoState(lastConfig);
+    }
   }, []);
+
+  const loadConfigIntoState = (config: CustomGameConfig) => {
+    setPingsMode(config.pingsMode);
+    setPingsCount(config.pingsCount);
+    setShowPingLocations(config.showPingLocations ?? true);
+    setPingReplaysEnabled(config.pingReplaysEnabled ?? false);
+    setReplaysCount(config.replaysCount ?? 0);
+    setTargetSize([config.targetSize]);
+    setMovementMode(config.movementMode);
+    setMovementTrigger(config.movementTrigger || 3);
+    setTimerEnabled(config.timerEnabled);
+    setTheme(config.theme);
+    setNoiseLevel([config.noiseLevel]);
+    setDecoys(config.decoys);
+    setArenaSize(config.arenaSize);
+    setNumberOfRounds(config.numberOfRounds);
+    setHintsEnabled(config.hintsEnabled);
+    setHintLevel(config.hintLevel);
+    setWinConditionType(config.winCondition?.type || 'none');
+    setProximityThreshold(config.winCondition?.proximityThreshold || 80);
+  };
 
   const handleBegin = () => {
     const config: CustomGameConfig = {
@@ -73,7 +101,32 @@ export function CustomMode() {
     };
 
     const validatedConfig = validateCustomConfig(config);
+    
+    // Save as last used config
+    saveLastConfig(validatedConfig);
+    
     navigate('/custom-game', { state: { config: validatedConfig } });
+  };
+
+  const handleResumeGame = () => {
+    navigate('/custom-game', { state: { resumeSession: true } });
+  };
+
+  const handleAbandonSession = () => {
+    clearGameSession();
+    toast({
+      title: 'Session Cleared',
+      description: 'Your saved game progress has been removed.',
+    });
+  };
+
+  const handleResetToDefaults = () => {
+    loadConfigIntoState(DEFAULT_CUSTOM_CONFIG);
+    clearLastConfig();
+    toast({
+      title: 'Reset to Defaults',
+      description: 'All settings have been reset to default values.',
+    });
   };
 
   const handleSavePreset = () => {
@@ -109,25 +162,7 @@ export function CustomMode() {
   };
 
   const loadPreset = (preset: CustomPreset) => {
-    const config = preset.config;
-    setPingsMode(config.pingsMode);
-    setPingsCount(config.pingsCount);
-    setShowPingLocations(config.showPingLocations ?? true);
-    setPingReplaysEnabled(config.pingReplaysEnabled ?? false);
-    setReplaysCount(config.replaysCount ?? 0);
-    setTargetSize([config.targetSize]);
-    setMovementMode(config.movementMode);
-    setMovementTrigger(config.movementTrigger || 3);
-    setTimerEnabled(config.timerEnabled);
-    setTheme(config.theme);
-    setNoiseLevel([config.noiseLevel]);
-    setDecoys(config.decoys);
-    setArenaSize(config.arenaSize);
-    setNumberOfRounds(config.numberOfRounds);
-    setHintsEnabled(config.hintsEnabled);
-    setHintLevel(config.hintLevel);
-    setWinConditionType(config.winCondition?.type || 'none');
-    setProximityThreshold(config.winCondition?.proximityThreshold || 80);
+    loadConfigIntoState(preset.config);
   };
 
   const handleDeletePreset = (name: string) => {
@@ -138,24 +173,7 @@ export function CustomMode() {
   const handleImportConfig = () => {
     const decoded = decodeShareCodeToConfig(importCode);
     if (decoded) {
-      setPingsMode(decoded.pingsMode);
-      setPingsCount(decoded.pingsCount);
-      setShowPingLocations(decoded.showPingLocations ?? true);
-      setPingReplaysEnabled(decoded.pingReplaysEnabled ?? false);
-      setReplaysCount(decoded.replaysCount ?? 0);
-      setTargetSize([decoded.targetSize]);
-      setMovementMode(decoded.movementMode);
-      setMovementTrigger(decoded.movementTrigger || 3);
-      setTimerEnabled(decoded.timerEnabled);
-      setTheme(decoded.theme);
-      setNoiseLevel([decoded.noiseLevel]);
-      setDecoys(decoded.decoys);
-      setArenaSize(decoded.arenaSize);
-      setNumberOfRounds(decoded.numberOfRounds);
-      setHintsEnabled(decoded.hintsEnabled);
-      setHintLevel(decoded.hintLevel);
-      setWinConditionType(decoded.winCondition?.type || 'none');
-      setProximityThreshold(decoded.winCondition?.proximityThreshold || 80);
+      loadConfigIntoState(decoded);
       
       setShowImportDialog(false);
       setImportCode('');
@@ -260,6 +278,30 @@ export function CustomMode() {
 
       {/* Config */}
       <div className="max-w-2xl mx-auto p-6 space-y-8 py-12">
+        {/* Resume Game Banner */}
+        {hasActiveSession() && (
+          <div className="flat-card bg-primary/10 border-2 border-primary/30 space-y-4">
+            <div className="flex items-start gap-3">
+              <PlayCircle className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
+              <div className="flex-1">
+                <h3 className="text-heading-3 text-primary mb-1">Resume Game</h3>
+                <p className="text-small text-muted-foreground">
+                  You have a saved game in progress from Round {loadGameSession()?.currentRound}.
+                  {getSessionAge() > 0 && ` (${getSessionAge()} day${getSessionAge() > 1 ? 's' : ''} ago)`}
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button onClick={handleResumeGame} className="flex-1" size="lg">
+                <PlayCircle className="w-4 h-4 mr-2" />
+                Resume Game
+              </Button>
+              <Button onClick={handleAbandonSession} variant="outline" className="flex-1" size="lg">
+                Start Fresh
+              </Button>
+            </div>
+          </div>
+        )}
         {/* Quick Presets Section */}
         <section className="flat-card space-y-4">
           <div className="flex items-center justify-between">
@@ -859,15 +901,27 @@ export function CustomMode() {
           </div>
         </div>
 
-        {/* Begin Button */}
-        <Button
-          onClick={handleBegin}
-          size="lg"
-          className="w-full h-14 text-base hover-lift"
-        >
-          <Play className="w-5 h-5 mr-2" />
-          Begin Custom Round
-        </Button>
+        {/* Action Buttons */}
+        <div className="space-y-3">
+          <Button
+            onClick={handleBegin}
+            size="lg"
+            className="w-full h-14 text-base hover-lift"
+          >
+            <Play className="w-5 h-5 mr-2" />
+            Begin Custom Round
+          </Button>
+          
+          <Button
+            onClick={handleResetToDefaults}
+            variant="outline"
+            size="sm"
+            className="w-full"
+          >
+            <RotateCcw className="w-4 h-4 mr-2" />
+            Reset to Defaults
+          </Button>
+        </div>
       </div>
 
       {/* Save Preset Dialog */}
