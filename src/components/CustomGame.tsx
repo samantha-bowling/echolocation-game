@@ -218,7 +218,7 @@ export function CustomGame() {
 
   const handleQuitGame = () => {
     clearGameSession();
-    navigate('/custom-mode');
+    navigate('/custom');
   };
 
   if (gameState === 'summary' && scoreResult) {
