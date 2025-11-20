@@ -23,6 +23,8 @@ interface PostRoundSummaryProps {
   config?: CustomGameConfig;
   replaysUsed?: number;
   replaysAvailable?: number;
+  showNextButton?: boolean;
+  nextButtonLabel?: string;
 }
 
 export function PostRoundSummary({
@@ -42,6 +44,8 @@ export function PostRoundSummary({
   config,
   replaysUsed = 0,
   replaysAvailable,
+  showNextButton,
+  nextButtonLabel,
 }: PostRoundSummaryProps) {
   // Detect boss level (Level 10, 20, 30, etc.) - only for classic mode
   const isBossLevel = !isCustomGame && (typeof score.level === 'number' ? score.level % 10 === 0 : false);
@@ -334,15 +338,15 @@ export function PostRoundSummary({
 
         {/* Actions */}
         <div className="flex flex-col gap-3">
-          {success && !isCustomGame && (
+          {(success && !isCustomGame) || showNextButton ? (
             <Button 
               onClick={onNext} 
               size="lg"
               className="w-full h-12"
             >
-              Next Level
+              {nextButtonLabel || 'Next Level'}
             </Button>
-          )}
+          ) : null}
           
           <button onClick={onRetry} className="ghost-button w-full h-12">
             Retry Level
