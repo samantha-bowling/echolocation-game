@@ -660,6 +660,20 @@ export function CustomMode() {
               step={10}
               className="w-full"
             />
+            
+            {/* Visual Preview */}
+            <div className="flex items-center justify-center p-6 bg-muted/20 rounded-lg border border-border/40">
+              <div 
+                className="rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center transition-all"
+                style={{ 
+                  width: `${targetSize[0]}px`, 
+                  height: `${targetSize[0]}px` 
+                }}
+              >
+                <span className="text-xs text-primary font-medium">{targetSize[0]}px</span>
+              </div>
+            </div>
+            
             <p className="text-tiny text-muted-foreground">
               Larger targets are easier to locate
             </p>
