@@ -44,6 +44,7 @@ export function CustomGame() {
   );
   const [scoreResult, setScoreResult] = useState<any>(null);
   const [targetMoveCount, setTargetMoveCount] = useState(0);
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
 
   const { gamePhase, finalGuess, setFinalGuess, handlePlaceFinalGuess, handleRepositionGuess, handleGoBackToPinging, resetPhase } = useGamePhase();
   const { elapsedTime, finalTime, resetTimer } = useGameTimer({ 
@@ -79,7 +80,8 @@ export function CustomGame() {
   }, [config.theme, arenaSize]);
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (gameState === 'summary' || gameState === 'round-transition') return;
+    if (gameState === 'summary') return;
+    if (gameState === 'round-transition') return; // Still block clicks during transition
     
     const rect = e.currentTarget.getBoundingClientRect();
     const clickPos: Position = {
@@ -119,6 +121,7 @@ export function CustomGame() {
     if (config.numberOfRounds === -1 || currentRound < config.numberOfRounds) {
       setRoundScores(prev => [...prev, score]);
       setGameState('round-transition');
+      setShowSummaryModal(false); // Initially show canvas, not modal
     } else {
       // Final round or single round
       setRoundScores(prev => [...prev, score]);
@@ -146,6 +149,7 @@ export function CustomGame() {
     setTargetMoveCount(0);
     setGameState('playing');
     setScoreResult(null);
+    setShowSummaryModal(false);
   };
 
   const handleRetry = () => {
@@ -159,22 +163,6 @@ export function CustomGame() {
     setGameState('playing');
     setScoreResult(null);
   };
-
-  if (gameState === 'round-transition' && scoreResult) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
-        <div className="max-w-2xl w-full space-y-6">
-          <div className="text-center space-y-2">
-            <h2 className="text-heading-2 font-display">Round {currentRound} Complete!</h2>
-            <p className="text-muted-foreground">Score: {scoreResult.total}</p>
-          </div>
-          <Button onClick={handleNextRound} size="lg" className="w-full">
-            Continue to Round {currentRound + 1}
-          </Button>
-        </div>
-      </div>
-    );
-  }
 
   if (gameState === 'summary' && scoreResult) {
     const totalScore = roundScores.reduce((sum, s) => sum + s.total, 0);
@@ -299,8 +287,39 @@ export function CustomGame() {
               </>
             )}
           </div>
+
+          {/* View Summary Button Overlay (for round transition) */}
+          {gameState === 'round-transition' && scoreResult && !showSummaryModal && (
+            <div className="flex justify-center">
+              <Button
+                size="lg"
+                onClick={() => setShowSummaryModal(true)}
+                className="hover-lift animate-bounce-subtle shadow-glow"
+              >
+                View Summary
+              </Button>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Post Round Summary Modal (for round transition) */}
+      {gameState === 'round-transition' && scoreResult && showSummaryModal && (
+        <PostRoundSummary
+          score={scoreResult}
+          proximity={scoreResult.proximity}
+          pingsUsed={pingsUsed}
+          totalPings={config.pingsMode === 'unlimited' ? 10 : config.pingsCount}
+          timeElapsed={finalTime ?? elapsedTime}
+          onNext={handleNextRound}
+          onRetry={handleNextRound}
+          onMenu={() => navigate('/')}
+          onClose={() => setShowSummaryModal(false)}
+          isCustomGame={true}
+          showNextButton={true}
+          nextButtonLabel={`Continue to Round ${currentRound + 1}`}
+        />
+      )}
     </div>
   );
 }
