@@ -66,10 +66,10 @@ export function TutorialGame() {
     { id: 'center-bottom', position: { x: 400, y: 150 }, label: 'TARGET BELOW', description: 'Sound travels down, lower pitch' },
     
     // Combination positions (teaching how cues combine)
-    { id: 'top-left', position: { x: 300, y: 150 }, label: 'TOP-LEFT', description: 'Left speaker, higher pitch, medium volume' },
-    { id: 'top-right-far', position: { x: 650, y: 150 }, label: 'TOP-RIGHT & FAR', description: 'Right speaker, higher pitch, quieter' },
-    { id: 'bottom-left-close', position: { x: 320, y: 450 }, label: 'BOTTOM-LEFT & CLOSE', description: 'Left speaker, lower pitch, louder' },
-    { id: 'bottom-right', position: { x: 600, y: 450 }, label: 'BOTTOM-RIGHT', description: 'Right speaker, lower pitch, medium volume' },
+    { id: 'top-left', position: { x: 300, y: 150 }, label: 'TOP-LEFT', description: 'Left speaker, lower pitch, medium volume' },
+    { id: 'top-right-far', position: { x: 650, y: 150 }, label: 'TOP-RIGHT & FAR', description: 'Right speaker, lower pitch, quieter' },
+    { id: 'bottom-left-close', position: { x: 320, y: 450 }, label: 'BOTTOM-LEFT & CLOSE', description: 'Left speaker, higher pitch, louder' },
+    { id: 'bottom-right', position: { x: 600, y: 450 }, label: 'BOTTOM-RIGHT', description: 'Right speaker, higher pitch, medium volume' },
   ];
 
   const { gamePhase, finalGuess, setFinalGuess, handlePlaceFinalGuess, resetPhase } = useGamePhase();
