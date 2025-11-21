@@ -24,29 +24,30 @@ export default function ChapterSelect() {
     }
   }, []);
 
-  const handleChapterClick = (chapterId: number) => {
-    const chapterProgress = loadChapterProgress();
-    const progressInChapter = chapterProgress[chapterId];
+  const handleContinueChapter = (chapterId: number, currentLevel: number) => {
+    const startLevel = (chapterId - 1) * 10 + currentLevel;
     
-    let startLevel: number;
-    if (progressInChapter && progressInChapter.currentLevel > 1) {
-      // Has progress - resume from last level
-      startLevel = (chapterId - 1) * 10 + progressInChapter.currentLevel;
-    } else {
-      // No progress - start from Level 1
-      startLevel = (chapterId - 1) * 10 + 1;
-    }
-    
-    // Save as the current progress
-    localStorage.setItem(
-      'echo_classic_progress',
-      JSON.stringify({
-        level: startLevel,
-        chapter: chapterId,
-      })
-    );
+    localStorage.setItem('echo_classic_progress', JSON.stringify({
+      level: startLevel,
+      chapter: chapterId,
+    }));
     
     navigate('/classic');
+  };
+
+  const handleRestartChapter = (chapterId: number) => {
+    const startLevel = (chapterId - 1) * 10 + 1;
+    
+    localStorage.setItem('echo_classic_progress', JSON.stringify({
+      level: startLevel,
+      chapter: chapterId,
+    }));
+    
+    navigate('/classic');
+  };
+
+  const handleStartChapter = (chapterId: number) => {
+    handleRestartChapter(chapterId);
   };
 
   const isChapterUnlocked = (chapterId: number): boolean => {
@@ -128,17 +129,26 @@ export default function ChapterSelect() {
         </div>
 
         {/* Chapter Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {CHAPTERS.map((chapter) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {CHAPTERS.map((chapter) => {
+          const chapterProgress = loadChapterProgress();
+          const progressInChapter = chapterProgress[chapter.id];
+          const hasProgress = progressInChapter && progressInChapter.currentLevel > 1;
+          
+          return (
             <ChapterCard
               key={chapter.id}
               chapter={chapter}
               stats={chapterStats[chapter.id] || null}
               isUnlocked={isChapterUnlocked(chapter.id)}
-              onClick={() => handleChapterClick(chapter.id)}
+              currentLevelInChapter={progressInChapter?.currentLevel}
+              onContinue={hasProgress ? () => handleContinueChapter(chapter.id, progressInChapter.currentLevel) : undefined}
+              onRestart={hasProgress || chapterStats[chapter.id]?.completed ? () => handleRestartChapter(chapter.id) : undefined}
+              onClick={!hasProgress ? () => handleStartChapter(chapter.id) : undefined}
             />
-          ))}
-        </div>
+          );
+        })}
+      </div>
       </div>
     </div>
   );
