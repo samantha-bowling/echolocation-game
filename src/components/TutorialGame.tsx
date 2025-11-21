@@ -51,11 +51,19 @@ export function TutorialGame() {
   const demoReferenceTarget = { x: 400, y: 300 };
 
   // Demo ping positions for audio-cues step - positioned to demonstrate spatial audio
+  // 8-ping system: 4 core positions + 4 combination positions
   const demoPings = [
+    // Core positions (isolated cues)
     { id: 'left-close', position: { x: 300, y: 300 }, label: 'LEFT & CLOSE', description: 'Loud, left speaker' },
     { id: 'right-far', position: { x: 700, y: 300 }, label: 'RIGHT & FAR', description: 'Quiet, right speaker' },
     { id: 'center-top', position: { x: 400, y: 450 }, label: 'TARGET ABOVE', description: 'Sound travels up, higher pitch' },
     { id: 'center-bottom', position: { x: 400, y: 150 }, label: 'TARGET BELOW', description: 'Sound travels down, lower pitch' },
+    
+    // Combination positions (teaching how cues combine)
+    { id: 'top-left', position: { x: 300, y: 150 }, label: 'TOP-LEFT', description: 'Left speaker, higher pitch, medium volume' },
+    { id: 'top-right-far', position: { x: 650, y: 150 }, label: 'TOP-RIGHT & FAR', description: 'Right speaker, higher pitch, quieter' },
+    { id: 'bottom-left-close', position: { x: 320, y: 450 }, label: 'BOTTOM-LEFT & CLOSE', description: 'Left speaker, lower pitch, louder' },
+    { id: 'bottom-right', position: { x: 600, y: 450 }, label: 'BOTTOM-RIGHT', description: 'Right speaker, lower pitch, medium volume' },
   ];
 
   const { gamePhase, finalGuess, setFinalGuess, handlePlaceFinalGuess, resetPhase } = useGamePhase();
@@ -427,7 +435,7 @@ export function TutorialGame() {
         totalSteps={8}
         currentStepNumber={getStepNumber(tutorialState.currentStep)}
         demoPingsExperienced={demoPingsExperienced.size}
-        totalDemoPings={4}
+        totalDemoPings={8}
         stepOrder={stepOrder}
         actualScore={actualScore}
         proximity={actualProximity}
