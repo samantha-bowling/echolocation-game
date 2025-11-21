@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Radio, Settings as SettingsIcon, Check, Save } from 'lucide-react';
+import { ArrowLeft, Radio, Settings as SettingsIcon, Check, Save, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CustomGameConfig, DEFAULT_CUSTOM_CONFIG, getArenaDimensions } from '@/lib/game/customConfig';
 import { generateTargetPosition, getTargetCenter, Position, Target } from '@/lib/game/coords';
@@ -19,6 +19,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { saveGameSessionDB, clearGameSessionDB, loadGameSessionDB } from '@/lib/game/customSessionDB';
 import { CustomGameSession } from '@/lib/game/customSession';
+import { sessionSyncManager } from '@/lib/game/customSessionSync';
 import { toast } from '@/hooks/use-toast';
 
 export function CustomGame() {
@@ -75,6 +76,7 @@ export function CustomGame() {
   const [targetMoveCount, setTargetMoveCount] = useState(resumedSession?.targetMoveCount || 0);
   const [showSummaryModal, setShowSummaryModal] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'idle'>('idle');
+  const [isMultiTab, setIsMultiTab] = useState(false);
   
   // Throttling for auto-save
   const lastSaveTimeRef = useRef<number>(0);
@@ -113,6 +115,53 @@ export function CustomGame() {
     audioEngine.setTheme(config.theme);
   }, [config.theme, arenaSize]);
 
+  // Multi-tab synchronization
+  useEffect(() => {
+    if (!sessionSyncManager.isAvailable()) {
+      return;
+    }
+
+    // Subscribe to session updates from other tabs
+    const unsubscribeSession = sessionSyncManager.subscribe((syncedSession) => {
+      if (!syncedSession) {
+        // Session cleared in another tab
+        toast({
+          title: 'Game Ended',
+          description: 'Session ended in another tab',
+          duration: 3000,
+        });
+        navigate('/custom');
+        return;
+      }
+      
+      // Session updated in another tab - sync state
+      setGameState(syncedSession.gameState);
+      setCurrentRound(syncedSession.currentRound);
+      setRoundScores(syncedSession.roundScores);
+      setTarget(syncedSession.target);
+      setFinalGuess(syncedSession.finalGuess);
+      setTargetMoveCount(syncedSession.targetMoveCount);
+      setScoreResult(syncedSession.scoreResult);
+      
+      // Show brief sync notification
+      toast({
+        title: 'Game Synced',
+        description: 'Updated from another tab',
+        duration: 2000,
+      });
+    });
+    
+    // Subscribe to tab count updates
+    const unsubscribeTabCount = sessionSyncManager.subscribeTabCount((count) => {
+      setIsMultiTab(count > 1);
+    });
+    
+    return () => {
+      unsubscribeSession();
+      unsubscribeTabCount();
+    };
+  }, [navigate]);
+
   // Throttled save function
   const saveGameThrottled = useCallback(async () => {
     if (gameState === 'summary') return; // Don't save completed games
@@ -143,6 +192,9 @@ export function CustomGame() {
     };
     
     await saveGameSessionDB(sessionData);
+    
+    // Broadcast update to other tabs
+    sessionSyncManager.broadcastSessionUpdate(sessionData);
     
     // Mark as saved after brief delay
     setTimeout(() => setSaveStatus('saved'), 300);
@@ -294,6 +346,10 @@ export function CustomGame() {
 
   const handleRetry = async () => {
     await clearGameSessionDB();
+    
+    // Broadcast session clear to other tabs
+    sessionSyncManager.broadcastSessionClear();
+    
     setCurrentRound(1);
     setRoundScores([]);
     setTarget(generateTargetPosition(arenaSize, config.targetSize));
@@ -324,6 +380,9 @@ export function CustomGame() {
       timestamp: Date.now(),
     };
     await saveGameSessionDB(sessionData);
+    
+    // Broadcast update to other tabs
+    sessionSyncManager.broadcastSessionUpdate(sessionData);
     
     // Show confirmation
     toast({
@@ -356,6 +415,10 @@ export function CustomGame() {
     };
     
     await saveGameSessionDB(sessionData);
+    
+    // Broadcast update to other tabs
+    sessionSyncManager.broadcastSessionUpdate(sessionData);
+    
     setSaveStatus('saved');
     
     toast({
@@ -380,6 +443,7 @@ export function CustomGame() {
   if (gameState === 'summary' && scoreResult) {
     // Clear session when game is complete
     clearGameSessionDB();
+    sessionSyncManager.broadcastSessionClear();
     
     const totalScore = roundScores.reduce((sum, s) => sum + s.total, 0);
     
@@ -446,7 +510,16 @@ export function CustomGame() {
           
           {/* Save Status Indicator (positioned below header on mobile, inline on desktop) */}
           {!isMobile && (
-            <div className="absolute right-0 top-full mt-1 flex items-center gap-2 text-xs">
+            <div className="absolute right-0 top-full mt-1 flex items-center gap-3 text-xs">
+              {/* Multi-tab indicator */}
+              {isMultiTab && (
+                <div className="flex items-center gap-1.5 text-accent animate-fade-in">
+                  <Users className="w-3 h-3" />
+                  <span>Multi-tab active</span>
+                </div>
+              )}
+              
+              {/* Save status */}
               {saveStatus === 'saving' && (
                 <div className="flex items-center gap-1.5 text-muted-foreground animate-fade-in">
                   <div className="w-2 h-2 bg-accent rounded-full animate-pulse" />
@@ -462,23 +535,32 @@ export function CustomGame() {
             </div>
           )}
           
-          {/* Mobile: Save status below */}
-          {isMobile && saveStatus !== 'idle' && (
-            <div className="flex justify-center mt-2">
-              <div className="text-xs text-muted-foreground flex items-center gap-1.5">
-                {saveStatus === 'saving' && (
-                  <>
-                    <div className="w-2 h-2 bg-accent rounded-full animate-pulse" />
-                    <span>Saving...</span>
-                  </>
-                )}
-                {saveStatus === 'saved' && (
-                  <>
-                    <Check className="w-3 h-3 text-accent" />
-                    <span className="text-accent">Saved</span>
-                  </>
-                )}
-              </div>
+          {/* Mobile: Multi-tab and save status below */}
+          {isMobile && (isMultiTab || saveStatus !== 'idle') && (
+            <div className="flex justify-center mt-2 gap-3">
+              {isMultiTab && (
+                <div className="text-xs flex items-center gap-1.5 text-accent">
+                  <Users className="w-3 h-3" />
+                  <span>Multi-tab</span>
+                </div>
+              )}
+              
+              {saveStatus !== 'idle' && (
+                <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+                  {saveStatus === 'saving' && (
+                    <>
+                      <div className="w-2 h-2 bg-accent rounded-full animate-pulse" />
+                      <span>Saving...</span>
+                    </>
+                  )}
+                  {saveStatus === 'saved' && (
+                    <>
+                      <Check className="w-3 h-3 text-accent" />
+                      <span className="text-accent">Saved</span>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
