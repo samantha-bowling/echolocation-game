@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ChapterConfig } from '@/lib/game/chapters';
 import { ChapterStats } from '@/lib/game/chapterStats';
 import { cn } from '@/lib/utils';
+import { InfoTooltip } from '@/components/InfoTooltip';
 
 const getMechanicSummary = (mechanic?: string): string | null => {
   switch (mechanic) {
@@ -73,6 +74,53 @@ export function ChapterCard({ chapter, stats, isUnlocked, currentLevelInChapter,
               >
                 Chapter {chapter.id}
               </h3>
+              
+              {/* Chapter Specs Info Tooltip */}
+              <InfoTooltip
+                content={
+                  <div className="space-y-3">
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-center gap-4">
+                        <span className="text-muted-foreground">Starting Pings:</span>
+                        <span className="font-semibold">{chapter.basePings}</span>
+                      </div>
+                      <div className="flex justify-between items-center gap-4">
+                        <span className="text-muted-foreground">Levels:</span>
+                        <span className="font-semibold">10</span>
+                      </div>
+                      <div className="flex justify-between items-center gap-4">
+                        <span className="text-muted-foreground">Target Size:</span>
+                        <span className="font-semibold">{chapter.targetSize}px</span>
+                      </div>
+                    </div>
+                    
+                    {/* Visual Target Size Preview */}
+                    <div className="flex flex-col items-center gap-2 pt-2 border-t border-border/50">
+                      <span className="text-muted-foreground text-[10px] uppercase tracking-wide">
+                        Target Preview
+                      </span>
+                      <div
+                        className="rounded-full border-2"
+                        style={{
+                          width: `${chapter.targetSize}px`,
+                          height: `${chapter.targetSize}px`,
+                          borderColor: chapter.theme.primary,
+                          background: `${chapter.theme.primary}20`,
+                        }}
+                      />
+                    </div>
+                    
+                    {/* Replays Info (Chapter 1 only) */}
+                    {chapter.id === 1 && (
+                      <div className="flex justify-between items-center pt-2 border-t border-border/50">
+                        <span className="text-muted-foreground">Replays:</span>
+                        <span className="font-semibold">Unlimited</span>
+                      </div>
+                    )}
+                  </div>
+                }
+              />
+              
               {!isUnlocked && <Lock className="w-4 h-4 text-muted-foreground" />}
               {isCompleted && (
                 <CheckCircle2 className="w-5 h-5" style={{ color: chapter.theme.accent }} />
