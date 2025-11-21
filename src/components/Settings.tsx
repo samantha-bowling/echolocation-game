@@ -347,7 +347,7 @@ export function Settings() {
               Audio Setup Guide
             </h2>
             <p className="text-small text-muted-foreground">
-              Optimize your audio experience for true binaural 3D sound. After setup, complete the calibration tests below to verify everything works correctly.
+              Optimize your audio experience for true binaural 3D sound. After setup, complete the setup tests below to verify everything works correctly.
             </p>
           </div>
           
@@ -416,12 +416,12 @@ export function Settings() {
           </div>
         </section>
 
-        {/* Audio Calibration */}
+        {/* Audio Setup Tests */}
         <section className="space-y-4">
           <div>
             <h2 className="text-heading-3 mb-2 flex items-center gap-2">
               <SettingsIcon className="w-5 h-5" />
-              Audio Calibration Tests
+              Audio Setup Tests
               {allTestsComplete && <CheckCircle2 className="w-5 h-5 text-primary ml-auto" />}
             </h2>
             <p className="text-small text-muted-foreground">
