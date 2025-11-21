@@ -56,7 +56,7 @@ export const TUTORIAL_STEPS: Record<TutorialStep, {
   },
   scoring: {
     title: 'Understanding Your Score',
-    description: 'Your score is purely skill-based: proximity (5 pts/%, most important), ping efficiency (up to +200), and time (<15s for bonus, >40s heavy penalty). In later chapters, master special mechanics for +100-200 bonuses, and defeat Level 10 bosses for +150. Achieve B rank (700+) to progress—accuracy is mandatory!',
+    description: 'Your score is purely skill-based: proximity (5 pts/%, most important), ping efficiency (up to +200), and time (<15s for bonus, 15-45s neutral, >45s penalty). In later chapters, master special mechanics for +100-200 bonuses, and defeat Level 10 bosses for +150. Achieve B rank (500+) to progress—accuracy is mandatory!',
     action: 'Continue',
   },
   complete: {

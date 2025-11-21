@@ -416,10 +416,10 @@ export function PostRoundSummary({
               
               
               {score.components.timeScore !== 0 && (
-                <ScoreBreakdownItem 
-                  label="Time Score"
-                  value={score.components.timeScore}
-                  isPositive={score.components.timeScore > 0}
+              <ScoreBreakdownItem 
+                label="Time Score"
+                value={Math.abs(score.components.timeScore)}
+                isPositive={score.components.timeScore > 0}
                   detail={`Completed in ${timeElapsed.toFixed(1)}s`}
                   tooltip="Core scoring component based on completion speed. Fast times (<15s) add points, slow times (>40s) subtract points."
                 />
