@@ -44,7 +44,9 @@ export function CustomGame() {
     resumedSession?.gameState || 'playing'
   );
   const [currentRound, setCurrentRound] = useState(resumedSession?.currentRound || 1);
-  const [roundScores, setRoundScores] = useState<any[]>(resumedSession?.roundScores || []);
+  const [roundScores, setRoundScores] = useState<Array<{ total: number; proximity: number; pingsUsed: number; hasWon: boolean }>>(
+    resumedSession?.roundScores || []
+  );
   const [target, setTarget] = useState(() => 
     resumedSession?.target || generateTargetPosition(arenaSize, config.targetSize)
   );
@@ -158,12 +160,12 @@ export function CustomGame() {
 
     // Multi-round handling (unlimited = -1, or check against target)
     if (config.numberOfRounds === -1 || currentRound < config.numberOfRounds) {
-      setRoundScores(prev => [...prev, score]);
+      setRoundScores(prev => [...prev, { total: score.total, proximity, pingsUsed, hasWon }]);
       setGameState('round-transition');
       setShowSummaryModal(true); // Auto-show modal like Classic mode
     } else {
       // Final round or single round
-      setRoundScores(prev => [...prev, score]);
+      setRoundScores(prev => [...prev, { total: score.total, proximity, pingsUsed, hasWon }]);
       setGameState('summary');
       
       // Record custom game stats
@@ -241,6 +243,8 @@ export function CustomGame() {
         winCondition={config.winCondition}
         passedCondition={scoreResult.hasWon}
         config={config}
+        roundScores={roundScores}
+        gameState={gameState}
       />
     );
   }
@@ -381,6 +385,10 @@ export function CustomGame() {
         winCondition={config.winCondition}
         passedCondition={scoreResult.hasWon}
         config={config}
+        currentRound={currentRound}
+        totalRounds={config.numberOfRounds}
+        roundScores={roundScores}
+        gameState={gameState}
       />
       )}
     </div>

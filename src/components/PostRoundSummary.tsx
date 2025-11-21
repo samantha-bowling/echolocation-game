@@ -25,6 +25,10 @@ interface PostRoundSummaryProps {
   replaysAvailable?: number;
   showNextButton?: boolean;
   nextButtonLabel?: string;
+  currentRound?: number;
+  totalRounds?: number;
+  roundScores?: Array<{ total: number; proximity: number; pingsUsed: number; hasWon: boolean }>;
+  gameState?: 'playing' | 'round-transition' | 'summary';
 }
 
 export function PostRoundSummary({
@@ -46,6 +50,10 @@ export function PostRoundSummary({
   replaysAvailable,
   showNextButton,
   nextButtonLabel,
+  currentRound,
+  totalRounds,
+  roundScores = [],
+  gameState = 'summary',
 }: PostRoundSummaryProps) {
   // Detect boss level (Level 10, 20, 30, etc.) - only for classic mode
   const isBossLevel = !isCustomGame && (typeof score.level === 'number' ? score.level % 10 === 0 : false);
@@ -135,54 +143,207 @@ export function PostRoundSummary({
           </div>
         )}
 
-        {/* Rank */}
-        <div className="text-center space-y-2">
-          <TooltipProvider>
-            <Tooltip delayDuration={200}>
-              <TooltipTrigger asChild>
-                <div 
-                  className={`inline-flex items-center justify-center w-20 h-20 rounded-full text-3xl font-display font-bold border-2 cursor-help ${
-                    getRankColor(score.rank).bg
-                  } ${
-                    getRankColor(score.rank).text
-                  } ${
-                    getRankColor(score.rank).border
-                  }`}
-                >
-                  {score.rank}
+        {/* Round Progress & Cumulative Stats (for multi-round mid-game) */}
+        {isCustomGame && currentRound && gameState === 'round-transition' && roundScores.length > 0 && (
+          <div className="flat-card bg-gradient-to-br from-primary/5 to-accent/5 border-primary/20 space-y-3">
+            <div className="text-center">
+              <p className="text-heading-2 text-primary">
+                {totalRounds === -1 
+                  ? `Round ${currentRound} • Cozy Mode` 
+                  : `Round ${currentRound} of ${totalRounds}`}
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="text-center space-y-1">
+                <p className="text-tiny text-muted-foreground">Total Score</p>
+                <p className="text-heading-3 font-mono text-primary">
+                  {roundScores.reduce((sum, r) => sum + r.total, 0)}
+                </p>
+              </div>
+              
+              <div className="text-center space-y-1">
+                <p className="text-tiny text-muted-foreground">Avg Proximity</p>
+                <p className="text-heading-3 font-mono text-primary">
+                  {(roundScores.reduce((sum, r) => sum + r.proximity, 0) / roundScores.length).toFixed(1)}%
+                </p>
+              </div>
+              
+              <div className="text-center space-y-1">
+                <p className="text-tiny text-muted-foreground">Best Round</p>
+                <p className="text-heading-3 font-mono text-primary">
+                  {Math.max(...roundScores.map(r => r.total))}
+                </p>
+              </div>
+              
+              <div className="text-center space-y-1">
+                <p className="text-tiny text-muted-foreground">Rounds Won</p>
+                <p className="text-heading-3 font-mono text-primary">
+                  {roundScores.filter(r => r.hasWon).length}/{roundScores.length}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Enhanced Session Stats (for final summary with multiple rounds) */}
+        {isCustomGame && gameState === 'summary' && roundScores.length > 1 && (
+          <div className="space-y-4">
+            <div className="text-center space-y-2">
+              <h2 className="text-heading-1 text-primary animate-pulse-glow">🎉 Session Complete!</h2>
+              <p className="text-muted-foreground">
+                Completed {roundScores.length} round{roundScores.length > 1 ? 's' : ''}
+              </p>
+            </div>
+            
+            <div className="flat-card bg-gradient-to-br from-primary/10 via-accent/5 to-primary/10 space-y-4">
+              <div className="grid grid-cols-3 gap-3">
+                {/* Row 1 - Score Performance */}
+                <div className="text-center space-y-1 p-3 rounded-lg bg-background/30">
+                  <p className="text-tiny text-muted-foreground uppercase tracking-wide">Total Score</p>
+                  <p className="text-heading-2 font-mono text-primary">
+                    {roundScores.reduce((sum, r) => sum + r.total, 0)}
+                  </p>
                 </div>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="max-w-xs">
-                <div className="space-y-1.5">
-                  <p className="text-xs font-semibold mb-2">Rank Thresholds</p>
-                  {RANK_THRESHOLDS.map(({ rank, threshold }) => (
-                    <div 
-                      key={rank}
-                      className={`flex justify-between text-xs ${
-                        rank === score.rank ? 'font-bold text-accent' : 'text-muted-foreground'
-                      }`}
-                    >
-                      <span>{rank}:</span>
-                      <span>{threshold}+ points</span>
+                
+                <div className="text-center space-y-1 p-3 rounded-lg bg-background/30">
+                  <p className="text-tiny text-muted-foreground uppercase tracking-wide">Avg Score</p>
+                  <p className="text-heading-2 font-mono text-primary">
+                    {Math.round(roundScores.reduce((sum, r) => sum + r.total, 0) / roundScores.length)}
+                  </p>
+                </div>
+                
+                <div className="text-center space-y-1 p-3 rounded-lg bg-background/30">
+                  <p className="text-tiny text-muted-foreground uppercase tracking-wide">Best Round</p>
+                  <p className="text-heading-2 font-mono text-primary">
+                    {Math.max(...roundScores.map(r => r.total))}
+                  </p>
+                </div>
+                
+                {/* Row 2 - Accuracy */}
+                <div className="text-center space-y-1 p-3 rounded-lg bg-background/30">
+                  <p className="text-tiny text-muted-foreground uppercase tracking-wide">Avg Proximity</p>
+                  <p className="text-heading-2 font-mono text-accent">
+                    {(roundScores.reduce((sum, r) => sum + r.proximity, 0) / roundScores.length).toFixed(1)}%
+                  </p>
+                </div>
+                
+                <div className="text-center space-y-1 p-3 rounded-lg bg-background/30">
+                  <p className="text-tiny text-muted-foreground uppercase tracking-wide">Best Prox</p>
+                  <p className="text-heading-2 font-mono text-accent">
+                    {Math.max(...roundScores.map(r => r.proximity)).toFixed(1)}%
+                  </p>
+                </div>
+                
+                <div className="text-center space-y-1 p-3 rounded-lg bg-background/30">
+                  <p className="text-tiny text-muted-foreground uppercase tracking-wide">Worst Prox</p>
+                  <p className="text-heading-2 font-mono text-accent">
+                    {Math.min(...roundScores.map(r => r.proximity)).toFixed(1)}%
+                  </p>
+                </div>
+                
+                {/* Row 3 - Efficiency */}
+                <div className="text-center space-y-1 p-3 rounded-lg bg-background/30">
+                  <p className="text-tiny text-muted-foreground uppercase tracking-wide">Total Pings</p>
+                  <p className="text-heading-2 font-mono text-echo-success">
+                    {roundScores.reduce((sum, r) => sum + r.pingsUsed, 0)}
+                  </p>
+                </div>
+                
+                <div className="text-center space-y-1 p-3 rounded-lg bg-background/30">
+                  <p className="text-tiny text-muted-foreground uppercase tracking-wide">Avg Pings</p>
+                  <p className="text-heading-2 font-mono text-echo-success">
+                    {(roundScores.reduce((sum, r) => sum + r.pingsUsed, 0) / roundScores.length).toFixed(1)}
+                  </p>
+                </div>
+                
+                <div className="text-center space-y-1 p-3 rounded-lg bg-background/30">
+                  <p className="text-tiny text-muted-foreground uppercase tracking-wide">Win Rate</p>
+                  <p className="text-heading-2 font-mono text-echo-success">
+                    {winCondition && winCondition.type !== 'none'
+                      ? `${Math.round((roundScores.filter(r => r.hasWon).length / roundScores.length) * 100)}%`
+                      : 'N/A'}
+                  </p>
+                </div>
+              </div>
+              
+              {/* Additional Callouts */}
+              <div className="space-y-2 pt-2 border-t border-border/50">
+                {roundScores.some(r => r.proximity === 100) && (
+                  <div className="text-center">
+                    <p className="text-small text-echo-success">
+                      🏆 {roundScores.filter(r => r.proximity === 100).length} Perfect Round{roundScores.filter(r => r.proximity === 100).length > 1 ? 's' : ''} (100%)
+                    </p>
+                  </div>
+                )}
+                
+                {(() => {
+                  const scores = roundScores.map(r => r.total);
+                  const mean = scores.reduce((a, b) => a + b, 0) / scores.length;
+                  const variance = scores.reduce((sum, score) => sum + Math.pow(score - mean, 2), 0) / scores.length;
+                  const stdDev = Math.sqrt(variance);
+                  const consistency = stdDev < 100 ? 'Excellent' : stdDev < 200 ? 'Good' : 'Varied';
+                  
+                  return (
+                    <div className="text-center">
+                      <p className="text-small text-muted-foreground">
+                        ⚡ Consistency: <span className="text-foreground font-semibold">{consistency}</span>
+                      </p>
                     </div>
-                  ))}
-                </div>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          <p className="text-heading-2">{score.flavorText}</p>
-          <p className="text-muted-foreground">
-            {isCustomGame 
-              ? (success ? 'Win Condition Met!' : 'Win Condition Not Met')
-              : (success 
-                  ? (isBossLevel ? `${score.rank} Rank - Boss Defeated!` : `${score.rank} Rank - Advancing to Next Level!`)
-                  : (isBossLevel 
-                      ? `${score.rank} Rank - Need A Rank or better to defeat boss` 
-                      : `${score.rank} Rank - Need B Rank or better to advance`)
-              )
-            }
-          </p>
-        </div>
+                  );
+                })()}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Rank - Only show for Classic mode */}
+        {!isCustomGame && (
+          <div className="text-center space-y-2">
+            <TooltipProvider>
+              <Tooltip delayDuration={200}>
+                <TooltipTrigger asChild>
+                  <div 
+                    className={`inline-flex items-center justify-center w-20 h-20 rounded-full text-3xl font-display font-bold border-2 cursor-help ${
+                      getRankColor(score.rank).bg
+                    } ${
+                      getRankColor(score.rank).text
+                    } ${
+                      getRankColor(score.rank).border
+                    }`}
+                  >
+                    {score.rank}
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs">
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-semibold mb-2">Rank Thresholds</p>
+                    {RANK_THRESHOLDS.map(({ rank, threshold }) => (
+                      <div 
+                        key={rank}
+                        className={`flex justify-between text-xs ${
+                          rank === score.rank ? 'font-bold text-accent' : 'text-muted-foreground'
+                        }`}
+                      >
+                        <span>{rank}:</span>
+                        <span>{threshold}+ points</span>
+                      </div>
+                    ))}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <p className="text-heading-2">{score.flavorText}</p>
+            <p className="text-muted-foreground">
+              {success 
+                ? (isBossLevel ? `${score.rank} Rank - Boss Defeated!` : `${score.rank} Rank - Advancing to Next Level!`)
+                : (isBossLevel 
+                    ? `${score.rank} Rank - Need A Rank or better to defeat boss` 
+                    : `${score.rank} Rank - Need B Rank or better to advance`)
+              }
+            </p>
+          </div>
+        )}
 
         {/* Score */}
         <div className="text-center">
