@@ -1,6 +1,7 @@
-import { Lock, CheckCircle2 } from 'lucide-react';
+import { Lock, CheckCircle2, Play, RotateCcw } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
 import { ChapterConfig } from '@/lib/game/chapters';
 import { ChapterStats } from '@/lib/game/chapterStats';
 import { cn } from '@/lib/utils';
@@ -9,19 +10,25 @@ interface ChapterCardProps {
   chapter: ChapterConfig;
   stats: ChapterStats | null;
   isUnlocked: boolean;
+  currentLevelInChapter?: number;
+  onContinue?: () => void;
+  onRestart?: () => void;
   onClick?: () => void;
 }
 
-export function ChapterCard({ chapter, stats, isUnlocked, onClick }: ChapterCardProps) {
+export function ChapterCard({ chapter, stats, isUnlocked, currentLevelInChapter, onContinue, onRestart, onClick }: ChapterCardProps) {
   const progress = stats ? (stats.levelsCompleted / 10) * 100 : 0;
   const isCompleted = stats?.completed || false;
+  const hasProgress = currentLevelInChapter && currentLevelInChapter > 1;
 
   return (
     <Card
       className={cn(
-        "relative overflow-hidden transition-all duration-300 cursor-pointer group",
-        isUnlocked
-          ? "hover:scale-105 hover:shadow-lg hover-lift"
+        "relative overflow-hidden transition-all duration-300 group",
+        isUnlocked && !hasProgress
+          ? "hover:scale-105 hover:shadow-lg hover-lift cursor-pointer"
+          : isUnlocked
+          ? "hover:shadow-lg"
           : "opacity-60 cursor-not-allowed"
       )}
       style={{
@@ -30,7 +37,7 @@ export function ChapterCard({ chapter, stats, isUnlocked, onClick }: ChapterCard
           ? `linear-gradient(135deg, ${chapter.theme.primary}15, ${chapter.theme.secondary}10)`
           : 'hsl(var(--card))',
       }}
-      onClick={isUnlocked ? onClick : undefined}
+      onClick={isUnlocked && !hasProgress ? onClick : undefined}
     >
       {/* Background Decoration */}
       <div
@@ -106,6 +113,56 @@ export function ChapterCard({ chapter, stats, isUnlocked, onClick }: ChapterCard
                 {Math.floor(stats.totalTime / 60)}m
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Action Buttons */}
+        {isUnlocked && hasProgress && !isCompleted && (
+          <div className="flex flex-col gap-2 pt-2 border-t border-border/50">
+            <Button
+              onClick={(e) => {
+                e.stopPropagation();
+                onContinue?.();
+              }}
+              className="w-full"
+              style={{
+                background: chapter.theme.primary,
+                color: 'white',
+              }}
+            >
+              <Play className="w-4 h-4 mr-2" />
+              Continue from Level {currentLevelInChapter}
+            </Button>
+            <Button
+              onClick={(e) => {
+                e.stopPropagation();
+                onRestart?.();
+              }}
+              variant="outline"
+              size="sm"
+              className="w-full"
+            >
+              <RotateCcw className="w-3 h-3 mr-2" />
+              Restart Chapter
+            </Button>
+          </div>
+        )}
+
+        {/* Restart for Completed Chapters */}
+        {isUnlocked && isCompleted && (
+          <div className="pt-2 border-t border-border/50">
+            <Button
+              onClick={(e) => {
+                e.stopPropagation();
+                onRestart?.();
+              }}
+              variant="outline"
+              size="sm"
+              className="w-full"
+            >
+              <RotateCcw className="w-3 h-3 mr-2" />
+              Restart Chapter
+            </Button>
           </div>
         )}
 
