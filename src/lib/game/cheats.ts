@@ -35,7 +35,7 @@ export const CHEAT_CODES: CheatCode[] = [
   {
     code: 'REVEAL_TARGET',
     name: 'Target Hint',
-    description: 'Show a subtle visual hint at the target location',
+    description: 'Show a subtle visual hint at the target location (Chapters 2-3 only)',
     category: 'debug',
   },
 ];
