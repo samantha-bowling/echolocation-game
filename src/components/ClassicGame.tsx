@@ -115,6 +115,17 @@ export function ClassicGame() {
 
   useEffect(() => {
     audioEngine.initialize(arenaSize.width, arenaSize.height);
+    
+    // Load saved audio preferences
+    const savedTheme = localStorage.getItem('echo_audio_theme');
+    const savedVolume = localStorage.getItem('echo_volume');
+    
+    if (savedTheme) {
+      audioEngine.setTheme(savedTheme);
+    }
+    if (savedVolume) {
+      audioEngine.setVolume(parseInt(savedVolume) / 100);
+    }
   }, [arenaSize]);
 
   useEffect(() => {
