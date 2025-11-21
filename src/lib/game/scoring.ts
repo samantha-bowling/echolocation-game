@@ -31,18 +31,18 @@ const MECHANIC_BONUS_CH5_COMBINED = 150; // Ultimate challenge completion
 
 /**
  * Calculate unified time score
- * Positive for fast times (<15s), zero/minimal for average (15-40s), negative for slow (>40s)
+ * Positive for fast times (<15s), neutral zone (15-45s), negative for slow (>45s)
  */
 function calculateTimeScore(timeSeconds: number): number {
   if (timeSeconds < 15) {
     // Fast completion: +300 at 0s, scaling down to 0 at 15s
     return Math.round(((15 - timeSeconds) / 15) * 300);
-  } else if (timeSeconds < 40) {
-    // Average time: small penalty, -2 pts/s
-    return -Math.round((timeSeconds - 15) * 2);
+  } else if (timeSeconds <= 45) {
+    // Neutral zone: no penalty or bonus for average times
+    return 0;
   } else {
-    // Slow time: -50 base penalty, then -4 pts/s
-    return -50 - Math.round((timeSeconds - 40) * 4);
+    // Slow time: -4 pts per second over 45s
+    return -Math.round((timeSeconds - 45) * 4);
   }
 }
 
@@ -165,18 +165,18 @@ export interface RankInfo {
 }
 
 export const RANK_THRESHOLDS: RankInfo[] = [
-  { rank: 'SS', threshold: 1500 },
-  { rank: 'S+', threshold: 1350 },
-  { rank: 'S', threshold: 1200 },
-  { rank: 'S-', threshold: 1100 },
-  { rank: 'A+', threshold: 1000 },
-  { rank: 'A', threshold: 900 },
-  { rank: 'A-', threshold: 800 },
-  { rank: 'B+', threshold: 750 },
-  { rank: 'B', threshold: 700 },
-  { rank: 'C+', threshold: 600 },
-  { rank: 'C', threshold: 500 },
-  { rank: 'C-', threshold: 400 },
+  { rank: 'SS', threshold: 950 },   // Near-perfect: 95%+ accuracy, <10s, all bonuses
+  { rank: 'S+', threshold: 875 },
+  { rank: 'S', threshold: 825 },
+  { rank: 'S-', threshold: 775 },
+  { rank: 'A+', threshold: 725 },
+  { rank: 'A', threshold: 650 },    // Boss level requirement
+  { rank: 'A-', threshold: 600 },
+  { rank: 'B+', threshold: 550 },
+  { rank: 'B', threshold: 500 },    // Progression threshold
+  { rank: 'C+', threshold: 450 },
+  { rank: 'C', threshold: 375 },
+  { rank: 'C-', threshold: 300 },
   { rank: 'D', threshold: 0 },
 ];
 
@@ -346,9 +346,9 @@ export function generateStrategicTips(
     tips.push("Save pings! Higher efficiency means better score");
   }
   
-  // Time tips - updated for unified time score
-  if (timeElapsed > 40) {
-    tips.push("Work faster! Time over 40s incurs significant penalties");
+  // Time tips - updated for neutral zone scoring
+  if (timeElapsed > 45) {
+    tips.push("Work faster! Time over 45s incurs penalties");
   } else if (timeElapsed > 15 && timeElapsed < 20) {
     tips.push("Complete in under 15 seconds to earn time bonus points!");
   }
