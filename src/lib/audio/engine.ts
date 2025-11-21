@@ -232,7 +232,7 @@ export class AudioEngine {
     oscillator.type = this.currentTheme.waveform;
     
     // Pitch modifier - enhanced for Z-axis depth perception
-    const pitchModifier = 1 + (direction.verticalRatio * 0.1) + (normalizedDistance * 0.05);
+    const pitchModifier = 1 - (direction.verticalRatio * 0.1) + (normalizedDistance * 0.05);
     const baseFreq = this.currentTheme.baseFrequency * pitchModifier;
     oscillator.frequency.value = baseFreq;
     
