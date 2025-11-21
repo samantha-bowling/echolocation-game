@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Play, Save, Trash2, Lightbulb, Download, Upload, Share2, BarChart3, Target, Zap, Infinity, Gamepad2, MapPin, Volume2, Settings, PlayCircle, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Play, Save, Trash2, Lightbulb, Download, Upload, Share2, BarChart3, Target, Zap, Infinity, Gamepad2, MapPin, Volume2, Settings, PlayCircle, RotateCcw, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
@@ -13,9 +13,11 @@ import { createSaveSlot } from '@/lib/game/saveSlotManager';
 import { toast } from '@/hooks/use-toast';
 import { InfoTooltip } from '@/components/InfoTooltip';
 import { loadLastConfigDB, saveLastConfigDB, clearLastConfigDB } from '@/lib/game/customSessionDB';
-import { getAllSaveSlots, getSaveSlot, deleteSaveSlot } from '@/lib/game/saveSlotManager';
+import { getAllSaveSlots, getSaveSlot, deleteSaveSlot, autoGenerateSlotName, renameSaveSlot, duplicateSaveSlot } from '@/lib/game/saveSlotManager';
 import { exportSessionAsFile, importSessionFromFile, generateShareURL } from '@/lib/game/exportImport';
 import { CustomGameSession } from '@/lib/game/customSession';
+import { SaveSlot } from '@/lib/game/customSessionDB';
+import { SaveSlotPicker } from '@/components/SaveSlotPicker';
 
 export function CustomMode() {
   const navigate = useNavigate();
@@ -51,10 +53,13 @@ export function CustomMode() {
   const [enforceWinCondition, setEnforceWinCondition] = useState(true);
 
   // Session state
-  const [hasSession, setHasSession] = useState(false);
   const [sessionLoading, setSessionLoading] = useState(true);
-  const [loadedSession, setLoadedSession] = useState<CustomGameSession | null>(null);
-  const [sessionAge, setSessionAge] = useState(0);
+  
+  // Rename/Duplicate dialog state
+  const [showRenameDialog, setShowRenameDialog] = useState(false);
+  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState<SaveSlot | null>(null);
+  const [newSlotName, setNewSlotName] = useState('');
 
   // Export/Import state
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -64,22 +69,11 @@ export function CustomMode() {
   useEffect(() => {
     setPresets(loadCustomPresets());
     
-    // Load last used config and check for active session
+    // Load last used config
     const loadData = async () => {
       const lastConfig = await loadLastConfigDB();
       if (lastConfig) {
         loadConfigIntoState(lastConfig);
-      }
-
-      // Check for __active__ slot
-      const defaultSlot = await getSaveSlot('__active__');
-      setHasSession(!!defaultSlot);
-      
-      if (defaultSlot) {
-        setLoadedSession(defaultSlot.session);
-        const ageMs = Date.now() - defaultSlot.lastPlayed;
-        const ageDays = Math.floor(ageMs / (1000 * 60 * 60 * 24));
-        setSessionAge(ageDays);
       }
       
       setSessionLoading(false);
@@ -136,25 +130,89 @@ export function CustomMode() {
     };
 
     const validatedConfig = validateCustomConfig(config);
-    
-    // Save as last used config
     await saveLastConfigDB(validatedConfig);
-    
-    navigate('/custom-game', { state: { config: validatedConfig } });
-  };
 
-  const handleResumeGame = () => {
-    navigate('/custom-game', { state: { resumeSession: true } });
-  };
+    // Generate new slot name
+    const slotName = await autoGenerateSlotName();
 
-  const handleAbandonSession = async () => {
-    await deleteSaveSlot('__active__');
-    setHasSession(false);
-    setLoadedSession(null);
-    toast({
-      title: 'Session Cleared',
-      description: 'Your saved game progress has been removed.',
+    navigate('/custom-game', { 
+      state: { 
+        config: validatedConfig,
+        createNewSlot: true,
+        slotName 
+      } 
     });
+  };
+
+  // SaveSlotPicker handlers
+  const handleSelectSlot = (slotId: string) => {
+    navigate('/custom-game', { state: { slotId, resumeSession: true } });
+  };
+
+  const handleNewGame = () => {
+    toast({ 
+      title: 'Configure Settings', 
+      description: 'Set up your game below and click Begin Custom Round' 
+    });
+  };
+
+  const handleExportSlot = (slot: SaveSlot) => {
+    exportSessionAsFile(slot.session, `${slot.name}.json`);
+  };
+
+  const handleShareSlot = async (slot: SaveSlot) => {
+    try {
+      const url = await generateShareURL(slot.session);
+      setShareUrl(url);
+      setShowShareDialog(true);
+    } catch (error) {
+      console.error('Failed to generate share URL:', error);
+      toast({ title: 'Error', description: 'Failed to generate share URL.', variant: 'destructive' });
+    }
+  };
+
+  const handleRenameSlot = (slot: SaveSlot) => {
+    setSelectedSlot(slot);
+    setNewSlotName(slot.name);
+    setShowRenameDialog(true);
+  };
+
+  const handleRenameConfirm = async () => {
+    if (!selectedSlot || !newSlotName.trim()) return;
+    
+    try {
+      await renameSaveSlot(selectedSlot.id, newSlotName.trim());
+      setShowRenameDialog(false);
+      setSelectedSlot(null);
+      setNewSlotName('');
+      toast({ title: 'Renamed', description: `Save renamed to "${newSlotName}"` });
+      window.dispatchEvent(new Event('storage'));
+    } catch (error) {
+      console.error('Failed to rename slot:', error);
+      toast({ title: 'Error', description: 'Failed to rename save.', variant: 'destructive' });
+    }
+  };
+
+  const handleDuplicateSlot = (slot: SaveSlot) => {
+    setSelectedSlot(slot);
+    setNewSlotName(`${slot.name} (Copy)`);
+    setShowDuplicateDialog(true);
+  };
+
+  const handleDuplicateConfirm = async () => {
+    if (!selectedSlot || !newSlotName.trim()) return;
+    
+    try {
+      await duplicateSaveSlot(selectedSlot.id, newSlotName.trim());
+      setShowDuplicateDialog(false);
+      setSelectedSlot(null);
+      setNewSlotName('');
+      toast({ title: 'Duplicated', description: `Created "${newSlotName}"` });
+      window.dispatchEvent(new Event('storage'));
+    } catch (error) {
+      console.error('Failed to duplicate slot:', error);
+      toast({ title: 'Error', description: 'Failed to duplicate save.', variant: 'destructive' });
+    }
   };
 
   const handleResetToDefaults = async () => {
@@ -167,25 +225,6 @@ export function CustomMode() {
   };
 
   // Export/Import handlers
-  const handleExportSession = async () => {
-    if (!loadedSession) return;
-
-    try {
-      exportSessionAsFile(loadedSession);
-      toast({
-        title: 'Game Exported',
-        description: 'Your game has been saved to a file',
-        duration: 2000,
-      });
-    } catch (error) {
-      console.error('Export failed:', error);
-      toast({
-        title: 'Export Failed',
-        description: 'Failed to export game',
-        variant: 'destructive',
-      });
-    }
-  };
 
   const handleImportSession = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -193,21 +232,17 @@ export function CustomMode() {
 
     try {
       const session = await importSessionFromFile(file);
-      
-      // Clear existing __active__ slot and create new one
-      await deleteSaveSlot('__active__').catch(() => {}); // Ignore if doesn't exist
-      await createSaveSlot('Current Game', session, '__active__');
-
-      setHasSession(true);
-      setLoadedSession(session);
+      const slotName = await autoGenerateSlotName();
+      await createSaveSlot(`${slotName} (Imported)`, session);
 
       toast({
         title: 'Game Imported',
         description: 'Successfully imported game from file',
         duration: 2000,
       });
+      
+      window.dispatchEvent(new Event('storage'));
 
-      // Reset file input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -219,29 +254,12 @@ export function CustomMode() {
         variant: 'destructive',
       });
 
-      // Reset file input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
     }
   };
 
-  const handleGenerateShareUrl = async () => {
-    if (!loadedSession) return;
-
-    try {
-      const url = await generateShareURL(loadedSession);
-      setShareUrl(url);
-      setShowShareDialog(true);
-    } catch (error) {
-      console.error('Share URL generation failed:', error);
-      toast({
-        title: 'Share Failed',
-        description: error instanceof Error ? error.message : 'Failed to generate share link',
-        variant: 'destructive',
-      });
-    }
-  };
 
   const handleCopyShareUrl = () => {
     navigator.clipboard.writeText(shareUrl);
@@ -402,45 +420,16 @@ export function CustomMode() {
 
       {/* Config */}
       <div className="max-w-2xl mx-auto p-6 space-y-8 py-12">
-        {/* Resume Game Banner */}
-        {!sessionLoading && hasSession && loadedSession && (
-          <div className="flat-card bg-primary/10 border-2 border-primary/30 space-y-4">
-            <div className="flex items-start gap-3">
-              <PlayCircle className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
-              <div className="flex-1">
-                <h3 className="text-heading-3 text-primary mb-1">Resume Game</h3>
-                <p className="text-small text-muted-foreground">
-                  You have a saved game in progress from Round {loadedSession.currentRound}.
-                  {sessionAge > 0 && ` (${sessionAge} day${sessionAge > 1 ? 's' : ''} ago)`}
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <Button onClick={handleResumeGame} className="flex-1" size="lg">
-                <PlayCircle className="w-4 h-4 mr-2" />
-                Resume Game
-              </Button>
-              <Button onClick={handleAbandonSession} variant="outline" className="flex-1" size="lg">
-                Start Fresh
-              </Button>
-            </div>
-
-            {/* Export/Import Controls */}
-            <div className="flex flex-wrap gap-2 pt-2 border-t border-border/50">
-              <Button onClick={handleExportSession} variant="ghost" size="sm" className="flex-1">
-                <Download className="w-4 h-4 mr-2" />
-                Export
-              </Button>
-              <Button onClick={handleGenerateShareUrl} variant="ghost" size="sm" className="flex-1">
-                <Share2 className="w-4 h-4 mr-2" />
-                Share
-              </Button>
-              <Button onClick={() => fileInputRef.current?.click()} variant="ghost" size="sm" className="flex-1">
-                <Upload className="w-4 h-4 mr-2" />
-                Import
-              </Button>
-            </div>
-          </div>
+        {/* Save Slot Picker */}
+        {!sessionLoading && (
+          <SaveSlotPicker
+            onSelectSlot={handleSelectSlot}
+            onNewGame={handleNewGame}
+            onExportSlot={handleExportSlot}
+            onShareSlot={handleShareSlot}
+            onRenameSlot={handleRenameSlot}
+            onDuplicateSlot={handleDuplicateSlot}
+          />
         )}
 
         {/* Hidden file input for import */}
@@ -1218,6 +1207,64 @@ export function CustomMode() {
           <DialogFooter>
             <Button onClick={() => setShowShareDialog(false)}>
               Done
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Rename Dialog */}
+      <Dialog open={showRenameDialog} onOpenChange={setShowRenameDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Rename Save</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <Input
+              value={newSlotName}
+              onChange={(e) => setNewSlotName(e.target.value)}
+              placeholder="Enter new name"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleRenameConfirm();
+                if (e.key === 'Escape') setShowRenameDialog(false);
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRenameDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleRenameConfirm} disabled={!newSlotName.trim()}>
+              Rename
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Duplicate Dialog */}
+      <Dialog open={showDuplicateDialog} onOpenChange={setShowDuplicateDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Duplicate Save</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <Input
+              value={newSlotName}
+              onChange={(e) => setNewSlotName(e.target.value)}
+              placeholder="Enter name for copy"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleDuplicateConfirm();
+                if (e.key === 'Escape') setShowDuplicateDialog(false);
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDuplicateDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleDuplicateConfirm} disabled={!newSlotName.trim()}>
+              Duplicate
             </Button>
           </DialogFooter>
         </DialogContent>

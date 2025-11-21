@@ -17,7 +17,7 @@ import { useGamePhase } from '@/hooks/useGamePhase';
 import { useHintSystem } from '@/hooks/useHintSystem';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
-import { getSaveSlot, updateSaveSlot, createSaveSlot, deleteSaveSlot } from '@/lib/game/saveSlotManager';
+import { getSaveSlot, updateSaveSlot, createSaveSlot, deleteSaveSlot, autoGenerateSlotName } from '@/lib/game/saveSlotManager';
 import { CustomGameSession } from '@/lib/game/customSession';
 import { sessionSyncManager } from '@/lib/game/customSessionSync';
 import { toast } from '@/hooks/use-toast';
@@ -32,26 +32,64 @@ export function CustomGame() {
   const [loading, setLoading] = useState(true);
   const [resumedSession, setResumedSession] = useState<CustomGameSession | null>(null);
   const [config, setConfig] = useState<CustomGameConfig>(DEFAULT_CUSTOM_CONFIG);
-  const [activeSlotId] = useState<string>('__active__');
+  const [activeSlotId, setActiveSlotId] = useState<string>('');
   
-  // Load session on mount
+  // Load or create session
   useEffect(() => {
     const loadSession = async () => {
-      if (location.state?.resumeSession) {
-        const slot = await getSaveSlot(activeSlotId);
+      const slotId = location.state?.slotId;
+      const createNew = location.state?.createNewSlot;
+      
+      if (createNew) {
+        // Create new slot with provided name
+        const slotName = location.state?.slotName || await autoGenerateSlotName();
+        const gameConfig = location.state?.config || DEFAULT_CUSTOM_CONFIG;
+        
+        const newSlot = await createSaveSlot(slotName, {
+          config: gameConfig,
+          currentRound: 1,
+          roundScores: [],
+          target: generateTargetPosition(getArenaDimensions(gameConfig.arenaSize), gameConfig.targetSize),
+          pingHistory: [],
+          finalGuess: null,
+          pingsUsed: 0,
+          elapsedTime: 0,
+          finalTime: null,
+          targetMoveCount: 0,
+          gamePhase: 'pinging',
+          scoreResult: null,
+          gameState: 'playing',
+          timestamp: Date.now(),
+        });
+        
+        setActiveSlotId(newSlot.id);
+        setConfig(gameConfig);
+      } else if (slotId) {
+        // Load existing slot
+        const slot = await getSaveSlot(slotId);
         if (slot) {
+          setActiveSlotId(slotId);
           setResumedSession(slot.session);
           setConfig(slot.session.config);
         } else {
-          setConfig((location.state?.config as CustomGameConfig) || DEFAULT_CUSTOM_CONFIG);
+          toast({ 
+            title: 'Save Not Found', 
+            description: 'This saved game no longer exists.',
+            variant: 'destructive' 
+          });
+          navigate('/custom');
+          return;
         }
       } else {
-        setConfig((location.state?.config as CustomGameConfig) || DEFAULT_CUSTOM_CONFIG);
+        // No slot specified - shouldn't happen, go back
+        navigate('/custom');
+        return;
       }
+      
       setLoading(false);
     };
     loadSession();
-  }, [location.state, activeSlotId]);
+  }, [location.state, navigate]);
 
   const arenaSize = useMemo(() => {
     const configSize = getArenaDimensions(config.arenaSize);

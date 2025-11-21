@@ -58,6 +58,13 @@ export function SaveSlotPicker({
 
   useEffect(() => {
     loadSlots();
+    
+    // Listen for storage events to reload slots
+    const handleStorageChange = () => {
+      loadSlots();
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const handleDeleteClick = (slot: SaveSlot) => {
