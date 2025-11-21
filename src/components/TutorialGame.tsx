@@ -54,8 +54,8 @@ export function TutorialGame() {
   const demoPings = [
     { id: 'left-close', position: { x: 300, y: 300 }, label: 'LEFT & CLOSE', description: 'Loud, left speaker' },
     { id: 'right-far', position: { x: 700, y: 300 }, label: 'RIGHT & FAR', description: 'Quiet, right speaker' },
-    { id: 'center-top', position: { x: 400, y: 150 }, label: 'ABOVE', description: 'Higher pitch' },
-    { id: 'center-bottom', position: { x: 400, y: 450 }, label: 'BELOW', description: 'Lower pitch' },
+    { id: 'center-top', position: { x: 400, y: 450 }, label: 'TARGET ABOVE', description: 'Sound travels up, higher pitch' },
+    { id: 'center-bottom', position: { x: 400, y: 150 }, label: 'TARGET BELOW', description: 'Sound travels down, lower pitch' },
   ];
 
   const { gamePhase, finalGuess, setFinalGuess, handlePlaceFinalGuess, resetPhase } = useGamePhase();
