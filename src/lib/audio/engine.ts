@@ -111,6 +111,28 @@ export class AudioEngine {
   }
 
   /**
+   * Update canvas dimensions without re-initializing audio context
+   * Use this when arena size changes to avoid expensive re-initialization
+   */
+  updateDimensions(canvasWidth: number, canvasHeight: number) {
+    this.canvasWidth = canvasWidth;
+    this.canvasHeight = canvasHeight;
+    
+    // Update listener position if context exists
+    if (this.context?.listener) {
+      if (this.context.listener.positionX) {
+        // Modern API - listener stays at origin, just update stored dimensions
+        this.context.listener.positionX.value = 0;
+        this.context.listener.positionY.value = 0;
+        this.context.listener.positionZ.value = 0;
+      } else {
+        // Fallback for older browsers
+        this.context.listener.setPosition(0, 0, 0);
+      }
+    }
+  }
+
+  /**
    * Play ping sound with true binaural 3D audio (HRTF)
    */
   playPing(
@@ -260,7 +282,7 @@ export class AudioEngine {
     oscillator.stop(now + baseDuration);
     if (noiseSource) noiseSource.stop(now + 0.05);
     
-    // Add echo repetitions for realistic reverberation
+    // Add echo repetitions for realistic reverberation with true 3D positioning
     if (!isEcho) {
       const echoCount = 3;
       const reverbMultiplier = 0.5 + (normalizedDistance * 0.5);
@@ -270,7 +292,17 @@ export class AudioEngine {
       for (let i = 1; i <= echoCount; i++) {
         const echoOsc = this.context.createOscillator();
         const echoGain = this.context.createGain();
-        const echoPanner = this.context.createStereoPanner();
+        const echoPanner = this.context.createPanner();
+        
+        // Configure 3D panner with HRTF for echoes
+        echoPanner.panningModel = 'HRTF';
+        echoPanner.distanceModel = 'inverse';
+        echoPanner.refDistance = 1;
+        echoPanner.maxDistance = 10000;
+        echoPanner.rolloffFactor = 1;
+        echoPanner.coneInnerAngle = 360;
+        echoPanner.coneOuterAngle = 360;
+        echoPanner.coneOuterGain = 0;
         
         // Slightly lower pitch for each echo (Doppler-like effect)
         echoOsc.type = this.currentTheme.waveform;
@@ -280,8 +312,20 @@ export class AudioEngine {
         const echoVolume = volumeByDistance * Math.pow(echoDecay, i) * 0.4;
         echoGain.gain.value = echoVolume;
         
-        // Slightly varied stereo position for spatial depth
-        echoPanner.pan.value = direction.horizontalRatio * (1 - i * 0.15);
+        // Position echoes slightly farther back in 3D space for depth
+        // Each echo is progressively deeper, creating realistic reverb tail
+        const echoDepthOffset = i * 0.3; // Move back in Z-space
+        const echoX = targetX;
+        const echoY = targetY;
+        const echoZ = targetZ + echoDepthOffset;
+        
+        if (echoPanner.positionX) {
+          echoPanner.positionX.value = echoX;
+          echoPanner.positionY.value = echoY;
+          echoPanner.positionZ.value = echoZ;
+        } else {
+          echoPanner.setPosition(echoX, echoY, echoZ);
+        }
         
         // Connect echo nodes
         echoOsc.connect(echoGain);
