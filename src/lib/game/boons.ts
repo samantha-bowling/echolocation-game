@@ -1,3 +1,5 @@
+import { isCheatActive } from './cheats';
+
 export interface Boon {
   id: string;
   name: string;
@@ -152,6 +154,11 @@ export function getBoonById(id: string): Boon | undefined {
 }
 
 export function getUnlockedBoons(completedChapters: number[]): Boon[] {
+  // Check if UNLOCK_ALL_BOONS cheat is active
+  if (isCheatActive('UNLOCK_ALL_BOONS')) {
+    return [...BOONS];
+  }
+  
   return BOONS.filter(b => completedChapters.includes(b.unlockChapter));
 }
 
