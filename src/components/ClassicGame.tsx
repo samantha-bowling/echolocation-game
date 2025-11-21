@@ -18,7 +18,7 @@ import { usePingSystem } from '@/hooks/usePingSystem';
 import { useGamePhase } from '@/hooks/useGamePhase';
 import { useHintSystem } from '@/hooks/useHintSystem';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { updateChapterStats, loadChapterStats, getSeenChapterIntros } from '@/lib/game/chapterStats';
+import { updateChapterStats, loadChapterStats, getSeenChapterIntros, saveChapterProgress } from '@/lib/game/chapterStats';
 import { getUnlockedBoons, applyBoonEffects, getRandomBoonByArchetype, type Boon, getBoonById } from '@/lib/game/boons';
 import { isCheatActive } from '@/lib/game/cheats';
 import { cn } from '@/lib/utils';
@@ -203,10 +203,14 @@ export function ClassicGame() {
       timeElapsed: elapsedTime,
     });
 
+    // Save global progress pointer
     localStorage.setItem('echo_classic_progress', JSON.stringify({
       level,
       chapter,
     }));
+    
+    // Save per-chapter progress
+    saveChapterProgress(chapter, level);
 
     setGameState('summary');
     
@@ -260,10 +264,14 @@ export function ClassicGame() {
     setScoreResult(null);
     setShowSummaryModal(true);
 
+    // Save global progress pointer
     localStorage.setItem('echo_classic_progress', JSON.stringify({
       level: nextLevel,
       chapter: nextChapter,
     }));
+    
+    // Save per-chapter progress
+    saveChapterProgress(nextChapter, nextLevel);
   };
 
   const handleRetry = () => {

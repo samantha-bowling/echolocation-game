@@ -20,6 +20,13 @@ export interface ChapterStatsMap {
   [chapterId: number]: ChapterStats;
 }
 
+export interface ChapterProgress {
+  [chapterId: number]: {
+    currentLevel: number;    // Last played level within chapter (1-10)
+    lastPlayedAt: string;    // ISO timestamp
+  };
+}
+
 export function loadChapterStats(): ChapterStatsMap {
   const stored = localStorage.getItem('echo_chapter_stats');
   if (stored) {
@@ -34,6 +41,28 @@ export function loadChapterStats(): ChapterStatsMap {
 
 export function saveChapterStats(stats: ChapterStatsMap) {
   localStorage.setItem('echo_chapter_stats', JSON.stringify(stats));
+}
+
+export function loadChapterProgress(): ChapterProgress {
+  const stored = localStorage.getItem('echo_chapter_progress');
+  if (stored) {
+    try {
+      return JSON.parse(stored);
+    } catch {
+      return {};
+    }
+  }
+  return {};
+}
+
+export function saveChapterProgress(chapterId: number, level: number) {
+  const progress = loadChapterProgress();
+  const levelInChapter = ((level - 1) % 10) + 1;  // Normalize to 1-10
+  progress[chapterId] = {
+    currentLevel: levelInChapter,
+    lastPlayedAt: new Date().toISOString(),
+  };
+  localStorage.setItem('echo_chapter_progress', JSON.stringify(progress));
 }
 
 export function updateChapterStats(

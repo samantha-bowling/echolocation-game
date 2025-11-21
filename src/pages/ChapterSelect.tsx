@@ -3,7 +3,7 @@ import { ArrowLeft, Trophy, Target, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ChapterCard } from '@/components/ChapterCard';
 import { CHAPTERS } from '@/lib/game/chapters';
-import { loadChapterStats } from '@/lib/game/chapterStats';
+import { loadChapterStats, loadChapterProgress } from '@/lib/game/chapterStats';
 import { isCheatActive } from '@/lib/game/cheats';
 import { useEffect, useState } from 'react';
 
@@ -25,18 +25,24 @@ export default function ChapterSelect() {
   }, []);
 
   const handleChapterClick = (chapterId: number) => {
-    // Navigate to classic mode and start at this chapter
-    const firstLevelOfChapter = (chapterId - 1) * 10 + 1;
+    const chapterProgress = loadChapterProgress();
+    const progressInChapter = chapterProgress[chapterId];
     
-    // Save as the current progress if player wants to jump to this chapter
+    let startLevel: number;
+    if (progressInChapter && progressInChapter.currentLevel > 1) {
+      // Has progress - resume from last level
+      startLevel = (chapterId - 1) * 10 + progressInChapter.currentLevel;
+    } else {
+      // No progress - start from Level 1
+      startLevel = (chapterId - 1) * 10 + 1;
+    }
+    
+    // Save as the current progress
     localStorage.setItem(
       'echo_classic_progress',
       JSON.stringify({
-        level: firstLevelOfChapter,
+        level: startLevel,
         chapter: chapterId,
-        totalScore: 0,
-        totalPings: 0,
-        totalTime: 0,
       })
     );
     
@@ -49,11 +55,21 @@ export default function ChapterSelect() {
     
     if (chapterId === 1) return true;
     
-    // Chapter is unlocked if previous chapter is completed or if current progress is in this chapter
     const prevChapterStats = chapterStats[chapterId - 1];
+    const hasProgressInChapter = chapterStats[chapterId]?.levelsCompleted > 0;
     const isCurrentChapter = currentProgress.chapter === chapterId;
     
-    return prevChapterStats?.completed || isCurrentChapter || currentProgress.chapter > chapterId;
+    // Chapter is unlocked if:
+    // - Previous chapter completed
+    // - Has progress in this chapter (fixes cheat edge case)
+    // - Currently playing this chapter
+    // - Beyond this chapter
+    return (
+      prevChapterStats?.completed ||
+      hasProgressInChapter ||
+      isCurrentChapter ||
+      currentProgress.chapter > chapterId
+    );
   };
 
   const totalLevelsCompleted = Object.values(chapterStats).reduce(
