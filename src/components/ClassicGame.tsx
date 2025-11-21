@@ -113,6 +113,7 @@ export function ClassicGame() {
     pingHistory,
   });
 
+  // Initialize audio once on mount
   useEffect(() => {
     audioEngine.initialize(arenaSize.width, arenaSize.height);
     
@@ -126,7 +127,17 @@ export function ClassicGame() {
     if (savedVolume) {
       audioEngine.setVolume(parseInt(savedVolume) / 100);
     }
-  }, [arenaSize]);
+
+    // Cleanup on unmount
+    return () => {
+      audioEngine.cleanup();
+    };
+  }, []);
+
+  // Update dimensions when arena size changes (without re-initializing)
+  useEffect(() => {
+    audioEngine.updateDimensions(arenaSize.width, arenaSize.height);
+  }, [arenaSize.width, arenaSize.height]);
 
   useEffect(() => {
     const shouldReset = localStorage.getItem('echo_reset_classic');

@@ -94,6 +94,11 @@ export function TutorialGame() {
     if (savedVolume) {
       audioEngine.setVolume(parseInt(savedVolume) / 100);
     }
+
+    // Cleanup on unmount
+    return () => {
+      audioEngine.cleanup();
+    };
   }, []);
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
