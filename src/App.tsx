@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,34 +16,44 @@ import { CustomStats } from "./components/CustomStats";
 import { ClassicStats } from "./components/ClassicStats";
 import { Settings } from "./components/Settings";
 import { Credits } from "./components/Credits";
+import { migrateToIndexedDB } from "./lib/game/migrateToIndexedDB";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/tutorial" element={<Tutorial />} />
-            <Route path="/chapters" element={<ChapterSelect />} />
-            <Route path="/classic" element={<ClassicGame />} />
-            <Route path="/classic-stats" element={<ClassicStats />} />
-            <Route path="/custom" element={<CustomMode />} />
-            <Route path="/custom-game" element={<CustomGame />} />
-            <Route path="/custom-stats" element={<CustomStats />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/credits" element={<Credits />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  // Run migration on app mount
+  useEffect(() => {
+    migrateToIndexedDB().catch((error) => {
+      console.error('Migration failed:', error);
+    });
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/tutorial" element={<Tutorial />} />
+              <Route path="/chapters" element={<ChapterSelect />} />
+              <Route path="/classic" element={<ClassicGame />} />
+              <Route path="/classic-stats" element={<ClassicStats />} />
+              <Route path="/custom" element={<CustomMode />} />
+              <Route path="/custom-game" element={<CustomGame />} />
+              <Route path="/custom-stats" element={<CustomStats />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="/credits" element={<Credits />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

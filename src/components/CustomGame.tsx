@@ -17,7 +17,8 @@ import { useGamePhase } from '@/hooks/useGamePhase';
 import { useHintSystem } from '@/hooks/useHintSystem';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
-import { saveGameSession, clearGameSession, loadGameSession } from '@/lib/game/customSession';
+import { saveGameSessionDB, clearGameSessionDB, loadGameSessionDB } from '@/lib/game/customSessionDB';
+import { CustomGameSession } from '@/lib/game/customSession';
 import { toast } from '@/hooks/use-toast';
 
 export function CustomGame() {
@@ -26,10 +27,30 @@ export function CustomGame() {
   const isMobile = useIsMobile();
   const canvasRef = useRef<HTMLDivElement>(null);
   
-  // Check for resumed session first, then location.state config
-  const resumedSession = location.state?.resumeSession ? loadGameSession() : null;
-  const config = (location.state?.config as CustomGameConfig) || resumedSession?.config || DEFAULT_CUSTOM_CONFIG;
+  // State for loading session
+  const [loading, setLoading] = useState(true);
+  const [resumedSession, setResumedSession] = useState<CustomGameSession | null>(null);
+  const [config, setConfig] = useState<CustomGameConfig>(DEFAULT_CUSTOM_CONFIG);
   
+  // Load session on mount
+  useEffect(() => {
+    const loadSession = async () => {
+      if (location.state?.resumeSession) {
+        const session = await loadGameSessionDB();
+        if (session) {
+          setResumedSession(session);
+          setConfig(session.config);
+        } else {
+          setConfig((location.state?.config as CustomGameConfig) || DEFAULT_CUSTOM_CONFIG);
+        }
+      } else {
+        setConfig((location.state?.config as CustomGameConfig) || DEFAULT_CUSTOM_CONFIG);
+      }
+      setLoading(false);
+    };
+    loadSession();
+  }, [location.state]);
+
   const arenaSize = useMemo(() => {
     const configSize = getArenaDimensions(config.arenaSize);
     if (isMobile) {
@@ -93,7 +114,7 @@ export function CustomGame() {
   }, [config.theme, arenaSize]);
 
   // Throttled save function
-  const saveGameThrottled = useCallback(() => {
+  const saveGameThrottled = useCallback(async () => {
     if (gameState === 'summary') return; // Don't save completed games
     
     const now = Date.now();
@@ -121,7 +142,7 @@ export function CustomGame() {
       timestamp: now,
     };
     
-    saveGameSession(sessionData);
+    await saveGameSessionDB(sessionData);
     
     // Mark as saved after brief delay
     setTimeout(() => setSaveStatus('saved'), 300);
@@ -152,7 +173,7 @@ export function CustomGame() {
     }
   }, []); // Only run on mount
 
-  // Save on page unload/refresh
+  // Save on page unload/refresh (synchronous fallback to localStorage)
   useEffect(() => {
     const handleBeforeUnload = () => {
       if (gameState !== 'summary') {
@@ -172,7 +193,13 @@ export function CustomGame() {
           scoreResult,
           timestamp: Date.now(),
         };
-        saveGameSession(sessionData);
+        // Use localStorage as sync fallback for beforeunload
+        // (IndexedDB async saves already happen via throttled save)
+        try {
+          localStorage.setItem('echo_custom_active_session', JSON.stringify(sessionData));
+        } catch (e) {
+          console.error('Failed to save on unload:', e);
+        }
       }
     };
     
@@ -265,8 +292,8 @@ export function CustomGame() {
     setShowSummaryModal(false);
   };
 
-  const handleRetry = () => {
-    clearGameSession();
+  const handleRetry = async () => {
+    await clearGameSessionDB();
     setCurrentRound(1);
     setRoundScores([]);
     setTarget(generateTargetPosition(arenaSize, config.targetSize));
@@ -278,7 +305,7 @@ export function CustomGame() {
     setScoreResult(null);
   };
 
-  const handleQuitGame = () => {
+  const handleQuitGame = async () => {
     // Ensure latest state is saved before quitting
     const sessionData = {
       config,
@@ -296,7 +323,7 @@ export function CustomGame() {
       scoreResult,
       timestamp: Date.now(),
     };
-    saveGameSession(sessionData);
+    await saveGameSessionDB(sessionData);
     
     // Show confirmation
     toast({
@@ -310,7 +337,7 @@ export function CustomGame() {
     }, 100);
   };
 
-  const handleManualSave = () => {
+  const handleManualSave = async () => {
     const sessionData = {
       config,
       gameState,
@@ -328,7 +355,7 @@ export function CustomGame() {
       timestamp: Date.now(),
     };
     
-    saveGameSession(sessionData);
+    await saveGameSessionDB(sessionData);
     setSaveStatus('saved');
     
     toast({
@@ -338,9 +365,21 @@ export function CustomGame() {
     });
   };
 
+  // Show loading state while session loads
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center space-y-3">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+          <p className="text-muted-foreground">Loading game...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (gameState === 'summary' && scoreResult) {
     // Clear session when game is complete
-    clearGameSession();
+    clearGameSessionDB();
     
     const totalScore = roundScores.reduce((sum, s) => sum + s.total, 0);
     
