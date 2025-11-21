@@ -529,15 +529,19 @@ export function CustomMode() {
         </div>
 
         {/* Presets Section */}
-        {Object.keys(presets).length > 0 && (
-          <div className="flat-card space-y-4">
-            <div className="flex items-center justify-between">
-              <Label className="text-base">Saved Presets</Label>
-              <Button variant="outline" size="sm" onClick={() => setShowSaveDialog(true)}>
-                <Save className="w-4 h-4 mr-2" />
-                Save Current
-              </Button>
-            </div>
+        <div className="flat-card space-y-4">
+          <div className="flex items-center justify-between">
+            <Label className="text-base">Saved Presets</Label>
+            <Button variant="outline" size="sm" onClick={() => setShowSaveDialog(true)}>
+              <Save className="w-4 h-4 mr-2" />
+              Save Current
+            </Button>
+          </div>
+          {Object.keys(presets).length === 0 ? (
+            <p className="text-small text-muted-foreground text-center py-4">
+              No saved presets yet
+            </p>
+          ) : (
             <div className="grid grid-cols-2 gap-3">
               {Object.entries(presets).map(([name, preset]) => (
                 <div
@@ -564,8 +568,8 @@ export function CustomMode() {
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         <div className="space-y-6">
           {/* Game Rules Section */}
