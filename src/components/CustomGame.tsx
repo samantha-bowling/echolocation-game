@@ -17,7 +17,7 @@ import { useGamePhase } from '@/hooks/useGamePhase';
 import { useHintSystem } from '@/hooks/useHintSystem';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
-import { saveGameSessionDB, clearGameSessionDB, loadGameSessionDB } from '@/lib/game/customSessionDB';
+import { getSaveSlot, updateSaveSlot, createSaveSlot, deleteSaveSlot } from '@/lib/game/saveSlotManager';
 import { CustomGameSession } from '@/lib/game/customSession';
 import { sessionSyncManager } from '@/lib/game/customSessionSync';
 import { toast } from '@/hooks/use-toast';
@@ -32,15 +32,16 @@ export function CustomGame() {
   const [loading, setLoading] = useState(true);
   const [resumedSession, setResumedSession] = useState<CustomGameSession | null>(null);
   const [config, setConfig] = useState<CustomGameConfig>(DEFAULT_CUSTOM_CONFIG);
+  const [activeSlotId] = useState<string>('__active__');
   
   // Load session on mount
   useEffect(() => {
     const loadSession = async () => {
       if (location.state?.resumeSession) {
-        const session = await loadGameSessionDB();
-        if (session) {
-          setResumedSession(session);
-          setConfig(session.config);
+        const slot = await getSaveSlot(activeSlotId);
+        if (slot) {
+          setResumedSession(slot.session);
+          setConfig(slot.session.config);
         } else {
           setConfig((location.state?.config as CustomGameConfig) || DEFAULT_CUSTOM_CONFIG);
         }
@@ -50,7 +51,7 @@ export function CustomGame() {
       setLoading(false);
     };
     loadSession();
-  }, [location.state]);
+  }, [location.state, activeSlotId]);
 
   const arenaSize = useMemo(() => {
     const configSize = getArenaDimensions(config.arenaSize);
@@ -174,7 +175,7 @@ export function CustomGame() {
     lastSaveTimeRef.current = now;
     setSaveStatus('saving');
     
-    const sessionData = {
+    const sessionData: CustomGameSession = {
       config,
       gameState,
       currentRound,
@@ -191,7 +192,13 @@ export function CustomGame() {
       timestamp: now,
     };
     
-    await saveGameSessionDB(sessionData);
+    // Update or create slot
+    const slot = await getSaveSlot(activeSlotId);
+    if (slot) {
+      await updateSaveSlot(activeSlotId, sessionData);
+    } else {
+      await createSaveSlot('Current Game', sessionData, activeSlotId);
+    }
     
     // Broadcast update to other tabs
     sessionSyncManager.broadcastSessionUpdate(sessionData);
@@ -201,7 +208,7 @@ export function CustomGame() {
     
     // Return to idle after 2 seconds
     setTimeout(() => setSaveStatus('idle'), 2000);
-  }, [config, gameState, currentRound, roundScores, target, pingHistory, finalGuess, pingsUsed, elapsedTime, finalTime, gamePhase, targetMoveCount, scoreResult]);
+  }, [config, gameState, currentRound, roundScores, target, pingHistory, finalGuess, pingsUsed, elapsedTime, finalTime, gamePhase, targetMoveCount, scoreResult, activeSlotId]);
 
   // Auto-save session on critical state changes (throttled)
   useEffect(() => {
@@ -345,7 +352,7 @@ export function CustomGame() {
   };
 
   const handleRetry = async () => {
-    await clearGameSessionDB();
+    await deleteSaveSlot(activeSlotId);
     
     // Broadcast session clear to other tabs
     sessionSyncManager.broadcastSessionClear();
@@ -363,7 +370,7 @@ export function CustomGame() {
 
   const handleQuitGame = async () => {
     // Ensure latest state is saved before quitting
-    const sessionData = {
+    const sessionData: CustomGameSession = {
       config,
       gameState,
       currentRound,
@@ -379,7 +386,14 @@ export function CustomGame() {
       scoreResult,
       timestamp: Date.now(),
     };
-    await saveGameSessionDB(sessionData);
+    
+    // Update or create slot
+    const slot = await getSaveSlot(activeSlotId);
+    if (slot) {
+      await updateSaveSlot(activeSlotId, sessionData);
+    } else {
+      await createSaveSlot('Current Game', sessionData, activeSlotId);
+    }
     
     // Broadcast update to other tabs
     sessionSyncManager.broadcastSessionUpdate(sessionData);
@@ -397,7 +411,7 @@ export function CustomGame() {
   };
 
   const handleManualSave = async () => {
-    const sessionData = {
+    const sessionData: CustomGameSession = {
       config,
       gameState,
       currentRound,
@@ -414,7 +428,13 @@ export function CustomGame() {
       timestamp: Date.now(),
     };
     
-    await saveGameSessionDB(sessionData);
+    // Update or create slot
+    const slot = await getSaveSlot(activeSlotId);
+    if (slot) {
+      await updateSaveSlot(activeSlotId, sessionData);
+    } else {
+      await createSaveSlot('Current Game', sessionData, activeSlotId);
+    }
     
     // Broadcast update to other tabs
     sessionSyncManager.broadcastSessionUpdate(sessionData);
@@ -442,7 +462,7 @@ export function CustomGame() {
 
   if (gameState === 'summary' && scoreResult) {
     // Clear session when game is complete
-    clearGameSessionDB();
+    deleteSaveSlot(activeSlotId);
     sessionSyncManager.broadcastSessionClear();
     
     const totalScore = roundScores.reduce((sum, s) => sum + s.total, 0);
