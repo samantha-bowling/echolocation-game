@@ -151,8 +151,18 @@ export function CustomGame() {
 
   useEffect(() => {
     audioEngine.initialize(arenaSize.width, arenaSize.height);
-    audioEngine.setTheme(config.theme);
-  }, [config.theme, arenaSize]);
+    
+    // Load saved audio preferences (global settings override config theme)
+    const savedTheme = localStorage.getItem('echo_audio_theme');
+    const savedVolume = localStorage.getItem('echo_volume');
+    
+    if (savedTheme) {
+      audioEngine.setTheme(savedTheme);
+    }
+    if (savedVolume) {
+      audioEngine.setVolume(parseInt(savedVolume) / 100);
+    }
+  }, [arenaSize]);
 
   // Multi-tab synchronization
   useEffect(() => {

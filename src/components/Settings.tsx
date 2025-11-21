@@ -17,9 +17,17 @@ export function Settings() {
     theme,
     setTheme
   } = useTheme();
-  const [volume, setVolume] = useState([70]);
-  const [audioTheme, setAudioTheme] = useState('sonar');
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const [volume, setVolume] = useState(() => {
+    const saved = localStorage.getItem('echo_volume');
+    return saved ? [parseInt(saved)] : [70];
+  });
+  const [audioTheme, setAudioTheme] = useState(() => {
+    return localStorage.getItem('echo_audio_theme') || 'sonar';
+  });
+  const [reduceMotion, setReduceMotion] = useState(() => {
+    const saved = localStorage.getItem('echo_reduce_motion');
+    return saved === 'true';
+  });
   const [calibrationTests, setCalibrationTests] = useState({
     leftRight: false,
     distance: false,
@@ -31,10 +39,15 @@ export function Settings() {
   const [showCheatReference, setShowCheatReference] = useState(false);
   useEffect(() => {
     audioEngine.setVolume(volume[0] / 100);
+    localStorage.setItem('echo_volume', volume[0].toString());
   }, [volume]);
   useEffect(() => {
     audioEngine.setTheme(audioTheme);
+    localStorage.setItem('echo_audio_theme', audioTheme);
   }, [audioTheme]);
+  useEffect(() => {
+    localStorage.setItem('echo_reduce_motion', reduceMotion.toString());
+  }, [reduceMotion]);
   const runCalibrationTest = (testType: 'leftRight' | 'distance' | 'pitch' | 'spatial3D') => {
     audioEngine.initialize();
     switch (testType) {
