@@ -32,6 +32,12 @@ export const CHEAT_CODES: CheatCode[] = [
     description: 'Change your active boon at any time during gameplay',
     category: 'gameplay',
   },
+  {
+    code: 'REVEAL_TARGET',
+    name: 'Target Hint',
+    description: 'Show a subtle visual hint at the target location',
+    category: 'debug',
+  },
 ];
 
 export function activateCheat(code: string): boolean {

@@ -1,9 +1,11 @@
+import { useState, useEffect } from 'react';
 import { Position, Target, getTargetCenter, PhantomTarget } from '@/lib/game/coords';
 import { Hint } from '@/lib/game/hints';
 import { GamePhase } from '@/hooks/useGamePhase';
 import { StoredPing } from '@/hooks/usePingSystem';
 import { ArrowRight, Volume2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { isCheatActive } from '@/lib/game/cheats';
 
 export interface GameCanvasProps {
   arenaSize: { width: number; height: number };
@@ -47,6 +49,41 @@ export function GameCanvas({
   canvasRef,
 }: GameCanvasProps) {
   const targetCenter = getTargetCenter(target);
+  const [showRevealHint, setShowRevealHint] = useState(false);
+
+  // Random blink effect for REVEAL_TARGET cheat
+  useEffect(() => {
+    if (!isCheatActive('REVEAL_TARGET') || gameState === 'summary' || gameState === 'round-transition') {
+      setShowRevealHint(false);
+      return;
+    }
+
+    const scheduleNextBlink = () => {
+      // Random interval between blinks: 3-8 seconds
+      const randomDelay = 3000 + Math.random() * 5000;
+      
+      const blinkTimeout = setTimeout(() => {
+        setShowRevealHint(true);
+        
+        // Hide after a quick blink (200ms)
+        const hideTimeout = setTimeout(() => {
+          setShowRevealHint(false);
+          // Schedule the next blink
+          scheduleNextBlink();
+        }, 200);
+        
+        return () => clearTimeout(hideTimeout);
+      }, randomDelay);
+      
+      return blinkTimeout;
+    };
+
+    const timeout = scheduleNextBlink();
+    
+    return () => {
+      if (timeout) clearTimeout(timeout);
+    };
+  }, [gameState]);
 
   return (
     <div className="relative flex items-center justify-center">
@@ -186,6 +223,21 @@ export function GameCanvas({
               );
             })}
           </>
+        )}
+
+        {/* Reveal Target Cheat - Random Quick Blink */}
+        {showRevealHint && (
+          <div
+            className="absolute rounded-full border border-accent/20 pointer-events-none transition-opacity duration-100"
+            style={{
+              left: target.position.x,
+              top: target.position.y,
+              width: target.size,
+              height: target.size,
+              background: 'rgba(59, 130, 246, 0.08)',
+              opacity: 0.15,
+            }}
+          />
         )}
 
         {/* Ping History */}
