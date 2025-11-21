@@ -1,9 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -17,8 +17,59 @@ import { ClassicStats } from "./components/ClassicStats";
 import { Settings } from "./components/Settings";
 import { Credits } from "./components/Credits";
 import { migrateToIndexedDB } from "./lib/game/migrateToIndexedDB";
+import { importFromShareURL } from "./lib/game/exportImport";
+import { saveGameSessionDB } from "./lib/game/customSessionDB";
+import { toast } from "./hooks/use-toast";
 
 const queryClient = new QueryClient();
+
+// Import handler component
+function ImportHandler() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [handled, setHandled] = useState(false);
+
+  useEffect(() => {
+    if (handled) return;
+
+    const params = new URLSearchParams(location.search);
+    const importCode = params.get('import');
+
+    if (importCode && location.pathname === '/custom') {
+      setHandled(true);
+
+      importFromShareURL(importCode)
+        .then(async (session) => {
+          // Save the imported session
+          await saveGameSessionDB(session);
+
+          // Show success toast
+          toast({
+            title: 'Game Imported',
+            description: 'Successfully imported game from share link',
+            duration: 3000,
+          });
+
+          // Clean URL and navigate
+          navigate('/custom', { replace: true });
+        })
+        .catch((error) => {
+          console.error('Import failed:', error);
+          toast({
+            title: 'Import Failed',
+            description: error.message || 'Invalid share link',
+            variant: 'destructive',
+            duration: 4000,
+          });
+
+          // Clean URL
+          navigate('/custom', { replace: true });
+        });
+    }
+  }, [location, navigate, handled]);
+
+  return null;
+}
 
 const App = () => {
   // Run migration on app mount
@@ -35,6 +86,7 @@ const App = () => {
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <ImportHandler />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/tutorial" element={<Tutorial />} />
