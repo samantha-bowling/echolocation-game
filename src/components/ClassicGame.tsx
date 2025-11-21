@@ -50,6 +50,7 @@ export function ClassicGame() {
   const [chapterTransition, setChapterTransition] = useState<string | null>(null);
   const [showSummaryModal, setShowSummaryModal] = useState(true);
   const [showBoonSelection, setShowBoonSelection] = useState(false);
+  const [boonSelectionContext, setBoonSelectionContext] = useState<'chapter-complete' | 'mid-game-swap'>('chapter-complete');
   const [activeBoons, setActiveBoons] = useState<string[]>([]);
   const [boonChoices, setBoonChoices] = useState<{ precision: Boon; efficiency: Boon; adaptability: Boon } | null>(null);
   const [completedChapters, setCompletedChapters] = useState<number[]>(() => {
@@ -321,6 +322,7 @@ export function ClassicGame() {
 
   const handleContinueAfterChapterComplete = () => {
     setShowChapterComplete(false);
+    setBoonSelectionContext('chapter-complete');
     
     // Show boon selection after chapters 1-4 (for next chapter)
     const nextChapter = chapter + 1;
@@ -339,16 +341,28 @@ export function ClassicGame() {
   const handleBoonConfirm = (selectedBoonId: string) => {
     setActiveBoons([selectedBoonId]); // Replace with single boon
     setShowBoonSelection(false);
-    handleNextLevel();
+    
+    // Only advance to next level if in chapter-complete flow
+    if (boonSelectionContext === 'chapter-complete') {
+      handleNextLevel();
+    }
+    // If mid-game-swap, just close and continue playing
   };
 
   const handleBoonSkip = () => {
     setActiveBoons([]);
     setShowBoonSelection(false);
-    handleNextLevel();
+    
+    // Only advance to next level if in chapter-complete flow
+    if (boonSelectionContext === 'chapter-complete') {
+      handleNextLevel();
+    }
+    // If mid-game-swap, just close and continue playing
   };
 
   const handleSwapBoonClick = () => {
+    setBoonSelectionContext('mid-game-swap');
+    
     const precisionBoon = getRandomBoonByArchetype('precision', activeBoons);
     const efficiencyBoon = getRandomBoonByArchetype('efficiency', activeBoons);
     const adaptabilityBoon = getRandomBoonByArchetype('adaptability', activeBoons);
@@ -381,6 +395,10 @@ export function ClassicGame() {
           onConfirm={handleBoonConfirm}
           onSkip={handleBoonSkip}
           chapterName={chapterConfig.name}
+          showAllBoons={isCheatActive('UNLOCK_ALL_BOONS')}
+          unlockedBoons={getUnlockedBoons(completedChapters)}
+          context={boonSelectionContext}
+          currentActiveBoon={activeBoons[0]}
         />
       )}
 
