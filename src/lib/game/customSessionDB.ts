@@ -1,17 +1,30 @@
 /**
  * IndexedDB wrapper for Custom Mode session persistence
  * Provides async, high-capacity storage with localStorage fallback
+ * Updated for Save Slot System (Phase 4)
  */
 
 import { openDB, DBSchema, IDBPDatabase } from 'idb';
 import { CustomGameSession } from './customSession';
 import { CustomGameConfig } from './customConfig';
 
+export interface SaveSlot {
+  id: string; // UUID
+  name: string; // User-defined name
+  session: CustomGameSession;
+  lastPlayed: number;
+  createdAt: number;
+  thumbnail?: string; // Optional base64 screenshot (future enhancement)
+}
+
 interface CustomGameDB extends DBSchema {
-  'game-sessions': {
-    key: string;
-    value: CustomGameSession & { id: string };
-    indexes: { 'by-timestamp': number };
+  'save-slots': {
+    key: string; // Slot ID
+    value: SaveSlot;
+    indexes: { 
+      'by-last-played': number;
+      'by-created': number;
+    };
   };
   'game-configs': {
     key: string;
@@ -20,8 +33,7 @@ interface CustomGameDB extends DBSchema {
 }
 
 const DB_NAME = 'echo-custom-game';
-const DB_VERSION = 1;
-const SESSION_KEY = 'active-session';
+const DB_VERSION = 2; // Incremented for schema change
 const LAST_CONFIG_KEY = 'last-config';
 const SESSION_EXPIRY_DAYS = 7;
 
@@ -30,19 +42,48 @@ let dbInstance: IDBPDatabase<CustomGameDB> | null = null;
 /**
  * Initialize and return the IndexedDB connection
  */
-async function getDB(): Promise<IDBPDatabase<CustomGameDB>> {
+export async function getDB(): Promise<IDBPDatabase<CustomGameDB>> {
   if (dbInstance) return dbInstance;
 
   try {
     dbInstance = await openDB<CustomGameDB>(DB_NAME, DB_VERSION, {
-      upgrade(db) {
-        // Create game-sessions store
-        if (!db.objectStoreNames.contains('game-sessions')) {
-          const sessionStore = db.createObjectStore('game-sessions', { keyPath: 'id' });
-          sessionStore.createIndex('by-timestamp', 'timestamp');
+      upgrade(db, oldVersion, newVersion, transaction) {
+        // Migration from v1 to v2: game-sessions -> save-slots
+        if (oldVersion < 2) {
+          // Migrate old single session to slot if it exists
+          if (db.objectStoreNames.contains('game-sessions')) {
+            const oldStore = transaction.objectStore('game-sessions');
+            const saveSlotStore = db.createObjectStore('save-slots', { keyPath: 'id' });
+            saveSlotStore.createIndex('by-last-played', 'lastPlayed');
+            saveSlotStore.createIndex('by-created', 'createdAt');
+            
+            // Migrate active session to a slot (async handled by transaction)
+            oldStore.get('active-session').then((oldSession) => {
+              if (oldSession) {
+                const migratedSlot: SaveSlot = {
+                  id: 'migrated-slot',
+                  name: 'Game 1',
+                  session: oldSession as CustomGameSession,
+                  lastPlayed: oldSession.timestamp || Date.now(),
+                  createdAt: oldSession.timestamp || Date.now(),
+                };
+                saveSlotStore.add(migratedSlot);
+              }
+            });
+            
+            // Delete old store
+            db.deleteObjectStore('game-sessions');
+          }
         }
 
-        // Create game-configs store
+        // Create save-slots store if not exists
+        if (!db.objectStoreNames.contains('save-slots')) {
+          const slotStore = db.createObjectStore('save-slots', { keyPath: 'id' });
+          slotStore.createIndex('by-last-played', 'lastPlayed');
+          slotStore.createIndex('by-created', 'createdAt');
+        }
+
+        // Create game-configs store if not exists
         if (!db.objectStoreNames.contains('game-configs')) {
           db.createObjectStore('game-configs');
         }
@@ -54,106 +95,6 @@ async function getDB(): Promise<IDBPDatabase<CustomGameDB>> {
     console.error('Failed to initialize IndexedDB:', error);
     throw error;
   }
-}
-
-/**
- * Save the current game session to IndexedDB
- */
-export async function saveGameSessionDB(session: CustomGameSession): Promise<void> {
-  try {
-    const db = await getDB();
-    const sessionWithId = {
-      ...session,
-      id: SESSION_KEY,
-      timestamp: Date.now(),
-    };
-    
-    await db.put('game-sessions', sessionWithId);
-  } catch (error) {
-    console.error('Failed to save game session to IndexedDB:', error);
-    // Fallback to localStorage
-    try {
-      localStorage.setItem('echo_custom_active_session', JSON.stringify(session));
-    } catch (e) {
-      console.error('Fallback to localStorage also failed:', e);
-    }
-  }
-}
-
-/**
- * Load the saved game session from IndexedDB
- * Returns null if no session exists or if it's expired
- */
-export async function loadGameSessionDB(): Promise<CustomGameSession | null> {
-  try {
-    const db = await getDB();
-    const sessionWithId = await db.get('game-sessions', SESSION_KEY);
-    
-    if (!sessionWithId) return null;
-
-    // Check if session is expired (7 days old)
-    const now = Date.now();
-    const age = now - sessionWithId.timestamp;
-    const maxAge = SESSION_EXPIRY_DAYS * 24 * 60 * 60 * 1000;
-    
-    if (age > maxAge) {
-      await clearGameSessionDB();
-      return null;
-    }
-
-    // Remove the id field before returning
-    const { id, ...session } = sessionWithId;
-    return session as CustomGameSession;
-  } catch (error) {
-    console.error('Failed to load game session from IndexedDB:', error);
-    // Fallback to localStorage
-    try {
-      const stored = localStorage.getItem('echo_custom_active_session');
-      if (!stored) return null;
-      return JSON.parse(stored);
-    } catch (e) {
-      console.error('Fallback to localStorage also failed:', e);
-      return null;
-    }
-  }
-}
-
-/**
- * Clear the saved game session
- */
-export async function clearGameSessionDB(): Promise<void> {
-  try {
-    const db = await getDB();
-    await db.delete('game-sessions', SESSION_KEY);
-  } catch (error) {
-    console.error('Failed to clear game session from IndexedDB:', error);
-    // Fallback to localStorage
-    try {
-      localStorage.removeItem('echo_custom_active_session');
-    } catch (e) {
-      console.error('Fallback to localStorage also failed:', e);
-    }
-  }
-}
-
-/**
- * Check if there's an active session
- */
-export async function hasActiveSessionDB(): Promise<boolean> {
-  const session = await loadGameSessionDB();
-  return session !== null;
-}
-
-/**
- * Get the age of the current session in days
- */
-export async function getSessionAgeDB(): Promise<number> {
-  const session = await loadGameSessionDB();
-  if (!session) return 0;
-  
-  const now = Date.now();
-  const age = now - session.timestamp;
-  return Math.floor(age / (24 * 60 * 60 * 1000));
 }
 
 /**
@@ -212,3 +153,4 @@ export async function clearLastConfigDB(): Promise<void> {
     }
   }
 }
+
