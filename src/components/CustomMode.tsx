@@ -11,7 +11,7 @@ import { AUDIO_THEMES } from '@/lib/audio/engine';
 import { CustomGameConfig, validateCustomConfig, ARENA_PRESETS, loadCustomPresets, saveCustomPreset, deleteCustomPreset, CustomPreset, decodeShareCodeToConfig, DEFAULT_CUSTOM_CONFIG } from '@/lib/game/customConfig';
 import { toast } from '@/hooks/use-toast';
 import { InfoTooltip } from '@/components/InfoTooltip';
-import { hasActiveSession, loadGameSession, clearGameSession, loadLastConfig, saveLastConfig, clearLastConfig, getSessionAge } from '@/lib/game/customSession';
+import { hasActiveSessionDB, loadGameSessionDB, clearGameSessionDB, loadLastConfigDB, saveLastConfigDB, clearLastConfigDB, getSessionAgeDB } from '@/lib/game/customSessionDB';
 
 export function CustomMode() {
   const navigate = useNavigate();
@@ -46,14 +46,36 @@ export function CustomMode() {
   const [proximityThreshold, setProximityThreshold] = useState(80);
   const [enforceWinCondition, setEnforceWinCondition] = useState(true);
 
+  // Session state
+  const [hasSession, setHasSession] = useState(false);
+  const [sessionLoading, setSessionLoading] = useState(true);
+  const [loadedSession, setLoadedSession] = useState<any>(null);
+  const [sessionAge, setSessionAge] = useState(0);
+
   useEffect(() => {
     setPresets(loadCustomPresets());
     
-    // Load last used config on mount
-    const lastConfig = loadLastConfig();
-    if (lastConfig) {
-      loadConfigIntoState(lastConfig);
-    }
+    // Load last used config and check for active session
+    const loadData = async () => {
+      const lastConfig = await loadLastConfigDB();
+      if (lastConfig) {
+        loadConfigIntoState(lastConfig);
+      }
+
+      const activeSession = await hasActiveSessionDB();
+      setHasSession(activeSession);
+      
+      if (activeSession) {
+        const session = await loadGameSessionDB();
+        setLoadedSession(session);
+        const age = await getSessionAgeDB();
+        setSessionAge(age);
+      }
+      
+      setSessionLoading(false);
+    };
+    
+    loadData();
   }, []);
 
   const loadConfigIntoState = (config: CustomGameConfig) => {
@@ -78,7 +100,7 @@ export function CustomMode() {
     setEnforceWinCondition(config.enforceWinCondition ?? true);
   };
 
-  const handleBegin = () => {
+  const handleBegin = async () => {
     const config: CustomGameConfig = {
       pingsMode,
       pingsCount,
@@ -106,7 +128,7 @@ export function CustomMode() {
     const validatedConfig = validateCustomConfig(config);
     
     // Save as last used config
-    saveLastConfig(validatedConfig);
+    await saveLastConfigDB(validatedConfig);
     
     navigate('/custom-game', { state: { config: validatedConfig } });
   };
@@ -115,17 +137,18 @@ export function CustomMode() {
     navigate('/custom-game', { state: { resumeSession: true } });
   };
 
-  const handleAbandonSession = () => {
-    clearGameSession();
+  const handleAbandonSession = async () => {
+    await clearGameSessionDB();
+    setHasSession(false);
     toast({
       title: 'Session Cleared',
       description: 'Your saved game progress has been removed.',
     });
   };
 
-  const handleResetToDefaults = () => {
+  const handleResetToDefaults = async () => {
     loadConfigIntoState(DEFAULT_CUSTOM_CONFIG);
-    clearLastConfig();
+    await clearLastConfigDB();
     toast({
       title: 'Reset to Defaults',
       description: 'All settings have been reset to default values.',
@@ -283,15 +306,15 @@ export function CustomMode() {
       {/* Config */}
       <div className="max-w-2xl mx-auto p-6 space-y-8 py-12">
         {/* Resume Game Banner */}
-        {hasActiveSession() && (
+        {!sessionLoading && hasSession && loadedSession && (
           <div className="flat-card bg-primary/10 border-2 border-primary/30 space-y-4">
             <div className="flex items-start gap-3">
               <PlayCircle className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
               <div className="flex-1">
                 <h3 className="text-heading-3 text-primary mb-1">Resume Game</h3>
                 <p className="text-small text-muted-foreground">
-                  You have a saved game in progress from Round {loadGameSession()?.currentRound}.
-                  {getSessionAge() > 0 && ` (${getSessionAge()} day${getSessionAge() > 1 ? 's' : ''} ago)`}
+                  You have a saved game in progress from Round {loadedSession.currentRound}.
+                  {sessionAge > 0 && ` (${sessionAge} day${sessionAge > 1 ? 's' : ''} ago)`}
                 </p>
               </div>
             </div>
