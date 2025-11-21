@@ -1,6 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { ArrowLeft, Target } from 'lucide-react';
 import { generateTargetPosition, getTargetCenter, Position } from '@/lib/game/coords';
 import { audioEngine } from '@/lib/audio/engine';
@@ -306,82 +312,83 @@ export function TutorialGame() {
           
           {/* Demo Ping Overlay for audio-cues step */}
           {tutorialState.currentStep === 'audio-cues' && (
-            <div className="absolute inset-0 pointer-events-none z-10">
-              {/* Target location indicator - FIXED at center for educational demo */}
-              <div
-                className="absolute pointer-events-none z-30"
-                style={{
-                  left: demoReferenceTarget.x,
-                  top: demoReferenceTarget.y,
-                  transform: 'translate(-50%, -50%)',
-                }}
-              >
-                <div className="w-16 h-16 rounded-full border-2 border-dashed border-accent/60 animate-pulse flex items-center justify-center">
-                  <Target className="w-6 h-6 text-accent" />
-                </div>
-                <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                  <div className="text-xs bg-accent/20 px-3 py-1.5 rounded-full border border-accent/40 text-accent font-semibold">
-                    🎯 REFERENCE TARGET
+            <TooltipProvider>
+              <div className="absolute inset-0 pointer-events-none z-10">
+                {/* Target location indicator - FIXED at center for educational demo */}
+                <div
+                  className="absolute pointer-events-none z-30"
+                  style={{
+                    left: demoReferenceTarget.x,
+                    top: demoReferenceTarget.y,
+                    transform: 'translate(-50%, -50%)',
+                  }}
+                >
+                  <div className="w-16 h-16 rounded-full border-2 border-dashed border-accent/60 animate-pulse flex items-center justify-center">
+                    <Target className="w-6 h-6 text-accent" />
                   </div>
-                </div>
-              </div>
-              
-              {demoPings.map(demo => {
-                const isExperienced = demoPingsExperienced.has(demo.id);
-                return (
-                  <div
-                    key={demo.id}
-                    className="absolute pointer-events-auto cursor-pointer hover:scale-110 transition-transform z-20"
-                    style={{
-                      left: demo.position.x,
-                      top: demo.position.y,
-                      transform: 'translate(-50%, -50%)',
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      // Play demo ping with fixed reference target
-                      audioEngine.playPing(
-                        demo.position,
-                        demoReferenceTarget,
-                        Math.max(arenaSize.width, arenaSize.height)
-                      );
-                      // Mark as experienced
-                      setDemoPingsExperienced(prev => new Set(prev).add(demo.id));
-                    }}
-                  >
-                    <div className={`relative transition-all ${isExperienced ? 'opacity-50' : 'opacity-100'}`}>
-                      {/* Pulse animation */}
-                      <div className={`absolute inset-0 ${!isExperienced ? 'animate-ping' : ''}`}>
-                        <div className="w-20 h-20 rounded-full bg-primary/30" />
-                      </div>
-                      
-                      {/* Main circle */}
-                      <div className={`w-20 h-20 rounded-full border-4 flex items-center justify-center transition-all ${
-                        isExperienced 
-                          ? 'bg-primary/20 border-primary/50' 
-                          : 'bg-primary/40 border-primary hover:scale-110'
-                      }`}>
-                        <div className="text-center">
-                          <div className="text-xs font-bold text-primary-foreground whitespace-nowrap">
-                            {demo.label}
-                          </div>
-                          {isExperienced && (
-                            <div className="text-2xl">✓</div>
-                          )}
-                        </div>
-                      </div>
-                      
-                      {/* Description label */}
-                      <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                        <div className="text-xs bg-background/90 px-2 py-1 rounded border border-border text-foreground">
-                          {demo.description}
-                        </div>
-                      </div>
+                  <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 whitespace-nowrap">
+                    <div className="text-xs bg-accent/20 px-3 py-1.5 rounded-full border border-accent/40 text-accent font-semibold">
+                      🎯 REFERENCE TARGET
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                </div>
+                
+                {demoPings.map(demo => {
+                  const isExperienced = demoPingsExperienced.has(demo.id);
+                  return (
+                    <Tooltip key={demo.id} delayDuration={200}>
+                      <TooltipTrigger asChild>
+                        <div
+                          className="absolute pointer-events-auto cursor-pointer hover:scale-110 transition-transform z-20"
+                          style={{
+                            left: demo.position.x,
+                            top: demo.position.y,
+                            transform: 'translate(-50%, -50%)',
+                          }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Play demo ping with fixed reference target
+                            audioEngine.playPing(
+                              demo.position,
+                              demoReferenceTarget,
+                              Math.max(arenaSize.width, arenaSize.height)
+                            );
+                            // Mark as experienced
+                            setDemoPingsExperienced(prev => new Set(prev).add(demo.id));
+                          }}
+                        >
+                          <div className={`relative transition-all ${isExperienced ? 'opacity-50' : 'opacity-100'}`}>
+                            {/* Pulse animation */}
+                            <div className={`absolute inset-0 ${!isExperienced ? 'animate-ping' : ''}`}>
+                              <div className="w-20 h-20 rounded-full bg-primary/30" />
+                            </div>
+                            
+                            {/* Main circle */}
+                            <div className={`w-20 h-20 rounded-full border-4 flex items-center justify-center transition-all ${
+                              isExperienced 
+                                ? 'bg-primary/20 border-primary/50' 
+                                : 'bg-primary/40 border-primary hover:scale-110'
+                            }`}>
+                              <div className="text-center">
+                                <div className="text-xs font-bold text-primary-foreground whitespace-nowrap">
+                                  {demo.label}
+                                </div>
+                                {isExperienced && (
+                                  <div className="text-2xl">✓</div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="top" className="max-w-xs">
+                        <p className="text-xs">{demo.description}</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                })}
+              </div>
+            </TooltipProvider>
           )}
         </div>
 
