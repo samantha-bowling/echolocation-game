@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Play, Save, Trash2, Lightbulb, Download, BarChart3, Target, Zap, Infinity, Gamepad2, MapPin, Volume2, Settings, PlayCircle, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Play, Save, Trash2, Lightbulb, Download, Upload, Share2, BarChart3, Target, Zap, Infinity, Gamepad2, MapPin, Volume2, Settings, PlayCircle, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
@@ -12,6 +12,7 @@ import { CustomGameConfig, validateCustomConfig, ARENA_PRESETS, loadCustomPreset
 import { toast } from '@/hooks/use-toast';
 import { InfoTooltip } from '@/components/InfoTooltip';
 import { hasActiveSessionDB, loadGameSessionDB, clearGameSessionDB, loadLastConfigDB, saveLastConfigDB, clearLastConfigDB, getSessionAgeDB } from '@/lib/game/customSessionDB';
+import { exportSessionAsFile, importSessionFromFile, generateShareURL } from '@/lib/game/exportImport';
 
 export function CustomMode() {
   const navigate = useNavigate();
@@ -51,6 +52,11 @@ export function CustomMode() {
   const [sessionLoading, setSessionLoading] = useState(true);
   const [loadedSession, setLoadedSession] = useState<any>(null);
   const [sessionAge, setSessionAge] = useState(0);
+
+  // Export/Import state
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showShareDialog, setShowShareDialog] = useState(false);
+  const [shareUrl, setShareUrl] = useState('');
 
   useEffect(() => {
     setPresets(loadCustomPresets());
@@ -152,6 +158,90 @@ export function CustomMode() {
     toast({
       title: 'Reset to Defaults',
       description: 'All settings have been reset to default values.',
+    });
+  };
+
+  // Export/Import handlers
+  const handleExportSession = async () => {
+    if (!loadedSession) return;
+
+    try {
+      exportSessionAsFile(loadedSession);
+      toast({
+        title: 'Game Exported',
+        description: 'Your game has been saved to a file',
+        duration: 2000,
+      });
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast({
+        title: 'Export Failed',
+        description: 'Failed to export game',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleImportSession = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const session = await importSessionFromFile(file);
+      await clearGameSessionDB(); // Clear existing session
+      await loadGameSessionDB(); // This will save the imported session
+
+      setHasSession(true);
+      setLoadedSession(session);
+
+      toast({
+        title: 'Game Imported',
+        description: 'Successfully imported game from file',
+        duration: 2000,
+      });
+
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } catch (error) {
+      console.error('Import failed:', error);
+      toast({
+        title: 'Import Failed',
+        description: error instanceof Error ? error.message : 'Failed to import game',
+        variant: 'destructive',
+      });
+
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const handleGenerateShareUrl = async () => {
+    if (!loadedSession) return;
+
+    try {
+      const url = await generateShareURL(loadedSession);
+      setShareUrl(url);
+      setShowShareDialog(true);
+    } catch (error) {
+      console.error('Share URL generation failed:', error);
+      toast({
+        title: 'Share Failed',
+        description: error instanceof Error ? error.message : 'Failed to generate share link',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleCopyShareUrl = () => {
+    navigator.clipboard.writeText(shareUrl);
+    toast({
+      title: 'Link Copied',
+      description: 'Share link copied to clipboard',
+      duration: 2000,
     });
   };
 
@@ -327,8 +417,33 @@ export function CustomMode() {
                 Start Fresh
               </Button>
             </div>
+
+            {/* Export/Import Controls */}
+            <div className="flex flex-wrap gap-2 pt-2 border-t border-border/50">
+              <Button onClick={handleExportSession} variant="ghost" size="sm" className="flex-1">
+                <Download className="w-4 h-4 mr-2" />
+                Export
+              </Button>
+              <Button onClick={handleGenerateShareUrl} variant="ghost" size="sm" className="flex-1">
+                <Share2 className="w-4 h-4 mr-2" />
+                Share
+              </Button>
+              <Button onClick={() => fileInputRef.current?.click()} variant="ghost" size="sm" className="flex-1">
+                <Upload className="w-4 h-4 mr-2" />
+                Import
+              </Button>
+            </div>
           </div>
         )}
+
+        {/* Hidden file input for import */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".json"
+          className="hidden"
+          onChange={handleImportSession}
+        />
         {/* Quick Presets Section */}
         <section className="flat-card space-y-4">
           <div className="flex items-center justify-between">
@@ -1062,6 +1177,44 @@ export function CustomMode() {
           </div>
         </div>
       )}
+
+      {/* Share URL Dialog */}
+      <Dialog open={showShareDialog} onOpenChange={setShowShareDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Share Game</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-small text-muted-foreground">
+              Anyone with this link can import and play your saved game.
+            </p>
+            
+            <div className="flex items-center gap-2">
+              <Input
+                value={shareUrl}
+                readOnly
+                className="flex-1 font-mono text-tiny"
+                onClick={(e) => e.currentTarget.select()}
+              />
+              <Button onClick={handleCopyShareUrl} size="sm">
+                Copy
+              </Button>
+            </div>
+            
+            <div className="flat-card bg-warning/10 border-warning/30 p-3">
+              <p className="text-tiny text-warning-foreground flex items-start gap-2">
+                <span className="text-base">⚠️</span>
+                <span>Share link contains your full game state. Only share with trusted people.</span>
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setShowShareDialog(false)}>
+              Done
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
