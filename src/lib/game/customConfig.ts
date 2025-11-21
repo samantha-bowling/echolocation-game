@@ -29,6 +29,7 @@ export interface CustomGameConfig {
     type: 'none' | 'proximity';
     proximityThreshold?: number;
   };
+  enforceWinCondition: boolean;
 
   // Rounds: number (1-100) or -1 for unlimited "cozy mode"
   numberOfRounds: number;
@@ -55,6 +56,7 @@ export const DEFAULT_CUSTOM_CONFIG: CustomGameConfig = {
   winCondition: {
     type: 'none',
   },
+  enforceWinCondition: true,
   numberOfRounds: 1,
   hintsEnabled: false,
   hintLevel: 'basic',
@@ -140,6 +142,7 @@ export function encodeConfigToShareCode(config: CustomGameConfig): string {
       hl: config.hintLevel === 'basic' ? 0 : 1,
       wc: config.winCondition?.type || 'none',
       wt: config.winCondition?.proximityThreshold || 80,
+      ewc: config.enforceWinCondition ? 1 : 0,
       d: config.decoys ? 1 : 0,
       nl: config.noiseLevel,
       th: config.theme,
@@ -182,6 +185,7 @@ export function decodeShareCodeToConfig(shareCode: string): CustomGameConfig | n
         type: compact.wc,
         proximityThreshold: compact.wt,
       },
+      enforceWinCondition: compact.ewc === 1,
       decoys: compact.d === 1,
       noiseLevel: compact.nl,
       theme: compact.th,

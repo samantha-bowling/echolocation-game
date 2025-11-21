@@ -44,6 +44,7 @@ export function CustomMode() {
   // Win condition
   const [winConditionType, setWinConditionType] = useState<'none' | 'proximity'>('none');
   const [proximityThreshold, setProximityThreshold] = useState(80);
+  const [enforceWinCondition, setEnforceWinCondition] = useState(true);
 
   useEffect(() => {
     setPresets(loadCustomPresets());
@@ -74,6 +75,7 @@ export function CustomMode() {
     setHintLevel(config.hintLevel);
     setWinConditionType(config.winCondition?.type || 'none');
     setProximityThreshold(config.winCondition?.proximityThreshold || 80);
+    setEnforceWinCondition(config.enforceWinCondition ?? true);
   };
 
   const handleBegin = () => {
@@ -98,6 +100,7 @@ export function CustomMode() {
         type: winConditionType,
         proximityThreshold,
       },
+      enforceWinCondition,
     };
 
     const validatedConfig = validateCustomConfig(config);
@@ -153,6 +156,7 @@ export function CustomMode() {
         type: winConditionType,
         proximityThreshold,
       },
+      enforceWinCondition,
     };
     
     saveCustomPreset(presetName.trim(), config);
@@ -555,22 +559,37 @@ export function CustomMode() {
             </div>
             
             {winConditionType === 'proximity' && (
-              <div className="pt-2 space-y-2 border-t border-border">
-                <div className="flex items-center justify-between">
-                  <Label className="text-small">Required Proximity</Label>
-                  <span className="text-base font-mono">{proximityThreshold}%</span>
+              <div className="pt-2 space-y-4 border-t border-border">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-small">Required Proximity</Label>
+                    <span className="text-base font-mono">{proximityThreshold}%</span>
+                  </div>
+                  <Slider
+                    value={[proximityThreshold]}
+                    onValueChange={(v) => setProximityThreshold(v[0])}
+                    min={50}
+                    max={95}
+                    step={5}
+                    className="w-full"
+                  />
+                  <p className="text-tiny text-muted-foreground">
+                    Higher = must be closer to target
+                  </p>
                 </div>
-                <Slider
-                  value={[proximityThreshold]}
-                  onValueChange={(v) => setProximityThreshold(v[0])}
-                  min={50}
-                  max={95}
-                  step={5}
-                  className="w-full"
-                />
-                <p className="text-tiny text-muted-foreground">
-                  Higher = must be closer to target
-                </p>
+                
+                <div className="flex items-center justify-between pt-2 border-t border-border">
+                  <div className="space-y-1">
+                    <Label className="text-small">Enforce to Advance</Label>
+                    <p className="text-tiny text-muted-foreground">
+                      {enforceWinCondition 
+                        ? 'Must meet condition to proceed to next round'
+                        : 'Can proceed even if condition not met'
+                      }
+                    </p>
+                  </div>
+                  <Switch checked={enforceWinCondition} onCheckedChange={setEnforceWinCondition} />
+                </div>
               </div>
             )}
           </div>
