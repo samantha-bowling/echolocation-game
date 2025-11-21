@@ -369,8 +369,8 @@ export function TutorialGame() {
                                 ? 'bg-primary/20 border-primary/50' 
                                 : 'bg-primary/40 border-primary hover:scale-110'
                             }`}>
-                              <div className="text-center">
-                                <div className="text-xs font-bold text-primary-foreground whitespace-nowrap">
+                              <div className="text-center px-2">
+                                <div className="text-xs font-bold text-primary-foreground leading-tight max-w-[70px]">
                                   {demo.label}
                                 </div>
                                 {isExperienced && (
