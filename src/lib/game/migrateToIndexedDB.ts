@@ -3,7 +3,8 @@
  * Runs once on app load to ensure seamless transition
  */
 
-import { saveGameSessionDB, loadGameSessionDB, saveLastConfigDB, loadLastConfigDB } from './customSessionDB';
+import { createSaveSlot, getSaveSlot } from './saveSlotManager';
+import { saveLastConfigDB } from './customSessionDB';
 import { loadGameSession, loadLastConfig } from './customSession';
 
 const MIGRATION_FLAG = 'echo_migrated_to_indexeddb';
@@ -27,11 +28,14 @@ export async function migrateToIndexedDB(): Promise<void> {
   console.log('Starting migration to IndexedDB...');
 
   try {
-    // Migrate active session
+    // Migrate active session to __active__ slot
     const existingSession = loadGameSession();
     if (existingSession) {
-      await saveGameSessionDB(existingSession);
-      console.log('✓ Migrated active game session to IndexedDB');
+      const existingSlot = await getSaveSlot('__active__');
+      if (!existingSlot) {
+        await createSaveSlot('Current Game', existingSession, '__active__');
+        console.log('✓ Migrated active session to save slot');
+      }
     }
 
     // Migrate last config
@@ -58,14 +62,12 @@ export async function migrateToIndexedDB(): Promise<void> {
  */
 export async function verifyMigration(): Promise<boolean> {
   try {
-    const dbSession = await loadGameSessionDB();
-    const dbConfig = await loadLastConfigDB();
+    const dbSlot = await getSaveSlot('__active__');
     const localSession = loadGameSession();
     const localConfig = loadLastConfig();
 
     // If localStorage has data but IndexedDB doesn't, migration failed
-    if (localSession && !dbSession) return false;
-    if (localConfig && !dbConfig) return false;
+    if (localSession && !dbSlot) return false;
 
     return true;
   } catch (error) {

@@ -24,12 +24,16 @@ export async function getAllSaveSlots(): Promise<SaveSlot[]> {
 }
 
 /**
- * Create a new save slot with auto-generated name
+ * Create a new save slot with auto-generated or custom ID
  */
-export async function createSaveSlot(name: string, session: CustomGameSession): Promise<SaveSlot> {
+export async function createSaveSlot(
+  name: string, 
+  session: CustomGameSession, 
+  customId?: string
+): Promise<SaveSlot> {
   try {
     const db = await getDB();
-    const id = generateSlotId();
+    const id = customId || generateSlotId();
     
     const slot: SaveSlot = {
       id,
@@ -207,6 +211,21 @@ export async function duplicateSaveSlot(slotId: string, newName: string): Promis
     console.error('Failed to duplicate save slot:', error);
     throw new Error('Failed to duplicate save slot');
   }
+}
+
+/**
+ * Get or create the default active slot
+ */
+export async function getOrCreateActiveSlot(session?: CustomGameSession): Promise<SaveSlot> {
+  const slot = await getSaveSlot('__active__');
+  if (slot) return slot;
+  
+  // Create default slot
+  if (!session) {
+    throw new Error('Cannot create active slot without session data');
+  }
+  
+  return await createSaveSlot('Current Game', session, '__active__');
 }
 
 // Export getDB for use in other modules

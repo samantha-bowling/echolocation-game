@@ -18,7 +18,7 @@ import { Settings } from "./components/Settings";
 import { Credits } from "./components/Credits";
 import { migrateToIndexedDB } from "./lib/game/migrateToIndexedDB";
 import { importFromShareURL } from "./lib/game/exportImport";
-import { saveGameSessionDB } from "./lib/game/customSessionDB";
+import { createSaveSlot, autoGenerateSlotName } from "./lib/game/saveSlotManager";
 import { toast } from "./hooks/use-toast";
 
 const queryClient = new QueryClient();
@@ -40,8 +40,9 @@ function ImportHandler() {
 
       importFromShareURL(importCode)
         .then(async (session) => {
-          // Save the imported session
-          await saveGameSessionDB(session);
+          // Save the imported session as a new slot
+          const slotName = await autoGenerateSlotName();
+          await createSaveSlot(`${slotName} (Imported)`, session);
 
           // Show success toast
           toast({

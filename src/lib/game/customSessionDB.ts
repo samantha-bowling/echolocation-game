@@ -35,7 +35,6 @@ interface CustomGameDB extends DBSchema {
 const DB_NAME = 'echo-custom-game';
 const DB_VERSION = 2; // Incremented for schema change
 const LAST_CONFIG_KEY = 'last-config';
-const SESSION_EXPIRY_DAYS = 7;
 
 let dbInstance: IDBPDatabase<CustomGameDB> | null = null;
 
@@ -47,35 +46,7 @@ export async function getDB(): Promise<IDBPDatabase<CustomGameDB>> {
 
   try {
     dbInstance = await openDB<CustomGameDB>(DB_NAME, DB_VERSION, {
-      upgrade(db, oldVersion, newVersion, transaction) {
-        // Migration from v1 to v2: game-sessions -> save-slots
-        if (oldVersion < 2) {
-          // Migrate old single session to slot if it exists
-          if (db.objectStoreNames.contains('game-sessions')) {
-            const oldStore = transaction.objectStore('game-sessions');
-            const saveSlotStore = db.createObjectStore('save-slots', { keyPath: 'id' });
-            saveSlotStore.createIndex('by-last-played', 'lastPlayed');
-            saveSlotStore.createIndex('by-created', 'createdAt');
-            
-            // Migrate active session to a slot (async handled by transaction)
-            oldStore.get('active-session').then((oldSession) => {
-              if (oldSession) {
-                const migratedSlot: SaveSlot = {
-                  id: 'migrated-slot',
-                  name: 'Game 1',
-                  session: oldSession as CustomGameSession,
-                  lastPlayed: oldSession.timestamp || Date.now(),
-                  createdAt: oldSession.timestamp || Date.now(),
-                };
-                saveSlotStore.add(migratedSlot);
-              }
-            });
-            
-            // Delete old store
-            db.deleteObjectStore('game-sessions');
-          }
-        }
-
+      upgrade(db) {
         // Create save-slots store if not exists
         if (!db.objectStoreNames.contains('save-slots')) {
           const slotStore = db.createObjectStore('save-slots', { keyPath: 'id' });
@@ -87,6 +58,8 @@ export async function getDB(): Promise<IDBPDatabase<CustomGameDB>> {
         if (!db.objectStoreNames.contains('game-configs')) {
           db.createObjectStore('game-configs');
         }
+        
+        // Note: Data migration from localStorage happens in migrateToIndexedDB.ts
       },
     });
 

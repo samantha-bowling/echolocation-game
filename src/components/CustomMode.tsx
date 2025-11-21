@@ -9,10 +9,13 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { AUDIO_THEMES } from '@/lib/audio/engine';
 import { CustomGameConfig, validateCustomConfig, ARENA_PRESETS, loadCustomPresets, saveCustomPreset, deleteCustomPreset, CustomPreset, decodeShareCodeToConfig, DEFAULT_CUSTOM_CONFIG } from '@/lib/game/customConfig';
+import { createSaveSlot } from '@/lib/game/saveSlotManager';
 import { toast } from '@/hooks/use-toast';
 import { InfoTooltip } from '@/components/InfoTooltip';
-import { hasActiveSessionDB, loadGameSessionDB, clearGameSessionDB, loadLastConfigDB, saveLastConfigDB, clearLastConfigDB, getSessionAgeDB } from '@/lib/game/customSessionDB';
+import { loadLastConfigDB, saveLastConfigDB, clearLastConfigDB } from '@/lib/game/customSessionDB';
+import { getAllSaveSlots, getSaveSlot, deleteSaveSlot } from '@/lib/game/saveSlotManager';
 import { exportSessionAsFile, importSessionFromFile, generateShareURL } from '@/lib/game/exportImport';
+import { CustomGameSession } from '@/lib/game/customSession';
 
 export function CustomMode() {
   const navigate = useNavigate();
@@ -50,7 +53,7 @@ export function CustomMode() {
   // Session state
   const [hasSession, setHasSession] = useState(false);
   const [sessionLoading, setSessionLoading] = useState(true);
-  const [loadedSession, setLoadedSession] = useState<any>(null);
+  const [loadedSession, setLoadedSession] = useState<CustomGameSession | null>(null);
   const [sessionAge, setSessionAge] = useState(0);
 
   // Export/Import state
@@ -68,14 +71,15 @@ export function CustomMode() {
         loadConfigIntoState(lastConfig);
       }
 
-      const activeSession = await hasActiveSessionDB();
-      setHasSession(activeSession);
+      // Check for __active__ slot
+      const defaultSlot = await getSaveSlot('__active__');
+      setHasSession(!!defaultSlot);
       
-      if (activeSession) {
-        const session = await loadGameSessionDB();
-        setLoadedSession(session);
-        const age = await getSessionAgeDB();
-        setSessionAge(age);
+      if (defaultSlot) {
+        setLoadedSession(defaultSlot.session);
+        const ageMs = Date.now() - defaultSlot.lastPlayed;
+        const ageDays = Math.floor(ageMs / (1000 * 60 * 60 * 24));
+        setSessionAge(ageDays);
       }
       
       setSessionLoading(false);
@@ -144,8 +148,9 @@ export function CustomMode() {
   };
 
   const handleAbandonSession = async () => {
-    await clearGameSessionDB();
+    await deleteSaveSlot('__active__');
     setHasSession(false);
+    setLoadedSession(null);
     toast({
       title: 'Session Cleared',
       description: 'Your saved game progress has been removed.',
@@ -188,8 +193,10 @@ export function CustomMode() {
 
     try {
       const session = await importSessionFromFile(file);
-      await clearGameSessionDB(); // Clear existing session
-      await loadGameSessionDB(); // This will save the imported session
+      
+      // Clear existing __active__ slot and create new one
+      await deleteSaveSlot('__active__').catch(() => {}); // Ignore if doesn't exist
+      await createSaveSlot('Current Game', session, '__active__');
 
       setHasSession(true);
       setLoadedSession(session);
