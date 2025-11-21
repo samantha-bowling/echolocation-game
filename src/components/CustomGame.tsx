@@ -50,7 +50,7 @@ export function CustomGame() {
   const [target, setTarget] = useState(() => 
     resumedSession?.target || generateTargetPosition(arenaSize, config.targetSize)
   );
-  const [scoreResult, setScoreResult] = useState<any>(resumedSession ? null : null);
+  const [scoreResult, setScoreResult] = useState<any>(resumedSession?.scoreResult || null);
   const [targetMoveCount, setTargetMoveCount] = useState(resumedSession?.targetMoveCount || 0);
   const [showSummaryModal, setShowSummaryModal] = useState(false);
 
@@ -104,11 +104,12 @@ export function CustomGame() {
       finalTime,
       targetMoveCount,
       gamePhase,
+      scoreResult,
       timestamp: Date.now(),
     };
     
     saveGameSession(sessionData);
-  }, [config, gameState, currentRound, roundScores, target, pingHistory, finalGuess, pingsUsed, gamePhase, targetMoveCount]);
+  }, [config, gameState, currentRound, roundScores, target, pingHistory, finalGuess, pingsUsed, gamePhase, targetMoveCount, scoreResult]);
 
   // Show toast on successful resume
   useEffect(() => {
@@ -119,6 +120,13 @@ export function CustomGame() {
       });
     }
   }, []);
+
+  // Auto-show summary modal when resuming during round-transition
+  useEffect(() => {
+    if (resumedSession && gameState === 'round-transition' && scoreResult) {
+      setShowSummaryModal(true);
+    }
+  }, []); // Only run on mount
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (gameState === 'summary') return;

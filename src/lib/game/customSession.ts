@@ -20,6 +20,7 @@ export interface CustomGameSession {
   finalTime: number | null;
   targetMoveCount: number;
   gamePhase: GamePhase;
+  scoreResult: any | null;
   timestamp: number;
 }
 
