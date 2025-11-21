@@ -35,7 +35,7 @@ export function CheatReferenceDialog({ open, onOpenChange }: CheatReferenceDialo
             Cheat Code Reference
           </DialogTitle>
           <DialogDescription>
-            All available cheat codes for Echo Dots. Enter these in the Settings page to activate them.
+            All available cheat codes for echo)))location. Enter these in the Settings page to activate them.
           </DialogDescription>
         </DialogHeader>
 
