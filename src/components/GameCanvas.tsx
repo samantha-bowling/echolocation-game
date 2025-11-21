@@ -26,6 +26,7 @@ export interface GameCanvasProps {
   replaysRemaining?: number;
   replaysUsed?: number;
   canvasRef: React.RefObject<HTMLDivElement>;
+  chapter?: number; // Classic mode chapter (undefined for Custom/Tutorial)
 }
 
 export function GameCanvas({
@@ -47,13 +48,15 @@ export function GameCanvas({
   replaysRemaining,
   replaysUsed,
   canvasRef,
+  chapter,
 }: GameCanvasProps) {
   const targetCenter = getTargetCenter(target);
   const [showRevealHint, setShowRevealHint] = useState(false);
 
-  // Random blink effect for REVEAL_TARGET cheat
+  // Random blink effect for REVEAL_TARGET cheat (only Chapters 2-3)
   useEffect(() => {
-    if (!isCheatActive('REVEAL_TARGET') || gameState === 'summary' || gameState === 'round-transition') {
+    const isChapters2or3 = chapter === 2 || chapter === 3;
+    if (!isCheatActive('REVEAL_TARGET') || !isChapters2or3 || gameState === 'summary' || gameState === 'round-transition') {
       setShowRevealHint(false);
       return;
     }
@@ -83,7 +86,7 @@ export function GameCanvas({
     return () => {
       if (timeout) clearTimeout(timeout);
     };
-  }, [gameState]);
+  }, [gameState, chapter]);
 
   return (
     <div className="relative flex items-center justify-center">

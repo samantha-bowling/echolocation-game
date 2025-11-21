@@ -485,6 +485,7 @@ export function ClassicGame() {
             onPingReplay={handleReplayPing}
             replaysRemaining={replaysRemaining}
             replaysUsed={replaysUsed}
+            chapter={chapter}
           />
 
           {/* Action Buttons */}
