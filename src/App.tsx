@@ -80,6 +80,25 @@ const App = () => {
     });
   }, []);
 
+  // Apply reduce motion setting to root element
+  useEffect(() => {
+    const applyReduceMotion = () => {
+      const reduceMotion = localStorage.getItem('echo_reduce_motion') === 'true';
+      if (reduceMotion) {
+        document.documentElement.setAttribute('data-reduce-motion', 'true');
+      } else {
+        document.documentElement.removeAttribute('data-reduce-motion');
+      }
+    };
+
+    // Apply on mount
+    applyReduceMotion();
+
+    // Listen for storage changes (when settings updated in another tab)
+    window.addEventListener('storage', applyReduceMotion);
+    return () => window.removeEventListener('storage', applyReduceMotion);
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>

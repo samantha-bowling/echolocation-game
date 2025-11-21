@@ -64,6 +64,7 @@ export class AudioEngine {
   private volume: number = 0.7;
   private canvasWidth: number = 1000;
   private canvasHeight: number = 1000;
+  private noiseBufferCache: Map<string, AudioBuffer> = new Map();
 
   initialize(canvasWidth: number = 1000, canvasHeight: number = 1000) {
     if (this.context) return;
@@ -94,6 +95,71 @@ export class AudioEngine {
       this.context.listener.setPosition(0, 0, 0);
       this.context.listener.setOrientation(0, 0, -1, 0, 1, 0);
     }
+    
+    // Pre-generate common noise buffers for performance
+    this.preGenerateNoiseBuffers();
+  }
+
+  /**
+   * Pre-generate common noise buffer durations for performance
+   * Avoids regenerating buffers on every ping
+   */
+  private preGenerateNoiseBuffers() {
+    if (!this.context) return;
+    
+    const commonDurations = [0.05, 0.1, 0.15, 0.2]; // Common noise durations in seconds
+    const noiseAmounts = [0.1, 0.15, 0.2]; // Common noise levels
+    
+    for (const duration of commonDurations) {
+      for (const amount of noiseAmounts) {
+        const key = `${duration}_${amount}`;
+        if (!this.noiseBufferCache.has(key)) {
+          const buffer = this.createNoiseBuffer(duration, amount);
+          if (buffer) {
+            this.noiseBufferCache.set(key, buffer);
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Get or create a cached noise buffer
+   * Returns cached buffer if available, creates and caches if not
+   */
+  private getNoiseBuffer(duration: number, amount: number): AudioBuffer | null {
+    if (!this.context) return null;
+    
+    const key = `${duration}_${amount}`;
+    
+    // Return cached buffer if available
+    if (this.noiseBufferCache.has(key)) {
+      return this.noiseBufferCache.get(key)!;
+    }
+    
+    // Create, cache, and return new buffer
+    const buffer = this.createNoiseBuffer(duration, amount);
+    if (buffer) {
+      this.noiseBufferCache.set(key, buffer);
+    }
+    return buffer;
+  }
+
+  /**
+   * Create a noise buffer with given duration and amount
+   */
+  private createNoiseBuffer(duration: number, amount: number): AudioBuffer | null {
+    if (!this.context) return null;
+    
+    const bufferSize = this.context.sampleRate * duration;
+    const buffer = this.context.createBuffer(1, bufferSize, this.context.sampleRate);
+    const data = buffer.getChannelData(0);
+    
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = (Math.random() * 2 - 1) * amount;
+    }
+    
+    return buffer;
   }
 
   setTheme(themeId: string) {
@@ -232,22 +298,19 @@ export class AudioEngine {
       panner.setPosition(targetX, targetY, targetZ);
     }
     
-    // Create noise if theme supports it
+    // Create noise if theme supports it (using cached buffers for performance)
     let noiseSource: AudioBufferSourceNode | null = null;
     if (this.currentTheme.noiseAmount && !isEcho) {
-      const bufferSize = this.context.sampleRate * 0.05;
-      const buffer = this.context.createBuffer(1, bufferSize, this.context.sampleRate);
-      const data = buffer.getChannelData(0);
-      for (let i = 0; i < bufferSize; i++) {
-        data[i] = (Math.random() * 2 - 1) * this.currentTheme.noiseAmount;
+      const buffer = this.getNoiseBuffer(0.05, this.currentTheme.noiseAmount);
+      if (buffer) {
+        noiseSource = this.context.createBufferSource();
+        noiseSource.buffer = buffer;
+        
+        const noiseGain = this.context.createGain();
+        noiseGain.gain.value = volumeByDistance * 0.5;
+        noiseSource.connect(noiseGain);
+        noiseGain.connect(panner);
       }
-      noiseSource = this.context.createBufferSource();
-      noiseSource.buffer = buffer;
-      
-      const noiseGain = this.context.createGain();
-      noiseGain.gain.value = volumeByDistance * 0.5;
-      noiseSource.connect(noiseGain);
-      noiseGain.connect(panner);
     }
     
     // Connect nodes: oscillator → gain → filter (optional) → panner → master
@@ -523,6 +586,8 @@ export class AudioEngine {
       this.context = null;
       this.masterGain = null;
     }
+    // Clear buffer cache
+    this.noiseBufferCache.clear();
   }
 }
 
