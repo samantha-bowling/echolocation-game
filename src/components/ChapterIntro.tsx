@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Radio, Sparkles, Target, Waves, Ghost, Zap } from 'lucide-react';
+import { X, Radio, Target, Crosshair, Waves, Ghost, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ChapterConfig } from '@/lib/game/chapters';
 import { markChapterIntroSeen } from '@/lib/game/chapterStats';
@@ -119,12 +119,9 @@ export function ChapterIntro({ chapter, onClose }: ChapterIntroProps) {
               }}
             >
               <div className="text-6xl">{mechanic.icon}</div>
-              <div className="flex items-center justify-center gap-2">
-                <Sparkles className="w-5 h-5" style={{ color: chapter.theme.accent }} />
-                <h3 className="text-2xl font-display font-bold text-foreground">
-                  {mechanic.title}
-                </h3>
-              </div>
+              <h3 className="text-2xl font-display font-bold text-foreground">
+                {mechanic.title}
+              </h3>
               <p className="text-muted-foreground">{mechanic.description}</p>
             </div>
           )}
@@ -132,26 +129,40 @@ export function ChapterIntro({ chapter, onClose }: ChapterIntroProps) {
           {/* Stats Preview */}
           <div className="grid grid-cols-3 gap-4 pt-4">
             <div
-              className="p-4 rounded-lg"
+              className="p-4 rounded-lg space-y-2"
               style={{ background: `${chapter.theme.primary}15` }}
             >
-              <Radio className="w-6 h-6 mx-auto mb-2" style={{ color: chapter.theme.primary }} />
+              <Radio className="w-6 h-6 mx-auto" style={{ color: chapter.theme.primary }} />
               <div className="text-2xl font-bold text-foreground">{chapter.basePings}</div>
               <div className="text-xs text-muted-foreground">Starting Pings</div>
             </div>
             <div
-              className="p-4 rounded-lg"
+              className="p-4 rounded-lg space-y-2"
               style={{ background: `${chapter.theme.primary}15` }}
             >
+              <Target className="w-6 h-6 mx-auto" style={{ color: chapter.theme.primary }} />
               <div className="text-2xl font-bold text-foreground">10</div>
               <div className="text-xs text-muted-foreground">Levels</div>
             </div>
             <div
-              className="p-4 rounded-lg"
+              className="p-4 rounded-lg space-y-2"
               style={{ background: `${chapter.theme.primary}15` }}
             >
+              <Crosshair className="w-6 h-6 mx-auto" style={{ color: chapter.theme.primary }} />
               <div className="text-2xl font-bold text-foreground">
                 {chapter.targetSize}px
+              </div>
+              {/* Visual preview circle */}
+              <div className="flex items-center justify-center py-2">
+                <div
+                  className="rounded-full border-2"
+                  style={{
+                    width: `${chapter.targetSize}px`,
+                    height: `${chapter.targetSize}px`,
+                    borderColor: chapter.theme.primary,
+                    background: `${chapter.theme.primary}20`,
+                  }}
+                />
               </div>
               <div className="text-xs text-muted-foreground">Target Size</div>
             </div>
