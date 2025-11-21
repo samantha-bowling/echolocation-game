@@ -373,12 +373,15 @@ export function CustomGame() {
           timeElapsed={finalTime ?? elapsedTime}
           onNext={handleNextRound}
           onRetry={handleNextRound}
-          onMenu={() => navigate('/')}
-          onClose={() => setShowSummaryModal(false)}
-          isCustomGame={true}
-          showNextButton={true}
-          nextButtonLabel={`Continue to Round ${currentRound + 1}`}
-        />
+        onMenu={() => navigate('/')}
+        onClose={() => setShowSummaryModal(false)}
+        isCustomGame={true}
+        showNextButton={true}
+        nextButtonLabel={`Continue to Round ${currentRound + 1}`}
+        winCondition={config.winCondition}
+        passedCondition={scoreResult.hasWon}
+        config={config}
+      />
       )}
     </div>
   );

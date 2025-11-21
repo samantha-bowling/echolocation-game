@@ -338,15 +338,39 @@ export function PostRoundSummary({
 
         {/* Actions */}
         <div className="flex flex-col gap-3">
-          {(success && !isCustomGame) || showNextButton ? (
-            <Button 
-              onClick={onNext} 
-              size="lg"
-              className="w-full h-12"
-            >
-              {nextButtonLabel || 'Next Level'}
-            </Button>
-          ) : null}
+          {(() => {
+            // For custom games, check enforceWinCondition
+            if (isCustomGame && showNextButton) {
+              const shouldShowNext = config?.enforceWinCondition 
+                ? passedCondition 
+                : true;
+              
+              return shouldShowNext ? (
+                <Button 
+                  onClick={onNext} 
+                  size="lg"
+                  className="w-full h-12"
+                >
+                  {nextButtonLabel || 'Next Round'}
+                </Button>
+              ) : null;
+            }
+            
+            // For classic games
+            if (success && !isCustomGame) {
+              return (
+                <Button 
+                  onClick={onNext} 
+                  size="lg"
+                  className="w-full h-12"
+                >
+                  {nextButtonLabel || 'Next Level'}
+                </Button>
+              );
+            }
+            
+            return null;
+          })()}
           
           <button onClick={onRetry} className="ghost-button w-full h-12">
             Retry Level
