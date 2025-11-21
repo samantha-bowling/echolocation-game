@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Radio, Settings as SettingsIcon } from 'lucide-react';
+import { ArrowLeft, Radio, Settings as SettingsIcon, Check, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CustomGameConfig, DEFAULT_CUSTOM_CONFIG, getArenaDimensions } from '@/lib/game/customConfig';
 import { generateTargetPosition, getTargetCenter, Position, Target } from '@/lib/game/coords';
@@ -53,6 +53,11 @@ export function CustomGame() {
   const [scoreResult, setScoreResult] = useState<any>(resumedSession?.scoreResult || null);
   const [targetMoveCount, setTargetMoveCount] = useState(resumedSession?.targetMoveCount || 0);
   const [showSummaryModal, setShowSummaryModal] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'idle'>('idle');
+  
+  // Throttling for auto-save
+  const lastSaveTimeRef = useRef<number>(0);
+  const SAVE_THROTTLE_MS = 2000; // 2 seconds
 
   const { gamePhase, finalGuess, setFinalGuess, handlePlaceFinalGuess, handleRepositionGuess, handleGoBackToPinging, resetPhase } = useGamePhase();
   const { elapsedTime, finalTime, resetTimer } = useGameTimer({ 
@@ -87,9 +92,17 @@ export function CustomGame() {
     audioEngine.setTheme(config.theme);
   }, [config.theme, arenaSize]);
 
-  // Auto-save session on critical state changes
-  useEffect(() => {
+  // Throttled save function
+  const saveGameThrottled = useCallback(() => {
     if (gameState === 'summary') return; // Don't save completed games
+    
+    const now = Date.now();
+    if (now - lastSaveTimeRef.current < SAVE_THROTTLE_MS) {
+      return; // Skip save if within throttle window
+    }
+    
+    lastSaveTimeRef.current = now;
+    setSaveStatus('saving');
     
     const sessionData = {
       config,
@@ -105,11 +118,22 @@ export function CustomGame() {
       targetMoveCount,
       gamePhase,
       scoreResult,
-      timestamp: Date.now(),
+      timestamp: now,
     };
     
     saveGameSession(sessionData);
-  }, [config, gameState, currentRound, roundScores, target, pingHistory, finalGuess, pingsUsed, gamePhase, targetMoveCount, scoreResult]);
+    
+    // Mark as saved after brief delay
+    setTimeout(() => setSaveStatus('saved'), 300);
+    
+    // Return to idle after 2 seconds
+    setTimeout(() => setSaveStatus('idle'), 2000);
+  }, [config, gameState, currentRound, roundScores, target, pingHistory, finalGuess, pingsUsed, elapsedTime, finalTime, gamePhase, targetMoveCount, scoreResult]);
+
+  // Auto-save session on critical state changes (throttled)
+  useEffect(() => {
+    saveGameThrottled();
+  }, [config, gameState, currentRound, roundScores, target, pingHistory, finalGuess, pingsUsed, gamePhase, targetMoveCount, scoreResult, saveGameThrottled]);
 
   // Show toast on successful resume
   useEffect(() => {
@@ -127,6 +151,34 @@ export function CustomGame() {
       setShowSummaryModal(true);
     }
   }, []); // Only run on mount
+
+  // Save on page unload/refresh
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (gameState !== 'summary') {
+        const sessionData = {
+          config,
+          gameState,
+          currentRound,
+          roundScores,
+          target,
+          pingHistory: pingHistory || [],
+          finalGuess,
+          pingsUsed,
+          elapsedTime,
+          finalTime,
+          targetMoveCount,
+          gamePhase,
+          scoreResult,
+          timestamp: Date.now(),
+        };
+        saveGameSession(sessionData);
+      }
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [config, gameState, currentRound, roundScores, target, pingHistory, finalGuess, pingsUsed, elapsedTime, finalTime, gamePhase, targetMoveCount, scoreResult]);
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (gameState === 'summary') return;
@@ -227,8 +279,63 @@ export function CustomGame() {
   };
 
   const handleQuitGame = () => {
-    clearGameSession();
-    navigate('/custom');
+    // Ensure latest state is saved before quitting
+    const sessionData = {
+      config,
+      gameState,
+      currentRound,
+      roundScores,
+      target,
+      pingHistory: pingHistory || [],
+      finalGuess,
+      pingsUsed,
+      elapsedTime,
+      finalTime,
+      targetMoveCount,
+      gamePhase,
+      scoreResult,
+      timestamp: Date.now(),
+    };
+    saveGameSession(sessionData);
+    
+    // Show confirmation
+    toast({
+      title: 'Progress Saved',
+      description: 'You can resume this game anytime',
+    });
+    
+    // Small delay to ensure save completes
+    setTimeout(() => {
+      navigate('/custom');
+    }, 100);
+  };
+
+  const handleManualSave = () => {
+    const sessionData = {
+      config,
+      gameState,
+      currentRound,
+      roundScores,
+      target,
+      pingHistory: pingHistory || [],
+      finalGuess,
+      pingsUsed,
+      elapsedTime,
+      finalTime,
+      targetMoveCount,
+      gamePhase,
+      scoreResult,
+      timestamp: Date.now(),
+    };
+    
+    saveGameSession(sessionData);
+    setSaveStatus('saved');
+    
+    toast({
+      title: 'Progress Saved',
+      description: 'Your game has been saved successfully',
+      duration: 2000,
+    });
   };
 
   if (gameState === 'summary' && scoreResult) {
@@ -260,22 +367,81 @@ export function CustomGame() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <header className="border-b border-border p-4">
-        <div className={cn("mx-auto flex items-center justify-between", isMobile ? "max-w-full" : "max-w-6xl")}>
-          <Button variant="ghost" size="sm" onClick={handleQuitGame} className="hover-lift">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            {!isMobile && 'Menu'}
-          </Button>
-          <div className="text-center flex items-center gap-2">
-            <Radio className="w-5 h-5 text-primary" />
-            <p className={cn("font-display font-semibold", isMobile ? "text-lg" : "text-heading-3")}>
-              Custom Game
-              {config.numberOfRounds > 1 && ` (${currentRound}/${config.numberOfRounds})`}
-              {config.numberOfRounds === -1 && ` (Round ${currentRound})`}
-            </p>
+        <div className={cn("mx-auto relative", isMobile ? "max-w-full" : "max-w-6xl")}>
+          <div className="flex items-center justify-between">
+            {/* Left: Save & Menu */}
+            <Button variant="ghost" size="sm" onClick={handleQuitGame} className="hover-lift">
+              <Save className="w-4 h-4" />
+              {!isMobile && <span className="ml-2">Save & Menu</span>}
+            </Button>
+            
+            {/* Center: Game Title */}
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+              <div className="flex items-center gap-2">
+                <Radio className="w-5 h-5 text-primary" />
+                <p className={cn("font-display font-semibold whitespace-nowrap", isMobile ? "text-lg" : "text-heading-3")}>
+                  Custom Game
+                  {config.numberOfRounds > 1 && ` (${currentRound}/${config.numberOfRounds})`}
+                  {config.numberOfRounds === -1 && ` (Round ${currentRound})`}
+                </p>
+              </div>
+            </div>
+            
+            {/* Right: Manual Save + Settings */}
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleManualSave}
+                className="hover-lift"
+                title="Save progress manually"
+              >
+                <Save className="w-4 h-4" />
+                {!isMobile && <span className="ml-2">Save</span>}
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => navigate('/settings')} className="hover-lift">
+                <SettingsIcon className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => navigate('/settings')} className="hover-lift">
-            <SettingsIcon className="w-4 h-4" />
-          </Button>
+          
+          {/* Save Status Indicator (positioned below header on mobile, inline on desktop) */}
+          {!isMobile && (
+            <div className="absolute right-0 top-full mt-1 flex items-center gap-2 text-xs">
+              {saveStatus === 'saving' && (
+                <div className="flex items-center gap-1.5 text-muted-foreground animate-fade-in">
+                  <div className="w-2 h-2 bg-accent rounded-full animate-pulse" />
+                  <span>Auto-saving...</span>
+                </div>
+              )}
+              {saveStatus === 'saved' && (
+                <div className="flex items-center gap-1.5 text-accent animate-fade-in">
+                  <Check className="w-3 h-3" />
+                  <span>Saved</span>
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* Mobile: Save status below */}
+          {isMobile && saveStatus !== 'idle' && (
+            <div className="flex justify-center mt-2">
+              <div className="text-xs text-muted-foreground flex items-center gap-1.5">
+                {saveStatus === 'saving' && (
+                  <>
+                    <div className="w-2 h-2 bg-accent rounded-full animate-pulse" />
+                    <span>Saving...</span>
+                  </>
+                )}
+                {saveStatus === 'saved' && (
+                  <>
+                    <Check className="w-3 h-3 text-accent" />
+                    <span className="text-accent">Saved</span>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </header>
 
