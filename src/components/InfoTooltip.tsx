@@ -7,7 +7,7 @@ import {
 } from '@/components/ui/tooltip';
 
 interface InfoTooltipProps {
-  content: string;
+  content: React.ReactNode;
 }
 
 export function InfoTooltip({ content }: InfoTooltipProps) {
@@ -18,7 +18,7 @@ export function InfoTooltip({ content }: InfoTooltipProps) {
           <HelpCircle className="w-3.5 h-3.5 text-muted-foreground/60 hover:text-foreground transition-colors cursor-help" />
         </TooltipTrigger>
         <TooltipContent side="top" className="max-w-xs">
-          <p className="text-xs">{content}</p>
+          <div className="text-xs">{content}</div>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
