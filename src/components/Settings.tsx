@@ -294,6 +294,22 @@ export function Settings() {
               <span className="text-heading-3 font-mono">{volume[0]}%</span>
             </div>
             <Slider value={volume} onValueChange={setVolume} min={0} max={100} step={5} className="w-full" />
+            
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => {
+                audioEngine.initialize();
+                audioEngine.playPreview();
+                toast.success('Playing test sound', {
+                  description: `Testing at ${volume[0]}% volume`
+                });
+              }}
+              className="w-full hover-lift"
+            >
+              <Volume2 className="w-4 h-4 mr-2" />
+              Test Volume
+            </Button>
           </div>
 
           <div className="flat-card space-y-4">
