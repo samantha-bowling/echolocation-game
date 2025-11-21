@@ -21,6 +21,12 @@ export const CHEAT_CODES: CheatCode[] = [
     category: 'progression',
   },
   {
+    code: 'UNLOCK_ALL_BOONS',
+    name: 'Unlock All Boons',
+    description: 'Unlock all 15 boons for selection in any chapter',
+    category: 'progression',
+  },
+  {
     code: 'SWAP_BOONS',
     name: 'Unlimited Boon Swapping',
     description: 'Change your active boon at any time during gameplay',
