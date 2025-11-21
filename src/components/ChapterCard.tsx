@@ -6,6 +6,21 @@ import { ChapterConfig } from '@/lib/game/chapters';
 import { ChapterStats } from '@/lib/game/chapterStats';
 import { cn } from '@/lib/utils';
 
+const getMechanicSummary = (mechanic?: string): string | null => {
+  switch (mechanic) {
+    case 'shrinking_target':
+      return '🎯 Target shrinks after each ping';
+    case 'moving_target':
+      return '🌊 Target drifts to new locations';
+    case 'phantom_targets':
+      return '👻 Decoy targets confuse you';
+    case 'combined_challenge':
+      return '⚡ All mechanics combined';
+    default:
+      return null;
+  }
+};
+
 interface ChapterCardProps {
   chapter: ChapterConfig;
   stats: ChapterStats | null;
@@ -69,6 +84,20 @@ export function ChapterCard({ chapter, stats, isUnlocked, currentLevelInChapter,
 
         {/* Description */}
         <p className="text-sm text-muted-foreground line-clamp-2">{chapter.description}</p>
+
+        {/* Mechanic Summary */}
+        {chapter.specialMechanic && (
+          <div
+            className="text-xs font-semibold px-3 py-2 rounded-md border"
+            style={{
+              borderColor: `${chapter.theme.secondary}50`,
+              background: `${chapter.theme.primary}10`,
+              color: chapter.theme.primary,
+            }}
+          >
+            {getMechanicSummary(chapter.specialMechanic)}
+          </div>
+        )}
 
         {/* Progress */}
         {stats && (
