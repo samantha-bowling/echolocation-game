@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Volume2, Moon, Sun, Headphones, CheckCircle2, Code2, Settings as SettingsIcon, Palette, BookOpen, Sparkles } from 'lucide-react';
+import { ArrowLeft, Volume2, Moon, Sun, Headphones, CheckCircle2, Code2, Settings as SettingsIcon, Palette, BookOpen, Sparkles, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
@@ -45,8 +45,19 @@ export function Settings() {
     audioEngine.setTheme(audioTheme);
     localStorage.setItem('echo_audio_theme', audioTheme);
   }, [audioTheme]);
+  // Apply reduce motion setting to root element and trigger re-render
   useEffect(() => {
-    localStorage.setItem('echo_reduce_motion', reduceMotion.toString());
+    const applyReduceMotion = () => {
+      if (reduceMotion) {
+        document.documentElement.setAttribute('data-reduce-motion', 'true');
+      } else {
+        document.documentElement.removeAttribute('data-reduce-motion');
+      }
+    };
+    applyReduceMotion();
+    
+    // Dispatch a custom event to notify App.tsx if needed
+    window.dispatchEvent(new Event('storage'));
   }, [reduceMotion]);
   const runCalibrationTest = (testType: 'leftRight' | 'distance' | 'pitch' | 'spatial3D') => {
     audioEngine.initialize();
@@ -218,6 +229,23 @@ export function Settings() {
       description: 'Chapter progression restored to normal'
     });
   };
+  
+  const handleResetAudio = () => {
+    setVolume([70]);
+    setAudioTheme('sonar');
+    toast.success('Audio settings reset', {
+      description: 'Volume and theme restored to defaults'
+    });
+  };
+  
+  const handleResetAppearance = () => {
+    setTheme('dark');
+    setReduceMotion(false);
+    toast.success('Appearance settings reset', {
+      description: 'Theme and motion settings restored to defaults'
+    });
+  };
+  
   const allTestsComplete = Object.values(calibrationTests).every(test => test);
   return <div className="min-h-screen bg-background">
       {/* Header */}
@@ -236,14 +264,25 @@ export function Settings() {
       <div className="max-w-2xl mx-auto p-6 space-y-8 py-12">
         {/* Audio */}
         <section className="space-y-4">
-          <div>
-            <h2 className="text-heading-3 mb-2 flex items-center gap-2">
-              <Volume2 className="w-5 h-5" />
-              Audio
-            </h2>
-            <p className="text-small text-muted-foreground">
-              Configure volume and sound theme preferences
-            </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-heading-3 mb-2 flex items-center gap-2">
+                <Volume2 className="w-5 h-5" />
+                Audio
+              </h2>
+              <p className="text-small text-muted-foreground">
+                Configure volume and sound theme preferences
+              </p>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleResetAudio}
+              className="hover-lift"
+            >
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Reset
+            </Button>
           </div>
           
           <div className="flat-card space-y-4">
@@ -422,14 +461,25 @@ export function Settings() {
 
         {/* Appearance */}
         <section className="space-y-4">
-          <div>
-            <h2 className="text-heading-3 mb-2 flex items-center gap-2">
-              <Palette className="w-5 h-5" />
-              Appearance
-            </h2>
-            <p className="text-small text-muted-foreground">
-              Customize visual theme and motion preferences
-            </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-heading-3 mb-2 flex items-center gap-2">
+                <Palette className="w-5 h-5" />
+                Appearance
+              </h2>
+              <p className="text-small text-muted-foreground">
+                Customize visual theme and motion preferences
+              </p>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleResetAppearance}
+              className="hover-lift"
+            >
+              <RotateCcw className="w-4 h-4 mr-2" />
+              Reset
+            </Button>
           </div>
           
           <div className="flat-card flex items-center justify-between">

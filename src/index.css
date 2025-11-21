@@ -97,12 +97,20 @@
     --echo-frosted: 220 18% 12% / 0.9;
   }
   
+  /* Reduce motion support - both system preference and manual setting */
   @media (prefers-reduced-motion: reduce) {
     * {
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
     }
+  }
+  
+  /* Manual reduce motion setting via data attribute */
+  [data-reduce-motion="true"] * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
