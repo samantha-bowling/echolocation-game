@@ -52,24 +52,24 @@ export function Credits() {
           </div>
 
           <div className="space-y-2">
-            <h3 className="text-heading-3">Built With</h3>
+            <h3 className="text-heading-3">
+              Built With{' '}
+              <a 
+                href="https://lovable.dev/invite/RFPUQB3" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-primary hover:text-primary/80 transition-colors inline-flex items-center gap-1"
+              >
+                Lovable
+                <span className="text-xs">↗</span>
+              </a>
+            </h3>
             <ul className="text-small text-muted-foreground space-y-1">
               <li>• React 18 + TypeScript</li>
               <li>• Vite + TailwindCSS</li>
               <li>• shadcn/ui + Radix UI</li>
               <li>• Web Audio API</li>
               <li>• Framer Motion</li>
-              <li>
-                •{' '}
-                <a 
-                  href="https://lovable.dev/invite/RFPUQB3" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-primary hover:text-primary/80 transition-colors"
-                >
-                  Lovable
-                </a>
-              </li>
             </ul>
           </div>
 
