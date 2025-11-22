@@ -13,11 +13,13 @@ import { ChapterComplete } from './ChapterComplete';
 import { GameCanvas } from './GameCanvas';
 import { GameStats } from './GameStats';
 import { BoonSelection } from './BoonSelection';
+import { PauseMenu } from './PauseMenu';
 import { useGameTimer } from '@/hooks/useGameTimer';
 import { usePingSystem } from '@/hooks/usePingSystem';
 import { useGamePhase } from '@/hooks/useGamePhase';
 import { useHintSystem } from '@/hooks/useHintSystem';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { updateChapterStats, loadChapterStats, getSeenChapterIntros, saveChapterProgress } from '@/lib/game/chapterStats';
 import { getUnlockedBoons, applyBoonEffects, getRandomBoonByArchetype, type Boon, getBoonById } from '@/lib/game/boons';
 import { isCheatActive } from '@/lib/game/cheats';
@@ -53,6 +55,7 @@ export function ClassicGame() {
   const [boonSelectionContext, setBoonSelectionContext] = useState<'chapter-complete' | 'mid-game-swap'>('chapter-complete');
   const [activeBoons, setActiveBoons] = useState<string[]>([]);
   const [boonChoices, setBoonChoices] = useState<{ precision: Boon; efficiency: Boon; adaptability: Boon } | null>(null);
+  const [isPaused, setIsPaused] = useState(false);
   const [completedChapters, setCompletedChapters] = useState<number[]>(() => {
     const stats = loadChapterStats();
     return Object.values(stats)
@@ -376,8 +379,61 @@ export function ClassicGame() {
     handleRepositionGuess(); // Go back to placing phase
   };
 
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    'escape': () => {
+      if (gameState === 'playing' && !showChapterIntro && !showBoonSelection && !showChapterComplete) {
+        setIsPaused(prev => !prev);
+      }
+    },
+    'r': () => {
+      if (gameState === 'summary' && !isPaused) {
+        handleRetry();
+      }
+    },
+    'n': () => {
+      if (gameState === 'summary' && scoreResult && !isPaused) {
+        const isBossLevel = level % 10 === 0;
+        const canProgress = scoreResult.score.rank === 'SS' || scoreResult.score.rank === 'S' || 
+                           scoreResult.score.rank === 'A' || (scoreResult.score.rank === 'B' && !isBossLevel);
+        if (canProgress) {
+          handleNextLevel();
+        }
+      }
+    },
+    'h': () => {
+      if (gameState === 'playing' && !isPaused) {
+        setShowHint(prev => !prev);
+        if (!showHint && !hintUsed) {
+          setHintUsed(true);
+        }
+      }
+    },
+  }, !isPaused && !showChapterIntro && !showBoonSelection);
+
   return (
     <div className="min-h-screen flex flex-col echo-dots relative">
+      {/* Pause Menu */}
+      <PauseMenu
+        open={isPaused}
+        onResume={() => setIsPaused(false)}
+        onRestart={() => {
+          setIsPaused(false);
+          handleRetry();
+        }}
+        onSettings={() => {
+          setIsPaused(false);
+          navigate('/settings', { state: { returnTo: '/classic' } });
+        }}
+        onQuit={() => {
+          setIsPaused(false);
+          navigate('/chapters');
+        }}
+        currentLevel={level}
+        currentChapter={chapter}
+        activeBoon={activeBoons[0] ? getBoonById(activeBoons[0])?.name : undefined}
+      />
+
       {/* Chapter Intro Modal */}
       {showChapterIntro && (
         <ChapterIntro

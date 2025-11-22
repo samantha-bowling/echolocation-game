@@ -10,12 +10,14 @@ import { audioEngine } from '@/lib/audio/engine';
 import { PostRoundSummary } from './PostRoundSummary';
 import { GameCanvas } from './GameCanvas';
 import { GameStats } from './GameStats';
+import { PauseMenu } from './PauseMenu';
 import { recordCustomGame } from '@/lib/game/customStats';
 import { useGameTimer } from '@/hooks/useGameTimer';
 import { usePingSystem } from '@/hooks/usePingSystem';
 import { useGamePhase } from '@/hooks/useGamePhase';
 import { useHintSystem } from '@/hooks/useHintSystem';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { cn } from '@/lib/utils';
 import { getSaveSlot, updateSaveSlot, createSaveSlot, deleteSaveSlot, autoGenerateSlotName } from '@/lib/game/saveSlotManager';
 import { CustomGameSession } from '@/lib/game/customSession';
@@ -116,6 +118,7 @@ export function CustomGame() {
   const [showSummaryModal, setShowSummaryModal] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'idle'>('idle');
   const [isMultiTab, setIsMultiTab] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   
   // Throttling for auto-save
   const lastSaveTimeRef = useRef<number>(0);
@@ -507,6 +510,30 @@ export function CustomGame() {
     });
   };
 
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    'escape': () => {
+      if (gameState === 'playing') {
+        setIsPaused(prev => !prev);
+      }
+    },
+    'r': () => {
+      if ((gameState === 'round-transition' || gameState === 'summary') && !isPaused) {
+        handleRetry();
+      }
+    },
+    'n': () => {
+      if (gameState === 'round-transition' && !isPaused) {
+        handleNextRound();
+      }
+    },
+    ' ': () => { // Space key
+      if (gameState === 'round-transition' && !isPaused) {
+        handleNextRound();
+      }
+    },
+  }, !isPaused);
+
   // Show loading state while session loads
   if (loading) {
     return (
@@ -548,6 +575,24 @@ export function CustomGame() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      {/* Pause Menu */}
+      <PauseMenu
+        open={isPaused}
+        onResume={() => setIsPaused(false)}
+        onRestart={() => {
+          setIsPaused(false);
+          handleRetry();
+        }}
+        onSettings={() => {
+          setIsPaused(false);
+          navigate('/settings', { state: { returnTo: '/custom-game' } });
+        }}
+        onQuit={() => {
+          setIsPaused(false);
+          handleQuitGame();
+        }}
+      />
+
       <header className="border-b border-border p-4">
         <div className={cn("mx-auto relative", isMobile ? "max-w-full" : "max-w-6xl")}>
           <div className="flex items-center justify-between">

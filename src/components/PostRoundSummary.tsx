@@ -7,6 +7,7 @@ import { CustomGameConfig, encodeConfigToShareCode } from '@/lib/game/customConf
 import { useState, useEffect } from 'react';
 import confetti from 'canvas-confetti';
 import { useCountUp } from '@/hooks/useCountUp';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 
 interface PostRoundSummaryProps {
   score: any;
@@ -109,6 +110,21 @@ export function PostRoundSummary({
     
     return messages[Math.floor(Math.random() * messages.length)];
   };
+
+  // Keyboard shortcuts for quick navigation
+  useKeyboardShortcuts({
+    'n': () => {
+      if (success || (isCustomGame && showNextButton)) {
+        onNext();
+      }
+    },
+    'r': onRetry,
+    ' ': () => { // Space key
+      if (success || (isCustomGame && showNextButton)) {
+        onNext();
+      }
+    },
+  }, true);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-6 backdrop-blur-sm bg-black/50 animate-fade-in">

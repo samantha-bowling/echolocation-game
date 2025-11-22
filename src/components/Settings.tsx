@@ -522,6 +522,42 @@ export function Settings() {
           </div>
         </section>
 
+        {/* Keyboard Shortcuts Section */}
+        <section className="space-y-4">
+          <div>
+            <h2 className="text-heading-3 mb-2 flex items-center gap-2">
+              <Code2 className="w-5 h-5" />
+              Keyboard Shortcuts
+            </h2>
+            <p className="text-small text-muted-foreground">
+              Use keyboard shortcuts for faster navigation
+            </p>
+          </div>
+          
+          <div className="flat-card space-y-3">
+            <div className="flex justify-between items-center">
+              <span className="text-sm">Pause/Resume</span>
+              <kbd className="px-2 py-1 bg-muted rounded text-xs font-mono">ESC</kbd>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm">Retry Level</span>
+              <kbd className="px-2 py-1 bg-muted rounded text-xs font-mono">R</kbd>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm">Next Level</span>
+              <kbd className="px-2 py-1 bg-muted rounded text-xs font-mono">N</kbd>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm">Toggle Hint</span>
+              <kbd className="px-2 py-1 bg-muted rounded text-xs font-mono">H</kbd>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm">Continue</span>
+              <kbd className="px-2 py-1 bg-muted rounded text-xs font-mono">SPACE</kbd>
+            </div>
+          </div>
+        </section>
+
         {/* Cheat Codes Section */}
         <section className="space-y-4">
           <div>
