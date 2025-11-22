@@ -35,7 +35,8 @@ interface ChapterCardProps {
 export function ChapterCard({ chapter, stats, isUnlocked, currentLevelInChapter, onContinue, onRestart, onClick }: ChapterCardProps) {
   const progress = stats ? (stats.levelsCompleted / 10) * 100 : 0;
   const isCompleted = stats?.completed || false;
-  const hasProgress = currentLevelInChapter && currentLevelInChapter > 1;
+  const levelsCompleted = stats?.levelsCompleted || 0;
+  const hasProgress = levelsCompleted > 0 && !isCompleted;
 
   return (
     <Card
@@ -208,7 +209,7 @@ export function ChapterCard({ chapter, stats, isUnlocked, currentLevelInChapter,
               }}
             >
               <Play className="w-4 h-4 mr-2" />
-              Continue from Level {currentLevelInChapter}
+              Continue from Level {levelsCompleted + 1}
             </Button>
             <Button
               onClick={(e) => {

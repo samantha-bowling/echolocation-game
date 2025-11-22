@@ -131,19 +131,19 @@ export default function ChapterSelect() {
         {/* Chapter Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {CHAPTERS.map((chapter) => {
-          const chapterProgress = loadChapterProgress();
-          const progressInChapter = chapterProgress[chapter.id];
-          const hasProgress = progressInChapter && progressInChapter.currentLevel > 1;
+          const stats = chapterStats[chapter.id];
+          const hasProgress = stats && stats.levelsCompleted > 0;
+          const isCompleted = stats?.completed || false;
           
           return (
             <ChapterCard
               key={chapter.id}
               chapter={chapter}
-              stats={chapterStats[chapter.id] || null}
+              stats={stats || null}
               isUnlocked={isChapterUnlocked(chapter.id)}
-              currentLevelInChapter={progressInChapter?.currentLevel}
-              onContinue={hasProgress ? () => handleContinueChapter(chapter.id, progressInChapter.currentLevel) : undefined}
-              onRestart={hasProgress || chapterStats[chapter.id]?.completed ? () => handleRestartChapter(chapter.id) : undefined}
+              currentLevelInChapter={(stats?.levelsCompleted || 0) + 1}
+              onContinue={hasProgress ? () => handleContinueChapter(chapter.id, stats.levelsCompleted + 1) : undefined}
+              onRestart={hasProgress || isCompleted ? () => handleRestartChapter(chapter.id) : undefined}
               onClick={!hasProgress ? () => handleStartChapter(chapter.id) : undefined}
             />
           );
