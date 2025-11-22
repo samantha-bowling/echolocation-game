@@ -53,7 +53,7 @@ export function Credits() {
 
           <div className="space-y-2">
             <h3 className="text-heading-3">
-              Built With{' '}
+              Built with{' '}
               <a 
                 href="https://lovable.dev/invite/RFPUQB3" 
                 target="_blank" 
