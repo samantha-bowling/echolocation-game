@@ -3,7 +3,7 @@ import { ArrowLeft, Trophy, Target, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ChapterCard } from '@/components/ChapterCard';
 import { CHAPTERS } from '@/lib/game/chapters';
-import { loadChapterStats, loadChapterProgress, ChapterStats as ChapterStatsType, saveChapterProgress, getDifficultyPreference, migrateChapterStatsToV2 } from '@/lib/game/chapterStats';
+import { loadChapterStats, loadChapterProgress, ChapterStats as ChapterStatsType, saveChapterProgress, getDifficultyPreference } from '@/lib/game/chapterStats';
 import { isCheatActive } from '@/lib/game/cheats';
 import { useEffect, useState } from 'react';
 
@@ -13,7 +13,6 @@ export default function ChapterSelect() {
   const [currentProgress, setCurrentProgress] = useState({ level: 1, chapter: 1 });
 
   useEffect(() => {
-    migrateChapterStatsToV2();
     const savedProgress = localStorage.getItem('echo_classic_progress');
     if (savedProgress) {
       try {

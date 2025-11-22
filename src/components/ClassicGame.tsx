@@ -20,7 +20,7 @@ import { useGamePhase } from '@/hooks/useGamePhase';
 import { useHintSystem } from '@/hooks/useHintSystem';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
-import { updateChapterStats, loadChapterStats, getSeenChapterIntros, saveChapterProgress, getDifficultyPreference, migrateChapterStatsToV2 } from '@/lib/game/chapterStats';
+import { updateChapterStats, loadChapterStats, getSeenChapterIntros, saveChapterProgress, getDifficultyPreference } from '@/lib/game/chapterStats';
 import { getUnlockedBoons, applyBoonEffects, getRandomBoonByArchetype, type Boon, getBoonById } from '@/lib/game/boons';
 import { isCheatActive } from '@/lib/game/cheats';
 import { cn } from '@/lib/utils';
@@ -125,9 +125,8 @@ export function ClassicGame() {
     pingHistory,
   });
 
-  // Run migration and initialize audio once on mount
+  // Initialize audio once on mount
   useEffect(() => {
-    migrateChapterStatsToV2();
     audioEngine.initialize(arenaSize.width, arenaSize.height);
     
     // Load saved audio preferences
