@@ -73,6 +73,12 @@ export default function ChapterSelect() {
     );
   };
 
+  const areAllChaptersUnlocked = (): boolean => {
+    return CHAPTERS.every(chapter => isChapterUnlocked(chapter.id));
+  };
+
+  const allUnlocked = areAllChaptersUnlocked();
+
   const totalLevelsCompleted = Object.values(chapterStats).reduce(
     (sum, stat) => sum + (stat?.levelsCompleted || 0),
     0
@@ -141,10 +147,12 @@ export default function ChapterSelect() {
               chapter={chapter}
               stats={stats || null}
               isUnlocked={isChapterUnlocked(chapter.id)}
+              allChaptersUnlocked={allUnlocked}
               currentLevelInChapter={(stats?.levelsCompleted || 0) + 1}
               onContinue={hasProgress ? () => handleContinueChapter(chapter.id, stats.levelsCompleted + 1) : undefined}
               onRestart={hasProgress || isCompleted ? () => handleRestartChapter(chapter.id) : undefined}
-              onClick={!hasProgress ? () => handleStartChapter(chapter.id) : undefined}
+              onStart={!hasProgress && !isCompleted ? () => handleStartChapter(chapter.id) : undefined}
+              onClick={!hasProgress && !allUnlocked ? () => handleStartChapter(chapter.id) : undefined}
             />
           );
         })}
