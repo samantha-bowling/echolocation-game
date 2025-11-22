@@ -45,7 +45,7 @@ export const CHAPTERS: ChapterConfig[] = [
   {
     id: 1,
     name: 'First Contact',
-    description: 'Learn the basics of echolocation',
+    description: '👋 Learn the basics of echolocation',
     basePings: 5,
     targetSize: 120,
     theme: {
@@ -58,7 +58,7 @@ export const CHAPTERS: ChapterConfig[] = [
   {
     id: 2,
     name: 'Shrinking Echoes',
-    description: 'The target shrinks after each ping',
+    description: '🎯 The target shrinks after each ping',
     basePings: 4,
     targetSize: 80,
     specialMechanic: 'shrinking_target',
@@ -76,7 +76,7 @@ export const CHAPTERS: ChapterConfig[] = [
   {
     id: 3,
     name: 'Moving Shadows',
-    description: 'The target drifts after each ping',
+    description: '🌊 The target drifts after each ping',
     basePings: 4,
     targetSize: 90,
     specialMechanic: 'moving_target',
@@ -94,7 +94,7 @@ export const CHAPTERS: ChapterConfig[] = [
   {
     id: 4,
     name: 'Echo Interference',
-    description: 'Phantom targets appear to confuse you',
+    description: '👻 Phantom targets appear to confuse you',
     basePings: 5,
     targetSize: 100,
     specialMechanic: 'phantom_targets',
@@ -111,7 +111,7 @@ export const CHAPTERS: ChapterConfig[] = [
   {
     id: 5,
     name: 'Perfect Silence',
-    description: 'All mechanics combined - the ultimate challenge',
+    description: '⚡ All mechanics combined - the ultimate challenge',
     basePings: 3,
     targetSize: 70,
     specialMechanic: 'combined_challenge',
