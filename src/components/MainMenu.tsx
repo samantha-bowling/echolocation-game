@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
-import { Play, Wand2, Settings, Heart, Headphones, GraduationCap, BookOpen } from 'lucide-react';
+import { Play, Wand2, Settings, Heart, Headphones, GraduationCap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { isTutorialCompleted } from '@/lib/game/tutorial';
+import { ClassicModeDialog } from '@/components/ClassicModeDialog';
 export function MainMenu() {
   const [hasSave, setHasSave] = useState(false);
   const [saveDetails, setSaveDetails] = useState<{
@@ -10,6 +11,11 @@ export function MainMenu() {
     chapter: number;
   } | null>(null);
   const [tutorialCompleted, setTutorialCompleted] = useState(true);
+  const [showClassicDialog, setShowClassicDialog] = useState(false);
+
+  const handleNewRun = () => {
+    localStorage.setItem('echo_reset_classic', 'true');
+  };
   useEffect(() => {
     // Check tutorial status
     setTutorialCompleted(isTutorialCompleted());
@@ -54,33 +60,14 @@ export function MainMenu() {
 
         {/* Main Actions */}
         <div className="space-y-8">
-          <Link to="/classic" className="block">
-            <Button size="lg" className="w-full h-14 text-base font-semibold hover-lift">
-              <Play className="w-5 h-5 mr-2" />
-              {hasSave ? <div className="flex flex-col items-center gap-1">
-                  <span>Continue Classic</span>
-                  {saveDetails && <span className="text-xs bg-white/20 px-3 py-0.5 rounded-full font-medium">
-                      Chapter {saveDetails.chapter} • Level {saveDetails.level}
-                    </span>}
-                </div> : 'Start Classic'}
-            </Button>
-          </Link>
-
-          <Link to="/classic" className="block">
-            <Button variant="outline" size="lg" className="w-full h-14 text-base font-semibold border-2 hover-lift" onClick={() => {
-            localStorage.setItem('echo_reset_classic', 'true');
-          }}>
-              <Play className="w-5 h-5 mr-2" />
-              New Classic Run
-            </Button>
-          </Link>
-
-          <Link to="/chapters" className="block">
-            <Button variant="outline" size="lg" className="w-full h-14 text-base font-semibold border-2 hover-lift">
-              <BookOpen className="w-5 h-5 mr-2" />
-              Chapter Select
-            </Button>
-          </Link>
+          <Button 
+            size="lg" 
+            className="w-full h-14 text-base font-semibold hover-lift"
+            onClick={() => setShowClassicDialog(true)}
+          >
+            <Play className="w-5 h-5 mr-2" />
+            Classic Mode
+          </Button>
 
           <Link to="/custom" className="block">
             <Button variant="outline" size="lg" className="w-full h-14 text-base font-semibold border-2 hover-lift">
@@ -118,5 +105,14 @@ export function MainMenu() {
         {/* Footer */}
         
       </div>
+
+      {/* Classic Mode Dialog */}
+      <ClassicModeDialog
+        open={showClassicDialog}
+        onOpenChange={setShowClassicDialog}
+        hasSave={hasSave}
+        saveDetails={saveDetails}
+        onNewRun={handleNewRun}
+      />
     </div>;
 }
