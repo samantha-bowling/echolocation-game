@@ -142,7 +142,12 @@ export function MainMenu() {
         </div>
 
         {/* Headphones Banner */}
-        <div className="flat-card bg-accent/30 border-accent/30 backdrop-blur-sm">
+        <div className={cn(
+          "flat-card backdrop-blur-sm",
+          whiskersActive && showWhiskers
+            ? "bg-accent/5 border-accent/10"
+            : "bg-accent/30 border-accent/30"
+        )}>
           <div className="flex items-center justify-center gap-3 text-accent-foreground">
             <Headphones className="w-5 h-5 text-accent" />
             <p className="text-small font-medium">Headphones recommended for best experience</p>
@@ -154,7 +159,10 @@ export function MainMenu() {
         <div className="space-y-8">
           <Button 
             size="lg" 
-            className="w-full h-14 text-base font-semibold hover-lift"
+            className={cn(
+              "w-full h-14 text-base font-semibold hover-lift",
+              whiskersActive && showWhiskers && "!bg-primary/10 backdrop-blur-md border border-primary/20 hover:!bg-primary/20"
+            )}
             onClick={() => setShowClassicDialog(true)}
           >
             <Play className="w-5 h-5 mr-2" />
@@ -162,7 +170,14 @@ export function MainMenu() {
           </Button>
 
           <Link to="/custom" className="block">
-            <Button variant="outline" size="lg" className="w-full h-14 text-base font-semibold border-2 hover-lift">
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className={cn(
+                "w-full h-14 text-base font-semibold border-2 hover-lift",
+                whiskersActive && showWhiskers && "!bg-background/5 backdrop-blur-md !border-foreground/15 hover:!bg-background/10"
+              )}
+            >
               <Wand2 className="w-5 h-5 mr-2" />
               Custom Mode
             </Button>
@@ -170,7 +185,10 @@ export function MainMenu() {
 
           {/* How to Play Link */}
           <Link to="/tutorial" className="block">
-            <button className="ghost-button w-full h-12">
+            <button className={cn(
+              "ghost-button w-full h-12",
+              whiskersActive && showWhiskers && "bg-background/5 backdrop-blur-md border border-muted/10 hover:bg-background/10"
+            )}>
               <GraduationCap className="w-4 h-4 mr-2" />
               How to Play
             </button>
@@ -180,14 +198,20 @@ export function MainMenu() {
         {/* Secondary Actions */}
         <div className="flex gap-4">
           <Link to="/settings" className="flex-1">
-            <button className="ghost-button w-full">
+            <button className={cn(
+              "ghost-button w-full",
+              whiskersActive && showWhiskers && "bg-background/5 backdrop-blur-md border border-muted/10 hover:bg-background/10"
+            )}>
               <Settings className="w-4 h-4 mr-2" />
               Settings
             </button>
           </Link>
           
           <Link to="/credits" className="flex-1">
-            <button className="ghost-button w-full">
+            <button className={cn(
+              "ghost-button w-full",
+              whiskersActive && showWhiskers && "bg-background/5 backdrop-blur-md border border-muted/10 hover:bg-background/10"
+            )}>
               <Heart className="w-4 h-4 mr-2" />
               Credits
             </button>
@@ -199,7 +223,10 @@ export function MainMenu() {
           <div className="flex justify-center">
             <button
               onClick={() => setShowWhiskers(!showWhiskers)}
-              className="ghost-button text-xs px-3 py-1.5"
+              className={cn(
+                "ghost-button text-xs px-3 py-1.5",
+                showWhiskers && "bg-background/5 backdrop-blur-md border border-muted/10 hover:bg-background/10"
+              )}
             >
               {showWhiskers ? 'Hide' : 'Show'} Whiskers
             </button>
