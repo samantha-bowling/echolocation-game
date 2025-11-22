@@ -2,7 +2,7 @@ export interface CheatCode {
   code: string;
   name: string;
   description: string;
-  category: 'progression' | 'gameplay' | 'debug' | 'meta';
+  category: 'progression' | 'gameplay' | 'debug' | 'meta' | 'easter-egg';
   special?: boolean;
 }
 
@@ -12,6 +12,13 @@ export const CHEAT_CODES: CheatCode[] = [
     name: 'Cheat Code Reference',
     description: 'View all available cheat codes',
     category: 'meta',
+    special: true,
+  },
+  {
+    code: 'WHISKERS',
+    name: 'Whiskers',
+    description: '*meow*',
+    category: 'easter-egg',
     special: true,
   },
   {

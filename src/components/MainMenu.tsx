@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { isTutorialCompleted } from '@/lib/game/tutorial';
 import { ClassicModeDialog } from '@/components/ClassicModeDialog';
+import { isCheatActive } from '@/lib/game/cheats';
+import { cn } from '@/lib/utils';
 export function MainMenu() {
   const [hasSave, setHasSave] = useState(false);
   const [saveDetails, setSaveDetails] = useState<{
@@ -12,6 +14,9 @@ export function MainMenu() {
   } | null>(null);
   const [tutorialCompleted, setTutorialCompleted] = useState(true);
   const [showClassicDialog, setShowClassicDialog] = useState(false);
+  const [whiskersActive, setWhiskersActive] = useState(false);
+  const [showWhiskers, setShowWhiskers] = useState(false);
+  const [renderedLines, setRenderedLines] = useState(0);
 
   const handleNewRun = () => {
     localStorage.setItem('echo_reset_classic', 'true');
@@ -36,9 +41,96 @@ export function MainMenu() {
         setHasSave(false);
       }
     }
+
+    // Check WHISKERS cheat status
+    const isActive = isCheatActive('WHISKERS');
+    setWhiskersActive(isActive);
+    if (isActive) {
+      setShowWhiskers(true);
+    }
   }, []);
-  return <div className="min-h-screen flex flex-col items-center justify-center p-6 echo-dots">
-      <div className="max-w-2xl w-full space-y-12 animate-fade-in">
+
+  // Listen for storage changes (cheat toggle in Settings)
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'echo_cheat_whiskers') {
+        const isActive = e.newValue === 'true';
+        setWhiskersActive(isActive);
+        if (isActive) {
+          setShowWhiskers(true);
+          setRenderedLines(0); // Reset animation
+        } else {
+          setShowWhiskers(false);
+        }
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  // Store ASCII art content
+  const [whiskersAscii, setWhiskersAscii] = useState('');
+
+  // Load ASCII art on mount
+  useEffect(() => {
+    fetch('/whiskers.txt')
+      .then(res => res.text())
+      .then(text => setWhiskersAscii(text))
+      .catch(() => setWhiskersAscii(''));
+  }, []);
+
+  // Implement line-by-line animation
+  const ENABLE_TYPEWRITER = true;
+  const LINES_PER_FRAME = 3;
+  const FRAME_DELAY = 50;
+
+  useEffect(() => {
+    if (!showWhiskers || !whiskersActive || !whiskersAscii) {
+      setRenderedLines(0);
+      return;
+    }
+    
+    if (!ENABLE_TYPEWRITER) {
+      setRenderedLines(165);
+      return;
+    }
+    
+    // Reset animation when showing
+    setRenderedLines(0);
+    
+    const lines = whiskersAscii.split('\n');
+    const totalLines = lines.length;
+    let currentLine = 0;
+    
+    const interval = setInterval(() => {
+      currentLine += LINES_PER_FRAME;
+      
+      if (currentLine >= totalLines) {
+        setRenderedLines(totalLines);
+        clearInterval(interval);
+      } else {
+        setRenderedLines(currentLine);
+      }
+    }, FRAME_DELAY);
+    
+    return () => clearInterval(interval);
+  }, [showWhiskers, whiskersActive, whiskersAscii]);
+  return <div className={cn(
+    "min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden",
+    whiskersActive && showWhiskers ? "" : "echo-dots"
+  )}>
+      {whiskersActive && showWhiskers && whiskersAscii && (
+        <div 
+          className="fixed inset-0 z-0 flex items-center justify-center p-4 bg-background cursor-pointer overflow-hidden"
+          onClick={() => setShowWhiskers(false)}
+        >
+          <pre className="font-mono text-[3px] sm:text-[4px] md:text-[5px] lg:text-[6px] leading-[1.1] text-muted-foreground/40 select-none whitespace-pre overflow-hidden">
+            {whiskersAscii.split('\n').slice(0, renderedLines).join('\n')}
+          </pre>
+        </div>
+      )}
+      <div className="max-w-2xl w-full space-y-12 animate-fade-in relative z-10">
         {/* Logo */}
         <div className="text-center space-y-4">
           <h1 className="text-display font-display tracking-tight">
@@ -101,6 +193,18 @@ export function MainMenu() {
             </button>
           </Link>
         </div>
+
+        {/* Whiskers Toggle */}
+        {whiskersActive && (
+          <div className="flex justify-center">
+            <button
+              onClick={() => setShowWhiskers(!showWhiskers)}
+              className="ghost-button text-xs px-3 py-1.5"
+            >
+              {showWhiskers ? 'Hide' : 'Show'} Whiskers
+            </button>
+          </div>
+        )}
 
         {/* Footer */}
         

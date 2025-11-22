@@ -4,7 +4,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { getAllCheats } from '@/lib/game/cheats';
-import { Code2, Gamepad2, Sparkles, Bug, Copy, Check } from 'lucide-react';
+import { Code2, Gamepad2, Sparkles, Bug, Copy, Check, Cat } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface CheatReferenceDialogProps {
@@ -32,6 +32,7 @@ export function CheatReferenceDialog({ open, onOpenChange }: CheatReferenceDialo
     gameplay: Gamepad2,
     debug: Bug,
     meta: Code2,
+    'easter-egg': Cat,
   };
   
   const categoryColors = {
@@ -39,6 +40,7 @@ export function CheatReferenceDialog({ open, onOpenChange }: CheatReferenceDialo
     gameplay: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
     debug: 'bg-orange-500/10 text-orange-600 border-orange-500/20',
     meta: 'bg-green-500/10 text-green-600 border-green-500/20',
+    'easter-egg': 'bg-pink-500/10 text-pink-600 border-pink-500/20',
   };
 
   return (
