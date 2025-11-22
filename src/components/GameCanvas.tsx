@@ -7,6 +7,12 @@ import { ArrowRight, Volume2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { isCheatActive } from '@/lib/game/cheats';
 
+interface Ripple {
+  id: number;
+  x: number;
+  y: number;
+}
+
 export interface GameCanvasProps {
   arenaSize: { width: number; height: number };
   target: Target;
@@ -52,6 +58,24 @@ export function GameCanvas({
 }: GameCanvasProps) {
   const targetCenter = getTargetCenter(target);
   const [showRevealHint, setShowRevealHint] = useState(false);
+  const [ripples, setRipples] = useState<Ripple[]>([]);
+
+  // Add ripple effect when new ping is added
+  useEffect(() => {
+    if (pingHistory.length > 0) {
+      const lastPing = pingHistory[pingHistory.length - 1];
+      const newRipple: Ripple = { 
+        id: Date.now(), 
+        x: lastPing.position.x, 
+        y: lastPing.position.y 
+      };
+      setRipples(prev => [...prev, newRipple]);
+      
+      setTimeout(() => {
+        setRipples(prev => prev.filter(r => r.id !== newRipple.id));
+      }, 600);
+    }
+  }, [pingHistory.length]);
 
   // Random blink effect for REVEAL_TARGET cheat (only Chapters 2-3)
   useEffect(() => {
@@ -243,6 +267,20 @@ export function GameCanvas({
           />
         )}
 
+        {/* Ripple effects */}
+        {ripples.map(ripple => (
+          <div
+            key={ripple.id}
+            className="ping-ripple"
+            style={{
+              left: ripple.x - 20,
+              top: ripple.y - 20,
+              width: 40,
+              height: 40,
+            }}
+          />
+        ))}
+
         {/* Ping History */}
         {showPingLocations && pingHistory.map((ping, i) => {
           const isReplayable = onPingReplay && (replaysRemaining === undefined || replaysRemaining === -1 || replaysRemaining > 0);
@@ -259,7 +297,7 @@ export function GameCanvas({
                   }
                 }}
                 className={cn(
-                  "absolute w-6 h-6 rounded-full transition-all flex items-center justify-center",
+                  "absolute w-6 h-6 rounded-full transition-all flex items-center justify-center text-xs font-bold",
                   isReplayable && gamePhase === 'pinging'
                     ? "cursor-pointer hover:scale-125 hover:border-2 hover:border-accent bg-primary/40"
                     : "bg-primary",
@@ -273,8 +311,10 @@ export function GameCanvas({
                 }}
                 title={isReplayable ? 'Click to replay ping' : undefined}
               >
-                {isReplayable && gamePhase === 'pinging' && (
+                {isReplayable && gamePhase === 'pinging' ? (
                   <Volume2 className="w-3 h-3 text-primary-foreground" />
+                ) : (
+                  <span className="text-primary-foreground">{i + 1}</span>
                 )}
                 <div className="absolute inset-0 rounded-full bg-primary/30 animate-ping-fade" />
               </div>

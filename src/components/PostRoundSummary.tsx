@@ -4,7 +4,9 @@ import { InfoTooltip } from '@/components/InfoTooltip';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { getNextRankInfo, getPointsToNextRank, getProgressToNextRank, generateStrategicTips, getRankColor, RANK_THRESHOLDS, canProgressToNextLevel } from '@/lib/game/scoring';
 import { CustomGameConfig, encodeConfigToShareCode } from '@/lib/game/customConfig';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import confetti from 'canvas-confetti';
+import { useCountUp } from '@/hooks/useCountUp';
 
 interface PostRoundSummaryProps {
   score: any;
@@ -62,6 +64,23 @@ export function PostRoundSummary({
   const [copiedCode, setCopiedCode] = useState(false);
 
   const shareCode = isCustomGame && config ? encodeConfigToShareCode(config) : '';
+
+  // Confetti for SS rank
+  useEffect(() => {
+    if (!isCustomGame && score.rank === 'SS') {
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
+    }
+  }, [score.rank, isCustomGame]);
+
+  // Animated score counting
+  const animatedTotal = useCountUp(score.total, 1500);
+  const animatedProximityBonus = useCountUp(score.components.proximityBonus || 0, 800);
+  const animatedTimeScore = useCountUp(Math.abs(score.components.timeScore || 0), 800);
+  const animatedPingEfficiency = useCountUp(score.components.pingEfficiencyBonus || 0, 800);
 
   const handleCopyCode = async () => {
     try {
@@ -350,7 +369,7 @@ export function PostRoundSummary({
           <p className="text-tiny text-muted-foreground uppercase tracking-wider mb-2">
             Total Score
           </p>
-          <p className="text-5xl text-primary font-mono">{score.total}</p>
+          <p className="text-5xl text-primary font-mono">{animatedTotal}</p>
         </div>
 
         {/* Stats Grid */}
@@ -397,7 +416,7 @@ export function PostRoundSummary({
               {score.components.proximityBonus > 0 && (
                 <ScoreBreakdownItem 
                   label="Accuracy Score"
-                  value={score.components.proximityBonus}
+                  value={animatedProximityBonus}
                   isPositive={true}
                   detail={`${proximity.toFixed(1)}% proximity × 5`}
                   tooltip="Core scoring component based on proximity. Each 1% of accuracy awards 5 points, up to +500 for perfect accuracy."
@@ -407,7 +426,7 @@ export function PostRoundSummary({
               {score.components.pingEfficiencyBonus > 0 && (
                 <ScoreBreakdownItem 
                   label="Ping Efficiency"
-                  value={score.components.pingEfficiencyBonus}
+                  value={animatedPingEfficiency}
                   isPositive={true}
                   detail={`${totalPings - pingsUsed} unused pings`}
                   tooltip="Bonus for conserving pings. Each unused ping adds to your score, up to +200 points maximum."
@@ -418,7 +437,7 @@ export function PostRoundSummary({
               {score.components.timeScore !== 0 && (
               <ScoreBreakdownItem 
                 label="Time Score"
-                value={Math.abs(score.components.timeScore)}
+                value={animatedTimeScore}
                 isPositive={score.components.timeScore > 0}
                   detail={`Completed in ${timeElapsed.toFixed(1)}s`}
                   tooltip="Core scoring component based on completion speed. Fast times (<15s) add points, slow times (>40s) subtract points."
@@ -472,7 +491,7 @@ export function PostRoundSummary({
               <div className="flex justify-between items-center">
                 <span className="text-heading-3 text-accent">Final Score</span>
                 <span className="text-heading-1 font-bold text-accent">
-                  {score.total}
+                  {animatedTotal}
                 </span>
               </div>
             </div>
