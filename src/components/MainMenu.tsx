@@ -143,12 +143,15 @@ export function MainMenu() {
 
         {/* Headphones Banner */}
         <div className={cn(
-          "flat-card backdrop-blur-sm",
+          "flat-card",
           whiskersActive && showWhiskers
-            ? "bg-accent/5 border-accent/10"
-            : "bg-accent/30 border-accent/30"
+            ? "!bg-transparent border-2 !border-accent/40"
+            : "bg-accent/30 border-accent/30 backdrop-blur-sm"
         )}>
-          <div className="flex items-center justify-center gap-3 text-accent-foreground">
+          <div className={cn(
+            "flex items-center justify-center gap-3",
+            whiskersActive && showWhiskers ? "text-foreground" : "text-accent-foreground"
+          )}>
             <Headphones className="w-5 h-5 text-accent" />
             <p className="text-small font-medium">Headphones recommended for best experience</p>
           </div>
@@ -161,7 +164,7 @@ export function MainMenu() {
             size="lg" 
             className={cn(
               "w-full h-14 text-base font-semibold hover-lift",
-              whiskersActive && showWhiskers && "!bg-primary/10 backdrop-blur-md border border-primary/20 hover:!bg-primary/20"
+              whiskersActive && showWhiskers && "!bg-transparent border-2 !border-primary/40 text-foreground hover:!border-primary/60 hover:!bg-primary/5"
             )}
             onClick={() => setShowClassicDialog(true)}
           >
@@ -175,7 +178,7 @@ export function MainMenu() {
               size="lg" 
               className={cn(
                 "w-full h-14 text-base font-semibold border-2 hover-lift",
-                whiskersActive && showWhiskers && "!bg-background/5 backdrop-blur-md !border-foreground/15 hover:!bg-background/10"
+                whiskersActive && showWhiskers && "!bg-transparent !border-foreground/40 text-foreground hover:!border-foreground/60 hover:!bg-foreground/5"
               )}
             >
               <Wand2 className="w-5 h-5 mr-2" />
@@ -187,7 +190,7 @@ export function MainMenu() {
           <Link to="/tutorial" className="block">
             <button className={cn(
               "ghost-button w-full h-12",
-              whiskersActive && showWhiskers && "bg-background/5 backdrop-blur-md border border-muted/10 hover:bg-background/10"
+              whiskersActive && showWhiskers && "!bg-transparent border-2 !border-muted-foreground/30 text-foreground hover:!border-muted-foreground/50 hover:!bg-muted/5"
             )}>
               <GraduationCap className="w-4 h-4 mr-2" />
               How to Play
@@ -200,7 +203,7 @@ export function MainMenu() {
           <Link to="/settings" className="flex-1">
             <button className={cn(
               "ghost-button w-full",
-              whiskersActive && showWhiskers && "bg-background/5 backdrop-blur-md border border-muted/10 hover:bg-background/10"
+              whiskersActive && showWhiskers && "!bg-transparent border-2 !border-muted-foreground/30 text-foreground hover:!border-muted-foreground/50 hover:!bg-muted/5"
             )}>
               <Settings className="w-4 h-4 mr-2" />
               Settings
@@ -210,7 +213,7 @@ export function MainMenu() {
           <Link to="/credits" className="flex-1">
             <button className={cn(
               "ghost-button w-full",
-              whiskersActive && showWhiskers && "bg-background/5 backdrop-blur-md border border-muted/10 hover:bg-background/10"
+              whiskersActive && showWhiskers && "!bg-transparent border-2 !border-muted-foreground/30 text-foreground hover:!border-muted-foreground/50 hover:!bg-muted/5"
             )}>
               <Heart className="w-4 h-4 mr-2" />
               Credits
@@ -225,7 +228,7 @@ export function MainMenu() {
               onClick={() => setShowWhiskers(!showWhiskers)}
               className={cn(
                 "ghost-button text-xs px-3 py-1.5",
-                showWhiskers && "bg-background/5 backdrop-blur-md border border-muted/10 hover:bg-background/10"
+                showWhiskers && "!bg-transparent border-2 !border-muted-foreground/30 text-foreground hover:!border-muted-foreground/50 hover:!bg-muted/5"
               )}
             >
               {showWhiskers ? 'Hide' : 'Show'} Whiskers
