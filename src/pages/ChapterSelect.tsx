@@ -3,7 +3,7 @@ import { ArrowLeft, Trophy, Target, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ChapterCard } from '@/components/ChapterCard';
 import { CHAPTERS } from '@/lib/game/chapters';
-import { loadChapterStats, loadChapterProgress } from '@/lib/game/chapterStats';
+import { loadChapterStats, loadChapterProgress, ChapterStats as ChapterStatsType, saveChapterProgress, getDifficultyPreference, migrateChapterStatsToV2 } from '@/lib/game/chapterStats';
 import { isCheatActive } from '@/lib/game/cheats';
 import { useEffect, useState } from 'react';
 
@@ -13,6 +13,7 @@ export default function ChapterSelect() {
   const [currentProgress, setCurrentProgress] = useState({ level: 1, chapter: 1 });
 
   useEffect(() => {
+    migrateChapterStatsToV2();
     const savedProgress = localStorage.getItem('echo_classic_progress');
     if (savedProgress) {
       try {
@@ -140,7 +141,9 @@ export default function ChapterSelect() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {CHAPTERS.map((chapter) => {
           const stats = chapterStats[chapter.id];
-          const hasProgress = stats && stats.levelsCompleted > 0;
+          const difficulty = getDifficultyPreference();
+          const difficultyStats = stats?.[difficulty];
+          const hasProgress = difficultyStats && difficultyStats.levelsCompleted > 0;
           const isCompleted = stats?.completed || false;
           
           return (
@@ -150,8 +153,9 @@ export default function ChapterSelect() {
               stats={stats || null}
               isUnlocked={isChapterUnlocked(chapter.id)}
               allChaptersUnlocked={allUnlocked}
-              currentLevelInChapter={(stats?.levelsCompleted || 0) + 1}
-              onContinue={hasProgress ? () => handleContinueChapter(chapter.id, stats.levelsCompleted + 1) : undefined}
+              difficulty={difficulty}
+              currentLevelInChapter={(difficultyStats?.levelsCompleted || 0) + 1}
+              onContinue={hasProgress ? () => handleContinueChapter(chapter.id, (difficultyStats?.levelsCompleted || 0) + 1) : undefined}
               onRestart={hasProgress || isCompleted ? () => handleRestartChapter(chapter.id) : undefined}
               onStart={!hasProgress && !isCompleted ? () => handleStartChapter(chapter.id) : undefined}
               onClick={!hasProgress && !allUnlocked ? () => handleStartChapter(chapter.id) : undefined}
