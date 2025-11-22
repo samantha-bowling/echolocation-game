@@ -1,13 +1,35 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Trophy, Target, Clock, Radio, TrendingUp, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { loadChapterStats } from '@/lib/game/chapterStats';
+import { loadChapterStats, ChapterStatsMap } from '@/lib/game/chapterStats';
 import { CHAPTERS } from '@/lib/game/chapters';
 import { cn } from '@/lib/utils';
+import { StatsLoadingSkeleton } from './StatsLoadingSkeleton';
 
 export function ClassicStats() {
   const navigate = useNavigate();
-  const chapterStats = loadChapterStats();
+  const [isLoading, setIsLoading] = useState(true);
+  const [chapterStats, setChapterStats] = useState<ChapterStatsMap>({});
+
+  useEffect(() => {
+    const loadStats = async () => {
+      setIsLoading(true);
+      
+      // Wrap in setTimeout to simulate async and prevent blocking
+      await new Promise(resolve => setTimeout(resolve, 0));
+      
+      const stats = loadChapterStats();
+      setChapterStats(stats);
+      setIsLoading(false);
+    };
+    
+    loadStats();
+  }, []);
+
+  if (isLoading) {
+    return <StatsLoadingSkeleton />;
+  }
   
   // Calculate overall stats
   const totalChapters = Object.keys(CHAPTERS).length;

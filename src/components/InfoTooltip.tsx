@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { HelpCircle } from 'lucide-react';
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 import {
@@ -11,7 +12,7 @@ interface InfoTooltipProps {
   content: React.ReactNode;
 }
 
-export function InfoTooltip({ content }: InfoTooltipProps) {
+export const InfoTooltip = memo(function InfoTooltip({ content }: InfoTooltipProps) {
   return (
     <TooltipProvider>
       <Tooltip delayDuration={200}>
@@ -26,4 +27,4 @@ export function InfoTooltip({ content }: InfoTooltipProps) {
       </Tooltip>
     </TooltipProvider>
   );
-}
+});

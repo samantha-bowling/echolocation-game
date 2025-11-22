@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Lock, CheckCircle2, Play, RotateCcw } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -19,7 +20,7 @@ interface ChapterCardProps {
   onClick?: () => void;
 }
 
-export function ChapterCard({ 
+export const ChapterCard = memo(function ChapterCard({ 
   chapter, 
   stats, 
   isUnlocked, 
@@ -278,4 +279,14 @@ export function ChapterCard({
       </CardContent>
     </Card>
   );
-}
+}, (prevProps, nextProps) => {
+  // Custom comparison - only re-render if these change
+  return (
+    prevProps.chapter.id === nextProps.chapter.id &&
+    prevProps.isUnlocked === nextProps.isUnlocked &&
+    prevProps.allChaptersUnlocked === nextProps.allChaptersUnlocked &&
+    prevProps.stats?.levelsCompleted === nextProps.stats?.levelsCompleted &&
+    prevProps.stats?.bestScore === nextProps.stats?.bestScore &&
+    prevProps.currentLevelInChapter === nextProps.currentLevelInChapter
+  );
+});

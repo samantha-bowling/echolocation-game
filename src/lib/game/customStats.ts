@@ -4,6 +4,11 @@
 
 import { CustomGameConfig } from './customConfig';
 
+// Cache layer
+let statsCache: CustomGameStats | null = null;
+let cacheTimestamp: number = 0;
+const CACHE_DURATION = 30000; // 30 seconds
+
 export interface CustomGameStats {
   totalGames: number;
   totalRounds: number;
@@ -54,10 +59,19 @@ const STATS_KEY = 'echo_custom_stats';
 const MAX_RECENT_GAMES = 50;
 
 export function loadCustomStats(): CustomGameStats {
+  const now = Date.now();
+  
+  // Return cached data if valid
+  if (statsCache && (now - cacheTimestamp) < CACHE_DURATION) {
+    return statsCache;
+  }
+  
   try {
     const stored = localStorage.getItem(STATS_KEY);
     if (stored) {
-      return JSON.parse(stored);
+      statsCache = JSON.parse(stored);
+      cacheTimestamp = now;
+      return statsCache;
     }
   } catch (e) {
     console.error('Failed to load custom stats:', e);
@@ -176,6 +190,8 @@ export function recordCustomGame(
 function saveCustomStats(stats: CustomGameStats): void {
   try {
     localStorage.setItem(STATS_KEY, JSON.stringify(stats));
+    statsCache = null; // Force fresh load next time
+    cacheTimestamp = 0;
   } catch (e) {
     console.error('Failed to save custom stats:', e);
   }
@@ -194,4 +210,12 @@ function generateConfigHash(config: CustomGameConfig): string {
 
 export function resetCustomStats(): void {
   localStorage.removeItem(STATS_KEY);
+  statsCache = null;
+  cacheTimestamp = 0;
+}
+
+// Manual cache invalidation
+export function invalidateCustomStatsCache() {
+  statsCache = null;
+  cacheTimestamp = 0;
 }

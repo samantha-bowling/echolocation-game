@@ -1,11 +1,57 @@
+import { useState, useEffect } from 'react';
 import { Trophy, Target, Clock, Zap, TrendingUp, Award, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { loadCustomStats } from '@/lib/game/customStats';
+import { loadCustomStats, CustomGameStats } from '@/lib/game/customStats';
+import { StatsLoadingSkeleton } from './StatsLoadingSkeleton';
 
 export function CustomStats() {
   const navigate = useNavigate();
-  const stats = loadCustomStats();
+  const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState<CustomGameStats>({
+    totalGames: 0,
+    totalRounds: 0,
+    bestScore: 0,
+    bestProximity: 0,
+    fastestTime: Infinity,
+    averageScore: 0,
+    averageProximity: 0,
+    totalPingsUsed: 0,
+    gamesWon: 0,
+    gamesLost: 0,
+    statsByMode: {
+      unlimited: { gamesPlayed: 0, bestScore: 0, averageScore: 0 },
+      limited: { gamesPlayed: 0, bestScore: 0, averageScore: 0 },
+    },
+    statsByArena: {
+      small: { gamesPlayed: 0, bestScore: 0, averageScore: 0 },
+      medium: { gamesPlayed: 0, bestScore: 0, averageScore: 0 },
+      large: { gamesPlayed: 0, bestScore: 0, averageScore: 0 },
+    },
+    recentGames: [],
+    perfectGames: 0,
+    speedrunGames: 0,
+    efficientGames: 0,
+  });
+
+  useEffect(() => {
+    const loadStats = async () => {
+      setIsLoading(true);
+      
+      // Wrap in setTimeout to simulate async and prevent blocking
+      await new Promise(resolve => setTimeout(resolve, 0));
+      
+      const customStats = loadCustomStats();
+      setStats(customStats);
+      setIsLoading(false);
+    };
+    
+    loadStats();
+  }, []);
+
+  if (isLoading) {
+    return <StatsLoadingSkeleton />;
+  }
   
   const winRate = stats.gamesWon + stats.gamesLost > 0
     ? Math.round((stats.gamesWon / (stats.gamesWon + stats.gamesLost)) * 100)
