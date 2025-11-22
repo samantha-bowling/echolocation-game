@@ -73,9 +73,10 @@ export function TutorialGame() {
   ];
 
   const { gamePhase, finalGuess, setFinalGuess, handlePlaceFinalGuess, resetPhase } = useGamePhase();
-  const { elapsedTime, finalTime, resetTimer } = useGameTimer({
+  const { elapsedTime, finalTime, resetTimer, startTimer } = useGameTimer({
     enabled: false,  // Tutorial doesn't need a running timer
     gamePhase,
+    startOnFirstPing: true
   });
   
   // Limited pings for the triangulation step
@@ -145,8 +146,14 @@ export function TutorialGame() {
     }
 
     if (gamePhase === 'pinging') {
+      const isFirstPing = tutorialState.pingCount === 0;
       const success = handlePing(clickPos);
       if (success) {
+        // Start timer on first ping (tutorial step tracking)
+        if (isFirstPing) {
+          startTimer();
+        }
+        
         setTutorialState(prev => ({
           ...prev,
           pingCount: prev.pingCount + 1,

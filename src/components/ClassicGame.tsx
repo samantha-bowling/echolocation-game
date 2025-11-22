@@ -85,7 +85,11 @@ export function ClassicGame() {
   const [phantomTargets, setPhantomTargets] = useState<PhantomTarget[]>([]);
 
   const { gamePhase, finalGuess, setFinalGuess, handlePlaceFinalGuess, handleRepositionGuess, handleGoBackToPinging, resetPhase } = useGamePhase();
-  const { elapsedTime, finalTime, resetTimer, unfreezeTimer } = useGameTimer({ enabled: true, gamePhase });
+  const { elapsedTime, finalTime, resetTimer, unfreezeTimer, startTimer } = useGameTimer({ 
+    enabled: true, 
+    gamePhase,
+    startOnFirstPing: true
+  });
   
   // Apply boon effects to game configuration
   const boonEffects = applyBoonEffects(
@@ -187,7 +191,14 @@ export function ClassicGame() {
     const y = e.clientY - rect.top;
 
     if (gamePhase === 'pinging') {
+      const isFirstPing = pingsUsed === 0;
       handlePing({ x, y });
+      
+      // Start timer on first ping
+      if (isFirstPing) {
+        startTimer();
+      }
+      
       if (pingsRemaining === 1) {
         // Last ping used, transition to placing phase
         setTimeout(() => handlePlaceFinalGuess(), 100);
