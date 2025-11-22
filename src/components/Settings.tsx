@@ -600,7 +600,7 @@ export function Settings() {
                     </div>
                     
                     <div className="flex items-center gap-2 shrink-0 ml-2">
-                      {cheat.special && (
+                      {cheat.code === 'UP_UP_DOWN_DOWN_LEFT_RIGHT_LEFT_RIGHT_B_A_START' && (
                         <Button
                           variant="outline"
                           size="sm"
