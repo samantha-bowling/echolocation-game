@@ -26,17 +26,32 @@ interface ChapterCardProps {
   chapter: ChapterConfig;
   stats: ChapterStats | null;
   isUnlocked: boolean;
+  allChaptersUnlocked?: boolean;
   currentLevelInChapter?: number;
   onContinue?: () => void;
   onRestart?: () => void;
+  onStart?: () => void;
   onClick?: () => void;
 }
 
-export function ChapterCard({ chapter, stats, isUnlocked, currentLevelInChapter, onContinue, onRestart, onClick }: ChapterCardProps) {
+export function ChapterCard({ 
+  chapter, 
+  stats, 
+  isUnlocked, 
+  allChaptersUnlocked = false,
+  currentLevelInChapter, 
+  onContinue, 
+  onRestart, 
+  onStart,
+  onClick 
+}: ChapterCardProps) {
   const progress = stats ? (stats.levelsCompleted / 10) * 100 : 0;
   const isCompleted = stats?.completed || false;
   const levelsCompleted = stats?.levelsCompleted || 0;
   const hasProgress = levelsCompleted > 0 && !isCompleted;
+  
+  // Show buttons if: has progress OR (all unlocked AND chapter is unlocked)
+  const shouldShowButtons = isUnlocked && (hasProgress || allChaptersUnlocked);
 
   return (
     <Card
@@ -194,23 +209,44 @@ export function ChapterCard({ chapter, stats, isUnlocked, currentLevelInChapter,
           </div>
         )}
 
-        {/* Action Buttons */}
-        {isUnlocked && hasProgress && !isCompleted && (
+        {/* Action Buttons - Show when unlocked with progress OR when all chapters unlocked */}
+        {shouldShowButtons && !isCompleted && (
           <div className="flex flex-col gap-2 pt-2 border-t border-border/50">
-            <Button
-              onClick={(e) => {
-                e.stopPropagation();
-                onContinue?.();
-              }}
-              className="w-full"
-              style={{
-                background: chapter.theme.primary,
-                color: 'white',
-              }}
-            >
-              <Play className="w-4 h-4 mr-2" />
-              Continue from Level {levelsCompleted + 1}
-            </Button>
+            {hasProgress ? (
+              // Has progress: Continue button
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onContinue?.();
+                }}
+                className="w-full"
+                style={{
+                  background: chapter.theme.primary,
+                  color: 'white',
+                }}
+              >
+                <Play className="w-4 h-4 mr-2" />
+                Continue from Level {levelsCompleted + 1}
+              </Button>
+            ) : (
+              // No progress but all unlocked: Start button
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onStart?.();
+                }}
+                className="w-full"
+                style={{
+                  background: chapter.theme.primary,
+                  color: 'white',
+                }}
+              >
+                <Play className="w-4 h-4 mr-2" />
+                Start Chapter
+              </Button>
+            )}
+            
+            {/* Restart button - always show when buttons are visible */}
             <Button
               onClick={(e) => {
                 e.stopPropagation();
@@ -226,9 +262,25 @@ export function ChapterCard({ chapter, stats, isUnlocked, currentLevelInChapter,
           </div>
         )}
 
-        {/* Restart for Completed Chapters */}
+        {/* Buttons for Completed Chapters */}
         {isUnlocked && isCompleted && (
-          <div className="pt-2 border-t border-border/50">
+          <div className="flex flex-col gap-2 pt-2 border-t border-border/50">
+            {allChaptersUnlocked && (
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onStart?.();
+                }}
+                className="w-full"
+                style={{
+                  background: chapter.theme.primary,
+                  color: 'white',
+                }}
+              >
+                <Play className="w-4 h-4 mr-2" />
+                Start Chapter
+              </Button>
+            )}
             <Button
               onClick={(e) => {
                 e.stopPropagation();
