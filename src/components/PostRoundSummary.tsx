@@ -21,6 +21,7 @@ interface PostRoundSummaryProps {
   onMenu: () => void;
   onClose?: () => void;
   isCustomGame?: boolean;
+  difficulty?: 'normal' | 'challenge';
   winCondition?: CustomGameConfig['winCondition'];
   passedCondition?: boolean;
   config?: CustomGameConfig;
@@ -45,7 +46,8 @@ export function PostRoundSummary({
   onRetry,
   onMenu,
   onClose,
-  isCustomGame,
+  isCustomGame = false,
+  difficulty = 'normal',
   winCondition,
   passedCondition,
   config,

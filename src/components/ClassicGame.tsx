@@ -20,7 +20,7 @@ import { useGamePhase } from '@/hooks/useGamePhase';
 import { useHintSystem } from '@/hooks/useHintSystem';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
-import { updateChapterStats, loadChapterStats, getSeenChapterIntros, saveChapterProgress } from '@/lib/game/chapterStats';
+import { updateChapterStats, loadChapterStats, getSeenChapterIntros, saveChapterProgress, getDifficultyPreference, migrateChapterStatsToV2 } from '@/lib/game/chapterStats';
 import { getUnlockedBoons, applyBoonEffects, getRandomBoonByArchetype, type Boon, getBoonById } from '@/lib/game/boons';
 import { isCheatActive } from '@/lib/game/cheats';
 import { cn } from '@/lib/utils';
@@ -63,7 +63,8 @@ export function ClassicGame() {
       .map((_, idx) => idx + 1);
   });
 
-  const canSwapBoons = isCheatActive('SWAP_BOONS');
+  const difficulty = getDifficultyPreference();
+  const canSwapBoons = difficulty === 'challenge' && isCheatActive('SWAP_BOONS');
 
   const chapter = getChapterFromLevel(level);
   const levelConfig = getLevelConfig(chapter, level);
@@ -91,12 +92,15 @@ export function ClassicGame() {
     startOnFirstPing: true
   });
   
-  // Apply boon effects to game configuration
-  const boonEffects = applyBoonEffects(
+  // Boons only available in Challenge mode
+  const boonEffects = difficulty === 'challenge' ? applyBoonEffects(
     levelConfig.pings,
     chapterConfig.replaysAvailable,
     activeBoons
-  );
+  ) : {
+    pings: levelConfig.pings,
+    replays: chapterConfig.replaysAvailable
+  };
   
   const { pingHistory, pingsRemaining, pingsUsed, replaysRemaining, replaysUsed, handlePing, handleReplayPing, resetPings } = usePingSystem({
     initialPings: boonEffects.pings,
@@ -121,8 +125,9 @@ export function ClassicGame() {
     pingHistory,
   });
 
-  // Initialize audio once on mount
+  // Run migration and initialize audio once on mount
   useEffect(() => {
+    migrateChapterStatsToV2();
     audioEngine.initialize(arenaSize.width, arenaSize.height);
     
     // Load saved audio preferences
@@ -215,6 +220,7 @@ export function ClassicGame() {
     const maxDistance = Math.sqrt(arenaSize.width ** 2 + arenaSize.height ** 2) * 0.7;
     const distance = calculateProximity(finalGuess, targetCenter, maxDistance);
     const proximity = distance; // calculateProximity already returns 0-100
+    const difficulty = getDifficultyPreference();
     const scoreData = calculateScore(
       proximity,
       pingsUsed,
@@ -223,11 +229,12 @@ export function ClassicGame() {
       chapter,
       replaysUsed,
       chapterConfig.replaysAvailable,
-      hintUsed
+      hintUsed,
+      difficulty
     );
 
-    // Update chapter stats with rank
-    const updatedChapterStats = updateChapterStats(chapter, level, pingsUsed, scoreData.total, elapsedTime, scoreData.rank);
+    // Update chapter stats with rank and difficulty
+    const updatedChapterStats = updateChapterStats(chapter, level, pingsUsed, scoreData.total, elapsedTime, scoreData.rank, difficulty);
 
     // Check if chapter was just completed (level 10)
     const isChapterComplete = (level % 10 === 0);

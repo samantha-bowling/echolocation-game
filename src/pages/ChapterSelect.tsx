@@ -57,7 +57,9 @@ export default function ChapterSelect() {
     if (chapterId === 1) return true;
     
     const prevChapterStats = chapterStats[chapterId - 1];
-    const hasProgressInChapter = chapterStats[chapterId]?.levelsCompleted > 0;
+    const normalLevels = chapterStats[chapterId]?.normal.levelsCompleted || 0;
+    const challengeLevels = chapterStats[chapterId]?.challenge.levelsCompleted || 0;
+    const hasProgressInChapter = normalLevels > 0 || challengeLevels > 0;
     const isCurrentChapter = currentProgress.chapter === chapterId;
     
     // Chapter is unlocked if:

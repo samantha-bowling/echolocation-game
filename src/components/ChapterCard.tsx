@@ -1,10 +1,11 @@
 import { memo } from 'react';
-import { Lock, CheckCircle2, Play, RotateCcw } from 'lucide-react';
+import { Lock, CheckCircle2, Play, RotateCcw, Shield, Zap } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { ChapterConfig } from '@/lib/game/chapters';
 import { ChapterStats } from '@/lib/game/chapterStats';
+import { getRankColor } from '@/lib/game/scoring';
 import { cn } from '@/lib/utils';
 import { InfoTooltip } from '@/components/InfoTooltip';
 
@@ -14,6 +15,7 @@ interface ChapterCardProps {
   isUnlocked: boolean;
   allChaptersUnlocked?: boolean;
   currentLevelInChapter?: number;
+  difficulty?: 'normal' | 'challenge';
   onContinue?: () => void;
   onRestart?: () => void;
   onStart?: () => void;
@@ -26,14 +28,17 @@ export const ChapterCard = memo(function ChapterCard({
   isUnlocked, 
   allChaptersUnlocked = false,
   currentLevelInChapter, 
+  difficulty = 'normal',
   onContinue, 
   onRestart, 
   onStart,
   onClick 
 }: ChapterCardProps) {
-  const progress = stats ? (stats.levelsCompleted / 10) * 100 : 0;
+  // Use difficulty-specific stats
+  const difficultyStats = stats?.[difficulty];
+  const progress = difficultyStats ? (difficultyStats.levelsCompleted / 10) * 100 : 0;
   const isCompleted = stats?.completed || false;
-  const levelsCompleted = stats?.levelsCompleted || 0;
+  const levelsCompleted = difficultyStats?.levelsCompleted || 0;
   const hasProgress = levelsCompleted > 0 && !isCompleted;
   
   // Show buttons if: has progress OR (all unlocked AND chapter is unlocked)
@@ -136,12 +141,12 @@ export const ChapterCard = memo(function ChapterCard({
         <p className="text-sm text-muted-foreground line-clamp-2">{chapter.description}</p>
 
         {/* Progress */}
-        {stats && (
+        {stats && difficultyStats && (
           <div className="space-y-2">
             <div className="flex items-center justify-between text-xs">
               <span className="text-muted-foreground">Progress</span>
               <span className="font-semibold text-foreground">
-                {stats.levelsCompleted}/10 levels
+                {difficultyStats.levelsCompleted}/10 levels
               </span>
             </div>
             <Progress
@@ -155,28 +160,47 @@ export const ChapterCard = memo(function ChapterCard({
           </div>
         )}
 
-        {/* Stats Summary */}
-        {stats && stats.levelsCompleted > 0 && (
-          <div className="grid grid-cols-3 gap-2 pt-2 border-t border-border/50">
-            <div className="text-center">
-              <div className="text-xs text-muted-foreground">Best Score</div>
-              <div className="text-sm font-semibold text-foreground">
-                {Math.round(stats.bestScore)}
+        {/* Dual Difficulty Stats Summary */}
+        {stats && (stats.normal.levelsCompleted > 0 || stats.challenge.levelsCompleted > 0) && (
+          <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border/50">
+            {/* Normal Mode Stats */}
+            <div className="space-y-1">
+              <div className="flex items-center gap-1.5">
+                <Shield className="w-3 h-3 text-blue-400" />
+                <span className="text-xs font-medium text-muted-foreground">Normal</span>
               </div>
+              {stats.normal.levelsCompleted > 0 ? (
+                <>
+                  <div className="text-lg font-bold" style={{ color: getRankColor(stats.normal.bestRank).text.replace('text-', 'hsl(var(--') + ')' }}>
+                    {stats.normal.bestRank}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {stats.normal.levelsCompleted}/10 levels
+                  </div>
+                </>
+              ) : (
+                <div className="text-xs text-muted-foreground italic">Not played</div>
+              )}
             </div>
-            <div className="text-center">
-              <div className="text-xs text-muted-foreground">Avg Pings</div>
-              <div className="text-sm font-semibold text-foreground">
-                {stats.levelsCompleted > 0
-                  ? Math.round(stats.totalPings / stats.levelsCompleted)
-                  : 0}
+            
+            {/* Challenge Mode Stats */}
+            <div className="space-y-1">
+              <div className="flex items-center gap-1.5">
+                <Zap className="w-3 h-3 text-yellow-400" />
+                <span className="text-xs font-medium text-muted-foreground">Challenge</span>
               </div>
-            </div>
-            <div className="text-center">
-              <div className="text-xs text-muted-foreground">Total Time</div>
-              <div className="text-sm font-semibold text-foreground">
-                {Math.floor(stats.totalTime / 60)}m
-              </div>
+              {stats.challenge.levelsCompleted > 0 ? (
+                <>
+                  <div className="text-lg font-bold" style={{ color: getRankColor(stats.challenge.bestRank).text.replace('text-', 'hsl(var(--') + ')' }}>
+                    {stats.challenge.bestRank}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {stats.challenge.levelsCompleted}/10 levels
+                  </div>
+                </>
+              ) : (
+                <div className="text-xs text-muted-foreground italic">Not played</div>
+              )}
             </div>
           </div>
         )}
@@ -285,8 +309,11 @@ export const ChapterCard = memo(function ChapterCard({
     prevProps.chapter.id === nextProps.chapter.id &&
     prevProps.isUnlocked === nextProps.isUnlocked &&
     prevProps.allChaptersUnlocked === nextProps.allChaptersUnlocked &&
-    prevProps.stats?.levelsCompleted === nextProps.stats?.levelsCompleted &&
-    prevProps.stats?.bestScore === nextProps.stats?.bestScore &&
+    prevProps.difficulty === nextProps.difficulty &&
+    prevProps.stats?.normal.levelsCompleted === nextProps.stats?.normal.levelsCompleted &&
+    prevProps.stats?.challenge.levelsCompleted === nextProps.stats?.challenge.levelsCompleted &&
+    prevProps.stats?.normal.bestScore === nextProps.stats?.normal.bestScore &&
+    prevProps.stats?.challenge.bestScore === nextProps.stats?.challenge.bestScore &&
     prevProps.currentLevelInChapter === nextProps.currentLevelInChapter
   );
 });
