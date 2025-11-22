@@ -148,11 +148,8 @@ export function MainMenu() {
             ? "!bg-transparent border-2 !border-accent/40"
             : "bg-accent/30 border-accent/30 backdrop-blur-sm"
         )}>
-          <div className={cn(
-            "flex items-center justify-center gap-3",
-            whiskersActive && showWhiskers ? "text-foreground" : "text-accent-foreground"
-          )}>
-            <Headphones className="w-5 h-5 text-accent" />
+          <div className="flex items-center justify-center gap-3 text-foreground">
+            <Headphones className="w-5 h-5 text-foreground/70" />
             <p className="text-small font-medium">Headphones recommended for best experience</p>
           </div>
         </div>
@@ -164,7 +161,9 @@ export function MainMenu() {
             size="lg" 
             className={cn(
               "w-full h-14 text-base font-semibold hover-lift",
-              whiskersActive && showWhiskers && "!bg-transparent border-2 !border-primary/40 text-foreground hover:!border-primary/60 hover:!bg-primary/5"
+              whiskersActive && showWhiskers 
+                ? "!bg-transparent border-2 !border-primary/40 text-foreground hover:!border-primary/60 hover:!bg-primary/5"
+                : "text-primary-foreground"
             )}
             onClick={() => setShowClassicDialog(true)}
           >
