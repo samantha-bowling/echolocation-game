@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { getAllCheats } from '@/lib/game/cheats';
-import { Code2, Gamepad2, Sparkles, Bug } from 'lucide-react';
+import { Code2, Gamepad2, Sparkles, Bug, Copy, Check } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface CheatReferenceDialogProps {
   open: boolean;
@@ -11,6 +14,18 @@ interface CheatReferenceDialogProps {
 
 export function CheatReferenceDialog({ open, onOpenChange }: CheatReferenceDialogProps) {
   const allCheats = getAllCheats();
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+
+  const handleCopyCode = async (code: string) => {
+    try {
+      await navigator.clipboard.writeText(code);
+      toast.success('Cheat code copied to clipboard!');
+      setCopiedCode(code);
+      setTimeout(() => setCopiedCode(null), 2000);
+    } catch (err) {
+      toast.error('Failed to copy code');
+    }
+  };
   
   const categoryIcons = {
     progression: Sparkles,
@@ -65,10 +80,23 @@ export function CheatReferenceDialog({ open, onOpenChange }: CheatReferenceDialo
                     </Badge>
                   </div>
                   
-                  <div className="pt-2 border-t border-border">
-                    <code className="text-xs font-mono bg-muted px-2 py-1 rounded">
+                  <div className="pt-2 border-t border-border flex items-center justify-between gap-2">
+                    <code className="text-xs font-mono bg-muted px-2 py-1 rounded flex-1 overflow-x-auto">
                       {cheat.code}
                     </code>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleCopyCode(cheat.code)}
+                      className="shrink-0"
+                      aria-label="Copy cheat code"
+                    >
+                      {copiedCode === cheat.code ? (
+                        <Check className="w-4 h-4 text-green-500" />
+                      ) : (
+                        <Copy className="w-4 h-4" />
+                      )}
+                    </Button>
                   </div>
                 </div>
               );
