@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Heart } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export function Credits() {
@@ -59,7 +59,17 @@ export function Credits() {
               <li>• shadcn/ui + Radix UI</li>
               <li>• Web Audio API</li>
               <li>• Framer Motion</li>
-              <li>• ChatGPT</li>
+              <li>
+                •{' '}
+                <a 
+                  href="https://lovable.dev/invite/RFPUQB3" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-primary hover:text-primary/80 transition-colors"
+                >
+                  Lovable
+                </a>
+              </li>
             </ul>
           </div>
 
@@ -67,6 +77,19 @@ export function Credits() {
             <h3 className="text-heading-3">Sound Design</h3>
             <p className="text-small text-muted-foreground">
               Procedurally generated audio using oscillators with spatial positioning
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <h3 className="text-heading-3">Feedback & Support</h3>
+            <p className="text-small text-muted-foreground">
+              Have feedback or found a bug?{' '}
+              <a 
+                href="mailto:hello@samantha-bowling.com" 
+                className="text-primary hover:text-primary/80 transition-colors"
+              >
+                Send us an email
+              </a>
             </p>
           </div>
 
@@ -83,16 +106,9 @@ export function Credits() {
           </div>
         </div>
 
-        <div className="text-center space-y-4">
-          <div className="flex items-center justify-center gap-2 text-muted-foreground">
-            <Heart className="w-4 h-4 text-accent" />
-            <p className="text-small">Made with Lovable</p>
-          </div>
-        </div>
-
-        <div className="text-center">
+        <div className="text-center pt-4 border-t border-border">
           <p className="text-tiny text-muted-foreground">
-            v1.0.0 • 2025
+            © 2025 funcool games. All rights reserved.
           </p>
         </div>
       </div>
