@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Play, RotateCcw, BookOpen, Shield, Zap } from 'lucide-react';
+import { Play, RotateCcw, BookOpen, Shield, Zap, BarChart3 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -9,7 +9,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
+
 import { getDifficultyPreference, setDifficultyPreference } from '@/lib/game/chapterStats';
 
 interface ClassicModeDialogProps {
@@ -37,11 +37,6 @@ export function ClassicModeDialog({
     setDifficultyPreference(newDifficulty);
   };
 
-  // Calculate progress (assuming 5 chapters, 10 levels each = 50 total levels)
-  const totalLevels = 50;
-  const currentProgress = saveDetails 
-    ? ((saveDetails.chapter - 1) * 10 + saveDetails.level - 1) / totalLevels * 100
-    : 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -103,7 +98,7 @@ export function ClassicModeDialog({
                   <li>• Focus on accuracy without time pressure</li>
                   <li>• Timer displayed for reference only</li>
                   <li>• No boons available</li>
-                  <li>• B rank required to progress (600+ points)</li>
+                  <li>• B rank required to progress (700+ points)</li>
                 </ul>
               </>
             ) : (
@@ -113,77 +108,112 @@ export function ClassicModeDialog({
                   <li>• Time affects your score</li>
                   <li>• Unlock and use boons for strategic advantages</li>
                   <li>• Higher scoring potential</li>
-                  <li>• B rank required to progress (500+ points)</li>
+                  <li>• B rank required to progress (700+ points)</li>
                 </ul>
               </>
             )}
           </div>
 
-          {/* Continue Option (only if save exists) */}
-          {hasSave && saveDetails && (
-            <Link to="/classic" className="block" onClick={() => onOpenChange(false)}>
-              <div className="flat-card hover:border-primary/50 transition-all cursor-pointer group">
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
-                    <Play className="w-5 h-5 text-primary" />
-                  </div>
-                  <div className="flex-1 space-y-2">
-                    <div>
-                      <h3 className="font-semibold text-lg">Continue Your Run</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Chapter {saveDetails.chapter} • Level {saveDetails.level}
-                      </p>
-                    </div>
-                    <Progress value={currentProgress} className="h-2" />
+          {/* Action Cards - 2x2 grid when save exists, else New Run full width + 2 column bottom */}
+          {hasSave && saveDetails ? (
+            <div className="grid grid-cols-2 gap-3">
+              {/* Continue Your Run */}
+              <Link to="/classic" className="block" onClick={() => onOpenChange(false)}>
+                <div className="flat-card p-3 h-full hover:border-primary/50 transition-all cursor-pointer group">
+                  <div className="flex flex-col items-center gap-2 text-center">
+                    <Play className="w-4 h-4 text-primary" />
+                    <h3 className="font-semibold text-sm">Continue</h3>
                     <p className="text-xs text-muted-foreground">
-                      {Math.round(currentProgress)}% Complete
+                      Ch {saveDetails.chapter} • L {saveDetails.level}
                     </p>
                   </div>
                 </div>
+              </Link>
+
+              {/* Start New Run */}
+              <Link 
+                to="/classic" 
+                className="block" 
+                onClick={() => {
+                  onNewRun();
+                  onOpenChange(false);
+                }}
+              >
+                <div className="flat-card p-3 h-full hover:border-accent/50 transition-all cursor-pointer group">
+                  <div className="flex flex-col items-center gap-2 text-center">
+                    <RotateCcw className="w-4 h-4 text-accent" />
+                    <h3 className="font-semibold text-sm">New Run</h3>
+                    <p className="text-xs text-muted-foreground">Start fresh</p>
+                  </div>
+                </div>
+              </Link>
+
+              {/* Chapter Select */}
+              <Link to="/chapters" className="block" onClick={() => onOpenChange(false)}>
+                <div className="flat-card p-3 h-full hover:border-secondary/50 transition-all cursor-pointer group">
+                  <div className="flex flex-col items-center gap-2 text-center">
+                    <BookOpen className="w-4 h-4 text-secondary-foreground" />
+                    <h3 className="font-semibold text-sm">Chapters</h3>
+                    <p className="text-xs text-muted-foreground">Practice</p>
+                  </div>
+                </div>
+              </Link>
+
+              {/* View Stats */}
+              <Link to="/classic-stats" className="block" onClick={() => onOpenChange(false)}>
+                <div className="flat-card p-3 h-full hover:border-purple-500/50 transition-all cursor-pointer group">
+                  <div className="flex flex-col items-center gap-2 text-center">
+                    <BarChart3 className="w-4 h-4 text-purple-400" />
+                    <h3 className="font-semibold text-sm">Stats</h3>
+                    <p className="text-xs text-muted-foreground">View progress</p>
+                  </div>
+                </div>
+              </Link>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {/* Start New Run - Full Width */}
+              <Link 
+                to="/classic" 
+                className="block" 
+                onClick={() => {
+                  onNewRun();
+                  onOpenChange(false);
+                }}
+              >
+                <div className="flat-card p-4 hover:border-accent/50 transition-all cursor-pointer group">
+                  <div className="flex flex-col items-center gap-2 text-center">
+                    <RotateCcw className="w-5 h-5 text-accent" />
+                    <h3 className="font-semibold text-base">Start New Run</h3>
+                    <p className="text-sm text-muted-foreground">Begin from Chapter 1, Level 1</p>
+                  </div>
+                </div>
+              </Link>
+
+              {/* Bottom Row - Chapter Select + View Stats */}
+              <div className="grid grid-cols-2 gap-3">
+                <Link to="/chapters" className="block" onClick={() => onOpenChange(false)}>
+                  <div className="flat-card p-3 h-full hover:border-secondary/50 transition-all cursor-pointer group">
+                    <div className="flex flex-col items-center gap-2 text-center">
+                      <BookOpen className="w-4 h-4 text-secondary-foreground" />
+                      <h3 className="font-semibold text-sm">Chapters</h3>
+                      <p className="text-xs text-muted-foreground">Practice</p>
+                    </div>
+                  </div>
+                </Link>
+
+                <Link to="/classic-stats" className="block" onClick={() => onOpenChange(false)}>
+                  <div className="flat-card p-3 h-full hover:border-purple-500/50 transition-all cursor-pointer group">
+                    <div className="flex flex-col items-center gap-2 text-center">
+                      <BarChart3 className="w-4 h-4 text-purple-400" />
+                      <h3 className="font-semibold text-sm">Stats</h3>
+                      <p className="text-xs text-muted-foreground">View progress</p>
+                    </div>
+                  </div>
+                </Link>
               </div>
-            </Link>
+            </div>
           )}
-
-          {/* New Run Option */}
-          <Link 
-            to="/classic" 
-            className="block" 
-            onClick={() => {
-              onNewRun();
-              onOpenChange(false);
-            }}
-          >
-            <div className="flat-card hover:border-accent/50 transition-all cursor-pointer group">
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center shrink-0 group-hover:bg-accent/20 transition-colors">
-                  <RotateCcw className="w-5 h-5 text-accent" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg">Start New Run</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Begin from Chapter 1, Level 1
-                  </p>
-                </div>
-              </div>
-            </div>
-          </Link>
-
-          {/* Chapter Select Option */}
-          <Link to="/chapters" className="block" onClick={() => onOpenChange(false)}>
-            <div className="flat-card hover:border-secondary/50 transition-all cursor-pointer group">
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center shrink-0 group-hover:bg-secondary/20 transition-colors">
-                  <BookOpen className="w-5 h-5 text-secondary-foreground" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg">Chapter Select</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Practice any unlocked chapter
-                  </p>
-                </div>
-              </div>
-            </div>
-          </Link>
         </div>
 
         <div className="text-center mt-4">
