@@ -3,17 +3,19 @@ import { useState, useEffect } from 'react';
 export interface GameTimerOptions {
   enabled: boolean;
   gamePhase: string;
+  startOnFirstPing?: boolean;
   onTimeFreeze?: (time: number) => void;
 }
 
-export function useGameTimer({ enabled, gamePhase, onTimeFreeze }: GameTimerOptions) {
+export function useGameTimer({ enabled, gamePhase, startOnFirstPing = false, onTimeFreeze }: GameTimerOptions) {
   const [startTime, setStartTime] = useState(Date.now());
   const [elapsedTime, setElapsedTime] = useState(0);
   const [finalTime, setFinalTime] = useState<number | null>(null);
+  const [hasStarted, setHasStarted] = useState(!startOnFirstPing);
 
   // Timer interval management
   useEffect(() => {
-    if (!enabled || finalTime !== null) return;
+    if (!enabled || finalTime !== null || !hasStarted) return;
     
     let animationFrameId: number;
     let lastTime = performance.now();
@@ -29,24 +31,32 @@ export function useGameTimer({ enabled, gamePhase, onTimeFreeze }: GameTimerOpti
 
     animationFrameId = requestAnimationFrame(updateTimer);
     return () => cancelAnimationFrame(animationFrameId);
-  }, [enabled, startTime, finalTime]);
+  }, [enabled, startTime, finalTime, hasStarted]);
 
-  // Auto-freeze when gamePhase === 'placing' or 'confirming'
+  // Auto-freeze only when gamePhase === 'confirming'
   useEffect(() => {
-    if ((gamePhase === 'placing' || gamePhase === 'confirming') && finalTime === null && enabled) {
+    if (gamePhase === 'confirming' && finalTime === null && enabled && hasStarted) {
       setFinalTime(elapsedTime);
       onTimeFreeze?.(elapsedTime);
     }
-  }, [gamePhase, finalTime, elapsedTime, enabled, onTimeFreeze]);
+  }, [gamePhase, finalTime, elapsedTime, enabled, hasStarted, onTimeFreeze]);
 
   const resetTimer = () => {
     setStartTime(Date.now());
     setElapsedTime(0);
     setFinalTime(null);
+    setHasStarted(!startOnFirstPing);
   };
 
   const unfreezeTimer = () => {
     setFinalTime(null);
+  };
+
+  const startTimer = () => {
+    if (!hasStarted) {
+      setStartTime(Date.now());
+      setHasStarted(true);
+    }
   };
 
   return {
@@ -54,5 +64,6 @@ export function useGameTimer({ enabled, gamePhase, onTimeFreeze }: GameTimerOpti
     finalTime,
     resetTimer,
     unfreezeTimer,
+    startTimer,
   };
 }

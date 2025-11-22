@@ -125,9 +125,10 @@ export function CustomGame() {
   const SAVE_THROTTLE_MS = 5000; // 5 seconds (increased from 2s)
 
   const { gamePhase, finalGuess, setFinalGuess, handlePlaceFinalGuess, handleRepositionGuess, handleGoBackToPinging, resetPhase } = useGamePhase();
-  const { elapsedTime, finalTime, resetTimer } = useGameTimer({ 
+  const { elapsedTime, finalTime, resetTimer, startTimer } = useGameTimer({ 
     enabled: config.timerEnabled, 
-    gamePhase 
+    gamePhase,
+    startOnFirstPing: true
   });
   
   const handleTargetMove = (newTarget: Target) => {
@@ -339,7 +340,13 @@ export function CustomGame() {
     };
 
     if (gamePhase === 'pinging') {
+      const isFirstPing = pingsUsed === 0;
       handlePing(clickPos);
+      
+      // Start timer on first ping (if timer is enabled)
+      if (isFirstPing && config.timerEnabled) {
+        startTimer();
+      }
     } else if (gamePhase === 'placing') {
       setFinalGuess(clickPos);
     }
