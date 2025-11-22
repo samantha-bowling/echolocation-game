@@ -154,7 +154,7 @@ export function ClassicModeDialog({
                   <div className="flex flex-col items-center gap-2 text-center">
                     <BookOpen className="w-4 h-4 text-secondary-foreground" />
                     <h3 className="font-semibold text-sm">Chapters</h3>
-                    <p className="text-xs text-muted-foreground">Practice</p>
+                    <p className="text-xs text-muted-foreground">Select chapter</p>
                   </div>
                 </div>
               </Link>
@@ -197,7 +197,7 @@ export function ClassicModeDialog({
                     <div className="flex flex-col items-center gap-2 text-center">
                       <BookOpen className="w-4 h-4 text-secondary-foreground" />
                       <h3 className="font-semibold text-sm">Chapters</h3>
-                      <p className="text-xs text-muted-foreground">Practice</p>
+                      <p className="text-xs text-muted-foreground">Select chapter</p>
                     </div>
                   </div>
                 </Link>
