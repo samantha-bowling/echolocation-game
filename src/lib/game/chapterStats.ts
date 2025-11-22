@@ -1,3 +1,9 @@
+// Cache layer
+let statsCache: ChapterStatsMap | null = null;
+let progressCache: ChapterProgress | null = null;
+let cacheTimestamp: number = 0;
+const CACHE_DURATION = 30000; // 30 seconds
+
 export interface ChapterStats {
   completed: boolean;
   totalPings: number;
@@ -28,10 +34,19 @@ export interface ChapterProgress {
 }
 
 export function loadChapterStats(): ChapterStatsMap {
+  const now = Date.now();
+  
+  // Return cached data if valid
+  if (statsCache && (now - cacheTimestamp) < CACHE_DURATION) {
+    return statsCache;
+  }
+  
   const stored = localStorage.getItem('echo_chapter_stats');
   if (stored) {
     try {
-      return JSON.parse(stored);
+      statsCache = JSON.parse(stored);
+      cacheTimestamp = now;
+      return statsCache;
     } catch {
       return {};
     }
@@ -41,13 +56,24 @@ export function loadChapterStats(): ChapterStatsMap {
 
 export function saveChapterStats(stats: ChapterStatsMap) {
   localStorage.setItem('echo_chapter_stats', JSON.stringify(stats));
+  statsCache = null; // Force fresh load next time
+  cacheTimestamp = 0;
 }
 
 export function loadChapterProgress(): ChapterProgress {
+  const now = Date.now();
+  
+  // Return cached data if valid
+  if (progressCache && (now - cacheTimestamp) < CACHE_DURATION) {
+    return progressCache;
+  }
+  
   const stored = localStorage.getItem('echo_chapter_progress');
   if (stored) {
     try {
-      return JSON.parse(stored);
+      progressCache = JSON.parse(stored);
+      cacheTimestamp = now;
+      return progressCache;
     } catch {
       return {};
     }
@@ -157,4 +183,11 @@ export function markChapterIntroSeen(chapter: number) {
     seen.push(chapter);
     localStorage.setItem('echo_seen_chapter_intros', JSON.stringify(seen));
   }
+}
+
+// Manual cache invalidation
+export function invalidateStatsCache() {
+  statsCache = null;
+  progressCache = null;
+  cacheTimestamp = 0;
 }

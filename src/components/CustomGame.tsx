@@ -122,7 +122,7 @@ export function CustomGame() {
   
   // Throttling for auto-save
   const lastSaveTimeRef = useRef<number>(0);
-  const SAVE_THROTTLE_MS = 2000; // 2 seconds
+  const SAVE_THROTTLE_MS = 5000; // 5 seconds (increased from 2s)
 
   const { gamePhase, finalGuess, setFinalGuess, handlePlaceFinalGuess, handleRepositionGuess, handleGoBackToPinging, resetPhase } = useGamePhase();
   const { elapsedTime, finalTime, resetTimer } = useGameTimer({ 
@@ -472,7 +472,7 @@ export function CustomGame() {
     }, 100);
   };
 
-  const handleManualSave = async () => {
+  const handleManualSave = useCallback(async () => {
     const sessionData: CustomGameSession = {
       config,
       gameState,
@@ -508,7 +508,7 @@ export function CustomGame() {
       description: 'Your game has been saved successfully',
       duration: 2000,
     });
-  };
+  }, [config, gameState, currentRound, roundScores, target, pingHistory, finalGuess, pingsUsed, elapsedTime, finalTime, gamePhase, targetMoveCount, scoreResult, activeSlotId]);
 
   // Keyboard shortcuts
   useKeyboardShortcuts({

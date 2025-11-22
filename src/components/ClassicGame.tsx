@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Lightbulb, BarChart3, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -363,7 +363,19 @@ export function ClassicGame() {
     // If mid-game-swap, just close and continue playing
   };
 
-  const handleSwapBoonClick = () => {
+  const handleRepositionGuessWithTimer = useCallback(() => {
+    unfreezeTimer(); // Unfreeze timer to continue counting
+    handleRepositionGuess(); // Go back to placing phase
+  }, [unfreezeTimer, handleRepositionGuess]);
+
+  const handleHintClick = useCallback(() => {
+    setShowHint(prev => !prev);
+    if (!showHint && !hintUsed) {
+      setHintUsed(true);
+    }
+  }, [showHint, hintUsed]);
+
+  const handleSwapBoonClick = useCallback(() => {
     setBoonSelectionContext('mid-game-swap');
     
     const precisionBoon = getRandomBoonByArchetype('precision', activeBoons);
@@ -372,12 +384,7 @@ export function ClassicGame() {
     
     setBoonChoices({ precision: precisionBoon, efficiency: efficiencyBoon, adaptability: adaptabilityBoon });
     setShowBoonSelection(true);
-  };
-
-  const handleRepositionGuessWithTimer = () => {
-    unfreezeTimer(); // Unfreeze timer to continue counting
-    handleRepositionGuess(); // Go back to placing phase
-  };
+  }, [activeBoons]);
 
   // Keyboard shortcuts
   useKeyboardShortcuts({
@@ -506,12 +513,7 @@ export function ClassicGame() {
 
             {/* Hint Button */}
             <button
-              onClick={() => {
-                setShowHint(!showHint);
-                if (!showHint && !hintUsed) {
-                  setHintUsed(true);
-                }
-              }}
+              onClick={handleHintClick}
               className="flat-card p-2 transition-all flex items-center gap-2 hover:bg-accent/20"
             >
               <Lightbulb className={cn(
