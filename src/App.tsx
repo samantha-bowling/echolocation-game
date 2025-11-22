@@ -16,6 +16,7 @@ import { CustomStats } from "./components/CustomStats";
 import { ClassicStats } from "./components/ClassicStats";
 import { Settings } from "./components/Settings";
 import { Credits } from "./components/Credits";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { migrateToIndexedDB } from "./lib/game/migrateToIndexedDB";
 import { importFromShareURL } from "./lib/game/exportImport";
 import { createSaveSlot, autoGenerateSlotName } from "./lib/game/saveSlotManager";
@@ -100,36 +101,52 @@ const App = () => {
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter
-            future={{
-              v7_startTransition: true,
-              v7_relativeSplatPath: true,
-            }}
-          >
-            <ImportHandler />
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/tutorial" element={<Tutorial />} />
-              <Route path="/chapters" element={<ChapterSelect />} />
-              <Route path="/classic" element={<ClassicGame />} />
-              <Route path="/classic-stats" element={<ClassicStats />} />
-              <Route path="/custom" element={<CustomMode />} />
-              <Route path="/custom-game" element={<CustomGame />} />
-              <Route path="/custom-stats" element={<CustomStats />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/credits" element={<Credits />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </ThemeProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter
+              future={{
+                v7_startTransition: true,
+                v7_relativeSplatPath: true,
+              }}
+            >
+              <ImportHandler />
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/tutorial" element={<Tutorial />} />
+                <Route path="/chapters" element={<ChapterSelect />} />
+                <Route 
+                  path="/classic" 
+                  element={
+                    <ErrorBoundary onReset={() => window.location.href = '/chapters'}>
+                      <ClassicGame />
+                    </ErrorBoundary>
+                  } 
+                />
+                <Route path="/classic-stats" element={<ClassicStats />} />
+                <Route path="/custom" element={<CustomMode />} />
+                <Route 
+                  path="/custom-game" 
+                  element={
+                    <ErrorBoundary onReset={() => window.location.href = '/custom'}>
+                      <CustomGame />
+                    </ErrorBoundary>
+                  } 
+                />
+                <Route path="/custom-stats" element={<CustomStats />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/credits" element={<Credits />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 };
 
