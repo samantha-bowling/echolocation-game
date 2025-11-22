@@ -146,7 +146,9 @@ export function ClassicStats() {
             {Object.entries(CHAPTERS).map(([id, chapter]) => {
               const chapterId = parseInt(id);
               const stats = chapterStats[chapterId];
-              const progress = stats?.levelsCompleted || 0;
+              const normalProgress = stats?.normal.levelsCompleted || 0;
+              const challengeProgress = stats?.challenge.levelsCompleted || 0;
+              const progress = Math.max(normalProgress, challengeProgress);
               const completed = stats?.completed || false;
 
               return (
@@ -181,19 +183,19 @@ export function ClassicStats() {
                       <div>
                         <div className="text-xs text-muted-foreground">Best Score</div>
                         <div className="text-lg font-semibold text-foreground">
-                          {Math.round(stats.bestScore)}
+                          {Math.round(Math.max(stats.normal.bestScore, stats.challenge.bestScore))}
                         </div>
                       </div>
                       <div>
                         <div className="text-xs text-muted-foreground">Avg Score</div>
                         <div className="text-lg font-semibold text-foreground">
-                          {Math.round(stats.avgScore)}
+                          {Math.round((stats.normal.avgScore + stats.challenge.avgScore) / 2)}
                         </div>
                       </div>
                       <div>
                         <div className="text-xs text-muted-foreground">Total Pings</div>
                         <div className="text-lg font-semibold text-foreground">
-                          {stats.totalPings}
+                          {stats.normal.totalPings + stats.challenge.totalPings}
                         </div>
                       </div>
                     </div>

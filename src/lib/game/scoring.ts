@@ -47,38 +47,58 @@ function calculateTimeScore(timeSeconds: number): number {
 }
 
 /**
- * Calculate chapter-specific mechanic bonus
+ * Calculate chapter-specific mechanic bonus with difficulty awareness
  */
 function calculateChapterMechanicBonus(
   chapter: number,
   proximity: number,
   pingEfficiency: number,
-  timeSeconds: number
+  timeSeconds: number,
+  difficulty: 'normal' | 'challenge' = 'normal'
 ): number {
   switch (chapter) {
-    case 2: // Shrinking Target - reward early/efficient guessing
-      // Bonus if you maintain high accuracy with good ping efficiency
-      return (proximity >= 85 && pingEfficiency >= 0.3) 
-        ? MECHANIC_BONUS_CH2_SHRINKING 
-        : 0;
+    case 2: // Shrinking Target
+      if (difficulty === 'normal') {
+        // Normal: reward high accuracy regardless of time
+        return (proximity >= 90) ? MECHANIC_BONUS_CH2_SHRINKING : 0;
+      } else {
+        // Challenge: reward early/efficient guessing (original logic)
+        return (proximity >= 85 && pingEfficiency >= 0.3) 
+          ? MECHANIC_BONUS_CH2_SHRINKING 
+          : 0;
+      }
     
-    case 3: // Moving Target - reward fast adaptation
-      // Bonus for quick completion (adapted to movement efficiently)
-      return (timeSeconds <= 30 && proximity >= 80) 
-        ? MECHANIC_BONUS_CH3_MOVING 
-        : 0;
+    case 3: // Moving Target
+      if (difficulty === 'normal') {
+        // Normal: reward ping efficiency (adapted without time pressure)
+        return (proximity >= 80 && pingEfficiency >= 0.3) 
+          ? MECHANIC_BONUS_CH3_MOVING 
+          : 0;
+      } else {
+        // Challenge: reward fast adaptation (original logic)
+        return (timeSeconds <= 30 && proximity >= 80) 
+          ? MECHANIC_BONUS_CH3_MOVING 
+          : 0;
+      }
     
-    case 4: // Phantom Targets - reward ping efficiency
-      // Bonus for high ping efficiency (didn't waste pings on phantoms)
+    case 4: // Phantom Targets
+      // Same for both: reward ping efficiency (not time-dependent)
       return (pingEfficiency >= 0.4 && proximity >= 75) 
         ? MECHANIC_BONUS_CH4_PHANTOMS 
         : 0;
     
-    case 5: // Combined Challenge - flat mastery bonus
-      // Base bonus for facing all mechanics, plus extra for excellence
-      const baseBonus = proximity >= 70 ? MECHANIC_BONUS_CH5_COMBINED : 0;
-      const excellenceBonus = (proximity >= 90 && pingEfficiency >= 0.4) ? 50 : 0;
-      return baseBonus + excellenceBonus;
+    case 5: // Combined Challenge
+      if (difficulty === 'normal') {
+        // Normal: flat mastery bonus based on accuracy
+        return (proximity >= 85 && pingEfficiency >= 0.3) 
+          ? MECHANIC_BONUS_CH5_COMBINED 
+          : 0;
+      } else {
+        // Challenge: original logic with excellence bonus
+        const baseBonus = proximity >= 70 ? MECHANIC_BONUS_CH5_COMBINED : 0;
+        const excellenceBonus = (proximity >= 90 && pingEfficiency >= 0.4) ? 50 : 0;
+        return baseBonus + excellenceBonus;
+      }
     
     default: // Chapter 1 has no mechanic
       return 0;
@@ -86,7 +106,7 @@ function calculateChapterMechanicBonus(
 }
 
 /**
- * Calculate round score
+ * Calculate round score with difficulty-specific logic
  */
 export function calculateScore(
   proximity: number, // 0-100
@@ -96,7 +116,8 @@ export function calculateScore(
   chapter: number = 1,
   replaysUsed: number = 0,
   replaysAvailable?: number,
-  hintUsed: boolean = false
+  hintUsed: boolean = false,
+  difficulty: 'normal' | 'challenge' = 'normal'
 ): ScoreResult {
   const unusedPings = totalPings - pingsUsed;
   const pingEfficiency = unusedPings / totalPings;
@@ -104,17 +125,20 @@ export function calculateScore(
   // Calculate individual components
   const proximityBonus = Math.round(proximity * PROXIMITY_POINTS_PER_PERCENT);
   const pingEfficiencyBonus = Math.round(pingEfficiency * PING_EFFICIENCY_MAX);
-  const timeScore = calculateTimeScore(timeSeconds);
+  
+  // Time score - ONLY for Challenge mode
+  const timeScore = difficulty === 'challenge' ? calculateTimeScore(timeSeconds) : 0;
   
   // Perfect target bonus
   const perfectTargetBonus = proximity === 100 ? PERFECT_TARGET_BONUS : 0;
   
-  // Chapter mechanic bonus
+  // Chapter mechanic bonus (difficulty-aware)
   const chapterMechanicBonus = calculateChapterMechanicBonus(
     chapter,
     proximity,
     pingEfficiency,
-    timeSeconds
+    timeSeconds,
+    difficulty
   );
   
   // Replay bonus - reward players who don't use all available replays (only if replays were limited)
@@ -155,7 +179,7 @@ export function calculateScore(
       replayBonus,
       hintPenalty,
     },
-    rank: getRank(Math.max(0, finalScore)),
+    rank: getRank(Math.max(0, finalScore), difficulty),
   };
 }
 
@@ -164,8 +188,26 @@ export interface RankInfo {
   threshold: number;
 }
 
-export const RANK_THRESHOLDS: RankInfo[] = [
-  { rank: 'SS', threshold: 950 },   // Near-perfect: 95%+ accuracy, <10s, all bonuses
+// Normal Mode Rank Thresholds (lower due to no time score)
+export const RANK_THRESHOLDS_NORMAL: RankInfo[] = [
+  { rank: 'SS', threshold: 950 },
+  { rank: 'S+', threshold: 875 },
+  { rank: 'S', threshold: 825 },
+  { rank: 'S-', threshold: 775 },
+  { rank: 'A+', threshold: 725 },
+  { rank: 'A', threshold: 650 },    // Boss level requirement
+  { rank: 'A-', threshold: 600 },   // Progression threshold
+  { rank: 'B+', threshold: 550 },
+  { rank: 'B', threshold: 500 },
+  { rank: 'C+', threshold: 450 },
+  { rank: 'C', threshold: 375 },
+  { rank: 'C-', threshold: 300 },
+  { rank: 'D', threshold: 0 },
+];
+
+// Challenge Mode Rank Thresholds (higher due to time score bonus potential)
+export const RANK_THRESHOLDS_CHALLENGE: RankInfo[] = [
+  { rank: 'SS', threshold: 950 },
   { rank: 'S+', threshold: 875 },
   { rank: 'S', threshold: 825 },
   { rank: 'S-', threshold: 775 },
@@ -180,11 +222,15 @@ export const RANK_THRESHOLDS: RankInfo[] = [
   { rank: 'D', threshold: 0 },
 ];
 
+// Legacy export for backwards compatibility
+export const RANK_THRESHOLDS = RANK_THRESHOLDS_CHALLENGE;
+
 /**
- * Get rank based on score
+ * Get rank based on score and difficulty
  */
-export function getRank(score: number): string {
-  for (const { rank, threshold } of RANK_THRESHOLDS) {
+export function getRank(score: number, difficulty: 'normal' | 'challenge' = 'normal'): string {
+  const thresholds = difficulty === 'normal' ? RANK_THRESHOLDS_NORMAL : RANK_THRESHOLDS_CHALLENGE;
+  for (const { rank, threshold } of thresholds) {
     if (score >= threshold) return rank;
   }
   return 'D';
@@ -192,17 +238,17 @@ export function getRank(score: number): string {
 
 /**
  * Check if player can progress to next level
- * Requires B rank or better (800+ points)
+ * Requires B rank or better for normal levels, A rank for boss levels
  */
-export function canProgressToNextLevel(rank: string, isBossLevel: boolean = false): boolean {
+export function canProgressToNextLevel(rank: string, isBossLevel: boolean = false, difficulty: 'normal' | 'challenge' = 'normal'): boolean {
   if (isBossLevel) {
-    // Boss levels (Level 10) require A rank or better
-    const bossProgressionRanks = ['SS', 'S+', 'S', 'A+', 'A'];
+    // Boss levels (Level 10) require A rank or better in BOTH modes
+    const bossProgressionRanks = ['SS', 'S+', 'S', 'S-', 'A+', 'A'];
     return bossProgressionRanks.includes(rank);
   }
   
   // Regular levels require B rank or better
-  const progressionRanks = ['SS', 'S+', 'S', 'A+', 'A', 'B+', 'B'];
+  const progressionRanks = ['SS', 'S+', 'S', 'S-', 'A+', 'A', 'A-', 'B+', 'B'];
   return progressionRanks.includes(rank);
 }
 
@@ -264,18 +310,19 @@ export function getRankColor(rank: string): {
 }
 
 /**
- * Get next rank info
+ * Get next rank info (difficulty-aware)
  */
-export function getNextRankInfo(currentRank: string): RankInfo | null {
-  const currentIndex = RANK_THRESHOLDS.findIndex(r => r.rank === currentRank);
-  return currentIndex > 0 ? RANK_THRESHOLDS[currentIndex - 1] : null;
+export function getNextRankInfo(currentRank: string, difficulty: 'normal' | 'challenge' = 'normal'): RankInfo | null {
+  const thresholds = difficulty === 'normal' ? RANK_THRESHOLDS_NORMAL : RANK_THRESHOLDS_CHALLENGE;
+  const currentIndex = thresholds.findIndex(r => r.rank === currentRank);
+  return currentIndex > 0 ? thresholds[currentIndex - 1] : null;
 }
 
 /**
- * Get points needed to reach next rank
+ * Get points needed to reach next rank (difficulty-aware)
  */
-export function getPointsToNextRank(score: number, currentRank: string): number {
-  const nextRank = getNextRankInfo(currentRank);
+export function getPointsToNextRank(score: number, currentRank: string, difficulty: 'normal' | 'challenge' = 'normal'): number {
+  const nextRank = getNextRankInfo(currentRank, difficulty);
   return nextRank ? Math.max(0, nextRank.threshold - score) : 0;
 }
 

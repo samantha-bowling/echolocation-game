@@ -4,22 +4,28 @@ let progressCache: ChapterProgress | null = null;
 let cacheTimestamp: number = 0;
 const CACHE_DURATION = 30000; // 30 seconds
 
-export interface ChapterStats {
-  completed: boolean;
+export interface DifficultyStats {
+  bestScore: number;
+  bestRank: string;
+  levelsCompleted: number;
   totalPings: number;
   avgScore: number;
-  bestScore: number;
   totalTime: number;
+  totalAttempts: number;
+  successfulAttempts: number;
+  perfectRounds: number;
+  bestPingCount: number;
+  fastestTime: number;
+}
+
+export interface ChapterStats {
+  completed: boolean;
   completedAt?: string;
-  levelsCompleted: number;
   unlockedBoons?: string[];
   
-  // Additional tracking metrics
-  totalAttempts: number;      // Every play attempt (pass or fail)
-  successfulAttempts: number; // Only B rank or better
-  perfectRounds: number;      // SS rank count
-  bestPingCount: number;      // Fewest pings for a successful level
-  fastestTime: number;        // Fastest completion for any level
+  // Separate stats for each difficulty
+  normal: DifficultyStats;
+  challenge: DifficultyStats;
 }
 
 export interface ChapterStatsMap {
@@ -97,7 +103,8 @@ export function updateChapterStats(
   pings: number,
   score: number,
   time: number,
-  rank: string
+  rank: string,
+  difficulty: 'normal' | 'challenge' = 'normal'
 ) {
   const stats = loadChapterStats();
   const levelInChapter = ((level - 1) % 10) + 1;
@@ -105,52 +112,76 @@ export function updateChapterStats(
   if (!stats[chapter]) {
     stats[chapter] = {
       completed: false,
-      totalPings: 0,
-      avgScore: 0,
-      bestScore: 0,
-      totalTime: 0,
-      levelsCompleted: 0,
-      totalAttempts: 0,
-      successfulAttempts: 0,
-      perfectRounds: 0,
-      bestPingCount: Infinity,
-      fastestTime: Infinity,
+      normal: {
+        bestScore: 0,
+        bestRank: 'D',
+        levelsCompleted: 0,
+        totalPings: 0,
+        avgScore: 0,
+        totalTime: 0,
+        totalAttempts: 0,
+        successfulAttempts: 0,
+        perfectRounds: 0,
+        bestPingCount: Infinity,
+        fastestTime: Infinity,
+      },
+      challenge: {
+        bestScore: 0,
+        bestRank: 'D',
+        levelsCompleted: 0,
+        totalPings: 0,
+        avgScore: 0,
+        totalTime: 0,
+        totalAttempts: 0,
+        successfulAttempts: 0,
+        perfectRounds: 0,
+        bestPingCount: Infinity,
+        fastestTime: Infinity,
+      },
     };
   }
 
   const chapterStat = stats[chapter];
+  const difficultyStats = chapterStat[difficulty];
   
   // Track every attempt
-  chapterStat.totalAttempts++;
+  difficultyStats.totalAttempts++;
   
   // Check if this was a successful attempt (B rank or better)
-  const progressionRanks = ['SS', 'S+', 'S', 'A+', 'A', 'B+', 'B'];
+  const progressionRanks = ['SS', 'S+', 'S', 'S-', 'A+', 'A', 'A-', 'B+', 'B'];
   const isSuccess = progressionRanks.includes(rank);
   
   if (isSuccess) {
-    chapterStat.successfulAttempts++;
-    chapterStat.totalPings += pings;
-    chapterStat.totalTime += time;
-    chapterStat.levelsCompleted = Math.max(chapterStat.levelsCompleted, levelInChapter);
-    chapterStat.bestScore = Math.max(chapterStat.bestScore, score);
+    difficultyStats.successfulAttempts++;
+    difficultyStats.totalPings += pings;
+    difficultyStats.totalTime += time;
+    difficultyStats.levelsCompleted = Math.max(difficultyStats.levelsCompleted, levelInChapter);
+    difficultyStats.bestScore = Math.max(difficultyStats.bestScore, score);
+    
+    // Update best rank
+    const currentRankIndex = progressionRanks.indexOf(difficultyStats.bestRank);
+    const newRankIndex = progressionRanks.indexOf(rank);
+    if (newRankIndex < currentRankIndex || difficultyStats.bestRank === 'D') {
+      difficultyStats.bestRank = rank;
+    }
     
     // Track best ping efficiency
-    chapterStat.bestPingCount = Math.min(chapterStat.bestPingCount, pings);
+    difficultyStats.bestPingCount = Math.min(difficultyStats.bestPingCount, pings);
     
     // Track fastest time
-    chapterStat.fastestTime = Math.min(chapterStat.fastestTime, time);
+    difficultyStats.fastestTime = Math.min(difficultyStats.fastestTime, time);
     
     // Track perfect rounds (SS rank)
     if (rank === 'SS') {
-      chapterStat.perfectRounds++;
+      difficultyStats.perfectRounds++;
     }
     
     // Calculate average score (only from successful attempts)
-    const totalSuccessful = chapterStat.successfulAttempts;
-    chapterStat.avgScore = ((chapterStat.avgScore * (totalSuccessful - 1)) + score) / totalSuccessful;
+    const totalSuccessful = difficultyStats.successfulAttempts;
+    difficultyStats.avgScore = ((difficultyStats.avgScore * (totalSuccessful - 1)) + score) / totalSuccessful;
   }
 
-  // Mark as completed if all 10 levels done
+  // Mark as completed if all 10 levels done on EITHER difficulty
   if (levelInChapter === 10 && isSuccess) {
     chapterStat.completed = true;
     chapterStat.completedAt = new Date().toISOString();
@@ -161,7 +192,7 @@ export function updateChapterStats(
   }
 
   saveChapterStats(stats);
-  return stats[chapter];
+  return chapterStat;
 }
 
 
@@ -190,4 +221,78 @@ export function invalidateStatsCache() {
   statsCache = null;
   progressCache = null;
   cacheTimestamp = 0;
+}
+
+// Difficulty preference storage
+export function getDifficultyPreference(): 'normal' | 'challenge' {
+  const stored = localStorage.getItem('echo_difficulty_preference');
+  return stored === 'challenge' ? 'challenge' : 'normal';
+}
+
+export function setDifficultyPreference(difficulty: 'normal' | 'challenge') {
+  localStorage.setItem('echo_difficulty_preference', difficulty);
+}
+
+// Migration from V1 (single-difficulty) to V2 (dual-difficulty) stats
+export function migrateChapterStatsToV2() {
+  const migrated = localStorage.getItem('echo_stats_migrated_v2');
+  if (migrated) return; // Already migrated
+  
+  const stored = localStorage.getItem('echo_chapter_stats');
+  if (!stored) {
+    localStorage.setItem('echo_stats_migrated_v2', 'true');
+    return;
+  }
+  
+  try {
+    const oldStats = JSON.parse(stored);
+    const newStats: ChapterStatsMap = {};
+    
+    Object.entries(oldStats).forEach(([chapterId, stats]: [string, any]) => {
+      const emptyStats: DifficultyStats = {
+        bestScore: 0,
+        bestRank: 'D',
+        levelsCompleted: 0,
+        totalPings: 0,
+        avgScore: 0,
+        totalTime: 0,
+        totalAttempts: 0,
+        successfulAttempts: 0,
+        perfectRounds: 0,
+        bestPingCount: Infinity,
+        fastestTime: Infinity,
+      };
+      
+      // Migrate old stats to challenge difficulty
+      newStats[parseInt(chapterId)] = {
+        completed: stats.completed || false,
+        completedAt: stats.completedAt,
+        unlockedBoons: stats.unlockedBoons || [],
+        
+        // Empty normal stats
+        normal: { ...emptyStats },
+        
+        // Move existing stats to challenge
+        challenge: {
+          bestScore: stats.bestScore || 0,
+          bestRank: 'D',
+          levelsCompleted: stats.levelsCompleted || 0,
+          totalPings: stats.totalPings || 0,
+          avgScore: stats.avgScore || 0,
+          totalTime: stats.totalTime || 0,
+          totalAttempts: stats.totalAttempts || 0,
+          successfulAttempts: stats.successfulAttempts || 0,
+          perfectRounds: stats.perfectRounds || 0,
+          bestPingCount: stats.bestPingCount || Infinity,
+          fastestTime: stats.fastestTime || Infinity,
+        },
+      };
+    });
+    
+    saveChapterStats(newStats);
+    localStorage.setItem('echo_stats_migrated_v2', 'true');
+  } catch (e) {
+    console.error('Migration failed:', e);
+    localStorage.setItem('echo_stats_migrated_v2', 'true');
+  }
 }
