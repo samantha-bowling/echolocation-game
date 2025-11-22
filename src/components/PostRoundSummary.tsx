@@ -452,13 +452,13 @@ export function PostRoundSummary({
               )}
               
               
-              {score.components.timeScore !== 0 && (
+              {score.components.timeScore !== 0 && (isCustomGame || difficulty === 'challenge') && (
               <ScoreBreakdownItem 
                 label="Time Score"
                 value={animatedTimeScore}
                 isPositive={score.components.timeScore > 0}
                   detail={`Completed in ${timeElapsed.toFixed(1)}s`}
-                  tooltip="Core scoring component based on completion speed. Fast times (<15s) add points, slow times (>40s) subtract points."
+                  tooltip="Core scoring component based on completion speed. Fast times (<15s) add points, slow times (>45s) subtract points. Only active in Challenge mode."
                 />
               )}
               

@@ -1,4 +1,4 @@
-import { Radio, Volume2 } from 'lucide-react';
+import { Radio, Volume2, Shield, Zap } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
 import { getChapterConfig } from '@/lib/game/chapters';
@@ -27,6 +27,7 @@ export interface GameStatsProps {
     level: number;
   };
   activeBoon?: Boon;
+  difficulty?: 'normal' | 'challenge';
 }
 
 export function GameStats({
@@ -40,6 +41,7 @@ export function GameStats({
   replaysAvailable,
   levelInfo,
   activeBoon,
+  difficulty,
 }: GameStatsProps) {
   const isMobile = useIsMobile();
   
@@ -87,7 +89,7 @@ export function GameStats({
               </div>
             </div>
 
-            {/* Center: Progress Bar + Active Boon */}
+            {/* Center: Progress Bar + Difficulty Badge + Active Boon */}
             <div className={cn(
               "space-y-2",
               isMobile ? "w-full" : "flex-1 max-w-md px-6"
@@ -106,15 +108,42 @@ export function GameStats({
                 />
               </div>
               
-              {/* Active Boon Indicator */}
-              {activeBoon && (
-                <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-                  <span className="text-lg">{activeBoon.icon}</span>
-                  <span>
-                    Active: <span className="text-foreground font-medium">{activeBoon.name}</span>
-                  </span>
-                </div>
-              )}
+              {/* Difficulty Badge + Active Boon Row */}
+              <div className="flex items-center justify-center gap-3">
+                {/* Difficulty Badge */}
+                {difficulty && (
+                  <div
+                    className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border"
+                    style={{
+                      background: difficulty === 'normal' ? 'rgba(59, 130, 246, 0.1)' : 'rgba(234, 179, 8, 0.1)',
+                      borderColor: difficulty === 'normal' ? 'rgba(59, 130, 246, 0.3)' : 'rgba(234, 179, 8, 0.3)',
+                      color: difficulty === 'normal' ? 'rgb(59, 130, 246)' : 'rgb(234, 179, 8)',
+                    }}
+                  >
+                    {difficulty === 'normal' ? (
+                      <>
+                        <Shield className="w-3 h-3" />
+                        <span>Normal</span>
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="w-3 h-3" />
+                        <span>Challenge</span>
+                      </>
+                    )}
+                  </div>
+                )}
+                
+                {/* Active Boon Indicator */}
+                {activeBoon && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span className="text-lg">{activeBoon.icon}</span>
+                    <span>
+                      <span className="text-foreground font-medium">{activeBoon.name}</span>
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Right: Badges with Overflow */}

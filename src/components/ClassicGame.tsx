@@ -557,6 +557,7 @@ export function ClassicGame() {
             level,
           }}
           activeBoon={activeBoons.length > 0 ? getBoonById(activeBoons[0]) : undefined}
+          difficulty={difficulty}
         />
       </div>
 
