@@ -115,6 +115,11 @@ export function PostRoundSummary({
 
   // Keyboard shortcuts for quick navigation
   useKeyboardShortcuts({
+    'escape': () => {
+      if (onClose) {
+        onClose();
+      }
+    },
     'n': () => {
       if (success || (isCustomGame && showNextButton)) {
         onNext();
