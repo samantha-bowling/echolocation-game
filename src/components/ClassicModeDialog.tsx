@@ -98,7 +98,7 @@ export function ClassicModeDialog({
                   <li>• Focus on accuracy without time pressure</li>
                   <li>• Timer displayed for reference only</li>
                   <li>• No boons available</li>
-                  <li>• B rank required to progress (700+ points)</li>
+                  <li>• B rank required to progress (500+ points)</li>
                 </ul>
               </>
             ) : (
