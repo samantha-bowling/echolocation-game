@@ -207,18 +207,18 @@ export const RANK_THRESHOLDS_NORMAL: RankInfo[] = [
 
 // Challenge Mode Rank Thresholds (higher due to time score bonus potential)
 export const RANK_THRESHOLDS_CHALLENGE: RankInfo[] = [
-  { rank: 'SS', threshold: 950 },
-  { rank: 'S+', threshold: 875 },
-  { rank: 'S', threshold: 825 },
-  { rank: 'S-', threshold: 775 },
-  { rank: 'A+', threshold: 725 },
-  { rank: 'A', threshold: 650 },    // Boss level requirement
-  { rank: 'A-', threshold: 600 },
-  { rank: 'B+', threshold: 550 },
-  { rank: 'B', threshold: 500 },    // Progression threshold
-  { rank: 'C+', threshold: 450 },
-  { rank: 'C', threshold: 375 },
-  { rank: 'C-', threshold: 300 },
+  { rank: 'SS', threshold: 1150 },
+  { rank: 'S+', threshold: 1075 },
+  { rank: 'S', threshold: 1025 },
+  { rank: 'S-', threshold: 975 },
+  { rank: 'A+', threshold: 925 },
+  { rank: 'A', threshold: 850 },    // Boss level requirement
+  { rank: 'A-', threshold: 800 },
+  { rank: 'B+', threshold: 750 },
+  { rank: 'B', threshold: 700 },    // Progression threshold
+  { rank: 'C+', threshold: 650 },
+  { rank: 'C', threshold: 575 },
+  { rank: 'C-', threshold: 500 },
   { rank: 'D', threshold: 0 },
 ];
 
