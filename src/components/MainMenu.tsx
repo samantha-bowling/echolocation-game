@@ -125,7 +125,7 @@ export function MainMenu() {
           className="fixed inset-0 z-0 flex items-center justify-center p-4 bg-background cursor-pointer overflow-hidden"
           onClick={() => setShowWhiskers(false)}
         >
-          <pre className="font-mono text-[3px] sm:text-[4px] md:text-[5px] lg:text-[6px] leading-[1.1] text-muted-foreground/40 select-none whitespace-pre overflow-hidden">
+          <pre className="font-mono text-[3px] sm:text-[4px] md:text-[5px] lg:text-[6px] leading-[1.1] text-muted-foreground/40 select-none whitespace-pre max-w-full overflow-hidden">
             {whiskersAscii.split('\n').slice(0, renderedLines).join('\n')}
           </pre>
         </div>

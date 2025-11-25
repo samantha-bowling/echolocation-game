@@ -459,7 +459,7 @@ export function Settings() {
                   <Button variant="outline" size="sm" onClick={() => runCalibrationTest('spatial3D')} className="justify-start">
                     {calibrationTests.spatial3D && <CheckCircle2 className="w-4 h-4 mr-2 text-primary" />}
                     <span className="flex-1 text-left">3D Positioning Test</span>
-                    <span className="ml-auto text-xs text-muted-foreground">
+                    <span className="ml-auto text-xs text-muted-foreground hidden sm:inline">
                       Front, Back, Above, Below
                     </span>
                   </Button>
