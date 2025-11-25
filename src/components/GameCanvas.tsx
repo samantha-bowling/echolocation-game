@@ -6,6 +6,7 @@ import { StoredPing } from '@/hooks/usePingSystem';
 import { ArrowRight, Volume2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { isCheatActive } from '@/lib/game/cheats';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface Ripple {
   id: number;
@@ -59,6 +60,7 @@ export function GameCanvas({
   const targetCenter = getTargetCenter(target);
   const [showRevealHint, setShowRevealHint] = useState(false);
   const [ripples, setRipples] = useState<Ripple[]>([]);
+  const isMobile = useIsMobile();
 
   // Add ripple effect when new ping is added
   useEffect(() => {
@@ -135,11 +137,13 @@ export function GameCanvas({
       <div
         ref={canvasRef}
         onClick={onCanvasClick}
-        className="relative bg-card border-2 border-border rounded-2xl shadow-lg overflow-hidden"
+        className="relative bg-card border-2 border-border rounded-2xl shadow-lg overflow-hidden select-none touch-manipulation"
         style={{
           width: arenaSize.width,
           height: arenaSize.height,
           cursor: gamePhase === 'placing' ? 'crosshair' : 'pointer',
+          overscrollBehavior: 'none',
+          touchAction: 'manipulation',
         }}
       >
         {/* Target Movement Indicator */}
@@ -297,15 +301,16 @@ export function GameCanvas({
                   }
                 }}
                 className={cn(
-                  "absolute w-6 h-6 rounded-full transition-all flex items-center justify-center text-xs font-bold",
+                  "absolute rounded-full transition-all flex items-center justify-center text-xs font-bold",
+                  isMobile ? "w-8 h-8" : "w-6 h-6",
                   isReplayable && gamePhase === 'pinging'
                     ? "cursor-pointer hover:scale-125 hover:border-2 hover:border-accent bg-primary/40"
                     : "bg-primary",
                   hasBeenReplayed && "ring-2 ring-accent ring-offset-1 ring-offset-background"
                 )}
                 style={{
-                  left: ping.position.x - 12,
-                  top: ping.position.y - 12,
+                  left: ping.position.x - (isMobile ? 16 : 12),
+                  top: ping.position.y - (isMobile ? 16 : 12),
                   opacity: 0.6 - (i / pingHistory.length) * 0.3,
                   animation: hasBeenReplayed ? 'pulse 1s ease-in-out' : 'none',
                 }}
