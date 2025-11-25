@@ -60,6 +60,11 @@ export function usePingSystem({
     const maxDistance = Math.max(arenaSize.width, arenaSize.height);
     audioEngine.playPing(clickPos, targetCenter, maxDistance);
 
+    // Haptic feedback on mobile
+    if ('vibrate' in navigator) {
+      navigator.vibrate(15);
+    }
+
     // Update counts
     if (!config || config.pingsMode === 'limited') {
       setPingsRemaining(prev => prev - 1);

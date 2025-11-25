@@ -18,10 +18,10 @@ const buttonVariants = cva(
         echo: "rounded-full bg-echo-ping text-primary-foreground hover:bg-echo-ping/90 shadow-[0_0_20px_hsl(var(--echo-ping)/0.3)] hover:shadow-[0_0_30px_hsl(var(--echo-ping)/0.5)] motion-smooth",
       },
       size: {
-        default: "h-10 px-4 py-2",
-        sm: "h-9 px-3",
+        default: "h-10 px-4 py-2 min-h-[44px]",
+        sm: "h-9 px-3 min-h-[44px]",
         lg: "h-11 px-8",
-        icon: "h-10 w-10",
+        icon: "h-10 w-10 min-h-[44px] min-w-[44px]",
       },
     },
     defaultVariants: {
