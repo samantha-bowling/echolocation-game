@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
@@ -27,10 +27,12 @@ import { useGamePhase } from '@/hooks/useGamePhase';
 import { useHintSystem } from '@/hooks/useHintSystem';
 import { calculateScore } from '@/lib/game/scoring';
 import { calculateProximity } from '@/lib/game/distance';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export function TutorialGame() {
   const navigate = useNavigate();
   const canvasRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
 
   const [tutorialState, setTutorialState] = useState<{
     currentStep: TutorialStep;
@@ -45,32 +47,57 @@ export function TutorialGame() {
     pingCount: 0,
     replaysUsed: 0,
   });
-  const [target] = useState(() =>
-    generateTargetPosition({ width: 800, height: 600 }, 100)
-  );
   const [demoPingsExperienced, setDemoPingsExperienced] = useState<Set<string>>(new Set());
   const [isModalMinimized, setIsModalMinimized] = useState(false);
 
-  const arenaSize = { width: 800, height: 600 };
+  // Responsive arena sizing
+  const arenaSize = useMemo(() => {
+    if (isMobile) {
+      const vw = Math.min(window.innerWidth - 32, 600);
+      const vh = Math.min(window.innerHeight - 400, vw * 0.75);
+      return { width: vw, height: vh };
+    }
+    return { width: 800, height: 600 };
+  }, [isMobile]);
+
+  // Generate target with responsive arena size
+  const [target, setTarget] = useState<any>(null);
+  
+  useEffect(() => {
+    if (arenaSize.width > 0 && !target) {
+      setTarget(generateTargetPosition(arenaSize, 100));
+    }
+  }, [arenaSize, target]);
   
   // Fixed reference target for audio-cues demo (center of arena)
-  const demoReferenceTarget = { x: 400, y: 300 };
+  const demoReferenceTarget = useMemo(() => ({
+    x: arenaSize.width / 2,
+    y: arenaSize.height / 2
+  }), [arenaSize]);
 
-  // Demo ping positions for audio-cues step - positioned to demonstrate spatial audio
-  // 8-ping system: 4 core positions + 4 combination positions
-  const demoPings = [
+  // Demo ping positions - using relative coordinates (0-1 scale) that scale with arena
+  const demoPingsRelative = [
     // Core positions (isolated cues)
-    { id: 'left-close', position: { x: 300, y: 300 }, label: 'LEFT & CLOSE', description: 'Loud, left speaker' },
-    { id: 'right-far', position: { x: 700, y: 300 }, label: 'RIGHT & FAR', description: 'Quiet, right speaker' },
-    { id: 'center-top', position: { x: 400, y: 450 }, label: 'TARGET ABOVE', description: 'Sound travels up, higher pitch' },
-    { id: 'center-bottom', position: { x: 400, y: 150 }, label: 'TARGET BELOW', description: 'Sound travels down, lower pitch' },
+    { id: 'left-close', relX: 0.375, relY: 0.5, label: 'LEFT & CLOSE', description: 'Loud, left speaker' },
+    { id: 'right-far', relX: 0.875, relY: 0.5, label: 'RIGHT & FAR', description: 'Quiet, right speaker' },
+    { id: 'center-top', relX: 0.5, relY: 0.75, label: 'TARGET ABOVE', description: 'Sound travels up, higher pitch' },
+    { id: 'center-bottom', relX: 0.5, relY: 0.25, label: 'TARGET BELOW', description: 'Sound travels down, lower pitch' },
     
     // Combination positions (teaching how cues combine)
-    { id: 'top-left', position: { x: 300, y: 150 }, label: 'TOP-LEFT', description: 'Left speaker, lower pitch, medium volume' },
-    { id: 'top-right-far', position: { x: 650, y: 150 }, label: 'TOP-RIGHT & FAR', description: 'Right speaker, lower pitch, quieter' },
-    { id: 'bottom-left-close', position: { x: 320, y: 450 }, label: 'BOTTOM-LEFT & CLOSE', description: 'Left speaker, higher pitch, louder' },
-    { id: 'bottom-right', position: { x: 600, y: 450 }, label: 'BOTTOM-RIGHT', description: 'Right speaker, higher pitch, medium volume' },
+    { id: 'top-left', relX: 0.375, relY: 0.25, label: 'TOP-LEFT', description: 'Left speaker, lower pitch, medium volume' },
+    { id: 'top-right-far', relX: 0.8125, relY: 0.25, label: 'TOP-RIGHT & FAR', description: 'Right speaker, lower pitch, quieter' },
+    { id: 'bottom-left-close', relX: 0.4, relY: 0.75, label: 'BOTTOM-LEFT & CLOSE', description: 'Left speaker, higher pitch, louder' },
+    { id: 'bottom-right', relX: 0.75, relY: 0.75, label: 'BOTTOM-RIGHT', description: 'Right speaker, higher pitch, medium volume' },
   ];
+
+  // Calculate actual positions based on arena size
+  const demoPings = useMemo(() => 
+    demoPingsRelative.map(ping => ({
+      ...ping,
+      position: { x: ping.relX * arenaSize.width, y: ping.relY * arenaSize.height }
+    })),
+    [arenaSize]
+  );
 
   const { gamePhase, finalGuess, setFinalGuess, handlePlaceFinalGuess, resetPhase } = useGamePhase();
   const { elapsedTime, finalTime, resetTimer, startTimer } = useGameTimer({
