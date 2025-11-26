@@ -294,7 +294,7 @@ export function TutorialGame() {
   };
 
   // Calculate actual score when on scoring step
-  const actualProximity = finalGuess 
+  const actualProximity = finalGuess && target
     ? calculateProximity(
         finalGuess,
         getTargetCenter(target),
@@ -314,6 +314,15 @@ export function TutorialGame() {
         false // hintUsed (tutorial doesn't penalize hints)
       )
     : null;
+
+  // Loading guard while target is being generated
+  if (!target) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-muted-foreground">Loading tutorial...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start p-6 pb-80 echo-dots">
