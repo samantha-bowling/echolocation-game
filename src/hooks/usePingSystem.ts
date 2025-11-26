@@ -41,6 +41,9 @@ export function usePingSystem({
   const [replaysUsed, setReplaysUsed] = useState(0);
 
   const handlePing = (clickPos: Position) => {
+    // Guard against null target
+    if (!target) return false;
+    
     // Check ping limit (unless unlimited)
     if (config?.pingsMode === 'limited' && pingsRemaining <= 0) return false;
     if (!config && pingsRemaining <= 0) return false;
