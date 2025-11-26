@@ -452,7 +452,7 @@ export function ClassicGame() {
         }}
         onQuit={() => {
           setIsPaused(false);
-          navigate('/chapters');
+          navigate('/');
         }}
         currentLevel={level}
         currentChapter={chapter}
