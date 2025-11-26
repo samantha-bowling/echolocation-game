@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Lightbulb, BarChart3, Sparkles } from 'lucide-react';
+import { Pause, Lightbulb, BarChart3, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { generateTargetPosition, getTargetCenter, Position, PhantomTarget, generatePhantomTargets } from '@/lib/game/coords';
 import { calculateProximity } from '@/lib/game/distance';
@@ -89,7 +89,8 @@ export function ClassicGame() {
   const { elapsedTime, finalTime, resetTimer, unfreezeTimer, startTimer } = useGameTimer({ 
     enabled: true, 
     gamePhase,
-    startOnFirstPing: true
+    startOnFirstPing: true,
+    paused: isPaused
   });
   
   // Boons only available in Challenge mode
@@ -456,6 +457,9 @@ export function ClassicGame() {
         currentLevel={level}
         currentChapter={chapter}
         activeBoon={activeBoons[0] ? getBoonById(activeBoons[0])?.name : undefined}
+        pingsUsed={pingsUsed}
+        pingsRemaining={pingsRemaining}
+        elapsedTime={elapsedTime}
       />
 
       {/* Chapter Intro Modal */}
@@ -505,12 +509,12 @@ export function ClassicGame() {
       <div className="w-full p-3 md:p-4 space-y-3 flex-shrink-0">
         {/* Row 1: Navigation + Actions */}
         <div className="flex items-center justify-between">
-          {/* Menu Button */}
+          {/* Pause Button */}
           <button
-            onClick={() => navigate('/chapters')}
+            onClick={() => setIsPaused(true)}
             className="flat-card p-2 hover:bg-accent/20 transition-all"
           >
-            <ArrowLeft className="w-5 h-5 text-foreground" />
+            <Pause className="w-5 h-5 text-foreground" />
           </button>
 
           {/* Action Buttons */}

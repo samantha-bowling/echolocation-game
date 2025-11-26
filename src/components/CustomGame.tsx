@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Radio, Settings as SettingsIcon, Check, Save, Users } from 'lucide-react';
+import { Pause, Radio, Settings as SettingsIcon, Check, Save, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { CustomGameConfig, DEFAULT_CUSTOM_CONFIG, getArenaDimensions } from '@/lib/game/customConfig';
 import { generateTargetPosition, getTargetCenter, Position, Target } from '@/lib/game/coords';
@@ -128,7 +128,8 @@ export function CustomGame() {
   const { elapsedTime, finalTime, resetTimer, startTimer } = useGameTimer({ 
     enabled: config.timerEnabled, 
     gamePhase,
-    startOnFirstPing: true
+    startOnFirstPing: true,
+    paused: isPaused
   });
   
   const handleTargetMove = (newTarget: Target) => {
@@ -598,15 +599,22 @@ export function CustomGame() {
           setIsPaused(false);
           handleQuitGame();
         }}
+        isCustomMode={true}
+        onSave={handleManualSave}
+        currentRound={currentRound}
+        totalRounds={config.numberOfRounds === -1 ? undefined : config.numberOfRounds}
+        pingsUsed={pingsUsed}
+        pingsRemaining={pingsRemaining}
+        elapsedTime={elapsedTime}
       />
 
       <header className="border-b border-border p-4">
         <div className={cn("mx-auto relative", isMobile ? "max-w-full" : "max-w-6xl")}>
           <div className="flex items-center justify-between">
-            {/* Left: Save & Menu */}
-            <Button variant="ghost" size="sm" onClick={handleQuitGame} className="hover-lift">
-              <Save className="w-4 h-4" />
-              {!isMobile && <span className="ml-2">Save & Menu</span>}
+            {/* Left: Pause Button */}
+            <Button variant="ghost" size="sm" onClick={() => setIsPaused(true)} className="hover-lift">
+              <Pause className="w-4 h-4" />
+              {!isMobile && <span className="ml-2">Pause</span>}
             </Button>
             
             {/* Center: Game Title */}
