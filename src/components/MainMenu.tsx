@@ -6,7 +6,9 @@ import { isTutorialCompleted } from '@/lib/game/tutorial';
 import { ClassicModeDialog } from '@/components/ClassicModeDialog';
 import { isCheatActive } from '@/lib/game/cheats';
 import { cn } from '@/lib/utils';
+import { useTheme } from 'next-themes';
 export function MainMenu() {
+  const { resolvedTheme } = useTheme();
   const [hasSave, setHasSave] = useState(false);
   const [saveDetails, setSaveDetails] = useState<{
     level: number;
@@ -72,13 +74,14 @@ export function MainMenu() {
   // Store ASCII art content
   const [whiskersAscii, setWhiskersAscii] = useState('');
 
-  // Load ASCII art on mount
+  // Load ASCII art on mount and when theme changes
   useEffect(() => {
-    fetch('/whiskers.txt')
+    const filename = resolvedTheme === 'light' ? '/whiskers.txt' : '/whiskers-invert.txt';
+    fetch(filename)
       .then(res => res.text())
       .then(text => setWhiskersAscii(text))
       .catch(() => setWhiskersAscii(''));
-  }, []);
+  }, [resolvedTheme]);
 
   // Implement line-by-line animation
   const ENABLE_TYPEWRITER = true;
