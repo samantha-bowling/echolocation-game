@@ -1,6 +1,7 @@
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Play, RotateCcw, Settings, LogOut } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { Play, RotateCcw, Settings, LogOut, Save, Radio, Clock } from 'lucide-react';
 
 interface PauseMenuProps {
   open: boolean;
@@ -8,9 +9,16 @@ interface PauseMenuProps {
   onRestart: () => void;
   onSettings: () => void;
   onQuit: () => void;
+  onSave?: () => void;
   currentLevel?: number;
   currentChapter?: number;
+  currentRound?: number;
+  totalRounds?: number;
   activeBoon?: string;
+  pingsUsed?: number;
+  pingsRemaining?: number;
+  elapsedTime?: number;
+  isCustomMode?: boolean;
 }
 
 export function PauseMenu({ 
@@ -19,17 +27,34 @@ export function PauseMenu({
   onRestart, 
   onSettings, 
   onQuit,
+  onSave,
   currentLevel,
   currentChapter,
-  activeBoon 
+  currentRound,
+  totalRounds,
+  activeBoon,
+  pingsUsed,
+  pingsRemaining,
+  elapsedTime,
+  isCustomMode = false,
 }: PauseMenuProps) {
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onResume()}>
       <DialogContent className="sm:max-w-md">
         <div className="space-y-6">
           <div className="text-center space-y-2">
             <h2 className="text-2xl font-display font-bold">Game Paused</h2>
-            {currentLevel && currentChapter && (
+            {isCustomMode && currentRound && (
+              <p className="text-muted-foreground">
+                Round {currentRound}{totalRounds ? ` of ${totalRounds}` : ' • Cozy Mode'}
+              </p>
+            )}
+            {!isCustomMode && currentLevel && currentChapter && (
               <p className="text-muted-foreground">
                 Chapter {currentChapter} • Level {currentLevel}
               </p>
@@ -38,10 +63,40 @@ export function PauseMenu({
               <p className="text-sm text-primary">Active Boon: {activeBoon}</p>
             )}
           </div>
+
+          {/* Current Stats Display */}
+          {(pingsUsed !== undefined || elapsedTime !== undefined) && (
+            <>
+              <Separator />
+              <div className="grid grid-cols-3 gap-3 text-center">
+                {pingsUsed !== undefined && pingsRemaining !== undefined && (
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-center gap-1 text-muted-foreground text-xs">
+                      <Radio className="w-3 h-3" />
+                      <span>Pings</span>
+                    </div>
+                    <p className="text-lg font-semibold">
+                      {pingsUsed}{pingsRemaining === Infinity ? '' : `/${pingsUsed + pingsRemaining}`}
+                    </p>
+                  </div>
+                )}
+                {elapsedTime !== undefined && (
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-center gap-1 text-muted-foreground text-xs">
+                      <Clock className="w-3 h-3" />
+                      <span>Time</span>
+                    </div>
+                    <p className="text-lg font-semibold">{formatTime(elapsedTime)}</p>
+                  </div>
+                )}
+              </div>
+              <Separator />
+            </>
+          )}
           
           <div className="space-y-2">
             <Button 
-              className="w-full" 
+              className="w-full min-h-[48px]" 
               size="lg"
               onClick={onResume}
             >
@@ -50,16 +105,30 @@ export function PauseMenu({
             </Button>
             
             <Button 
-              className="w-full" 
+              className="w-full min-h-[48px]" 
               variant="outline"
               onClick={onRestart}
             >
               <RotateCcw className="w-4 h-4 mr-2" />
-              Restart Level
+              {isCustomMode ? 'Restart Game' : 'Restart Level'}
             </Button>
+
+            {isCustomMode && onSave && (
+              <Button 
+                className="w-full min-h-[48px]" 
+                variant="outline"
+                onClick={() => {
+                  onSave();
+                  onResume();
+                }}
+              >
+                <Save className="w-4 h-4 mr-2" />
+                Save Progress
+              </Button>
+            )}
             
             <Button 
-              className="w-full" 
+              className="w-full min-h-[48px]" 
               variant="outline"
               onClick={onSettings}
             >
@@ -68,7 +137,7 @@ export function PauseMenu({
             </Button>
             
             <Button 
-              className="w-full" 
+              className="w-full min-h-[48px]" 
               variant="destructive"
               onClick={onQuit}
             >
