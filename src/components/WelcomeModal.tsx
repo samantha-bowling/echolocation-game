@@ -259,37 +259,37 @@ export const WelcomeModal = ({ open, onOpenChange, onClassicMode }: WelcomeModal
                 </div>
               </CarouselItem>
             </CarouselContent>
-          </Carousel>
 
-          {/* Single unified navigation footer */}
-          <div className="flex flex-col items-center gap-3 p-6 border-t border-border">
-            <div className="flex items-center justify-center gap-6">
-              <CarouselPrevious 
-                className="!static !transform-none disabled:opacity-0"
-                disabled={currentSlide === 0}
-              />
-              <div className="flex items-center gap-2">
-                {[0, 1, 2].map((index) => (
-                  <div 
-                    key={index}
-                    className={`w-2 h-2 rounded-full transition-colors ${
-                      currentSlide === index ? 'bg-primary' : 'bg-muted'
-                    }`}
-                  />
-                ))}
+            {/* Single unified navigation footer */}
+            <div className="flex flex-col items-center gap-3 p-6 border-t border-border">
+              <div className="flex items-center justify-center gap-6">
+                <CarouselPrevious 
+                  className="!static !transform-none disabled:opacity-0"
+                  disabled={currentSlide === 0}
+                />
+                <div className="flex items-center gap-2">
+                  {[0, 1, 2].map((index) => (
+                    <div 
+                      key={index}
+                      className={`w-2 h-2 rounded-full transition-colors ${
+                        currentSlide === index ? 'bg-primary' : 'bg-muted'
+                      }`}
+                    />
+                  ))}
+                </div>
+                <CarouselNext 
+                  className="!static !transform-none disabled:opacity-0"
+                  disabled={currentSlide === 2}
+                />
               </div>
-              <CarouselNext 
-                className="!static !transform-none disabled:opacity-0"
-                disabled={currentSlide === 2}
-              />
+              <button
+                onClick={() => handleClose()}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Skip for now
+              </button>
             </div>
-            <button
-              onClick={() => handleClose()}
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Skip for now
-            </button>
-          </div>
+          </Carousel>
         </div>
       </DialogContent>
     </Dialog>
