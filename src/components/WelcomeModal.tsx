@@ -64,22 +64,22 @@ export const WelcomeModal = ({ open, onOpenChange, onClassicMode }: WelcomeModal
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && handleClose()}>
       <DialogContent className="max-w-2xl p-0 overflow-visible [&>button]:hidden">
-        <Carousel 
-          className="w-full"
-          opts={{ loop: false }}
-          setApi={(api) => {
-            if (!api) return;
-            setCurrentSlide(api.selectedScrollSnap());
-            api.on('select', () => {
+        <div className="flex flex-col">
+          <Carousel 
+            className="w-full"
+            opts={{ loop: false }}
+            setApi={(api) => {
+              if (!api) return;
               setCurrentSlide(api.selectedScrollSnap());
-            });
-          }}
-        >
-          <CarouselContent>
-            {/* Slide 1: Welcome & Introduction */}
-            <CarouselItem>
-              <div className="p-8 space-y-6 min-h-[500px] flex flex-col">
-                <div className="flex-1 space-y-6">
+              api.on('select', () => {
+                setCurrentSlide(api.selectedScrollSnap());
+              });
+            }}
+          >
+            <CarouselContent>
+              {/* Slide 1: Welcome & Introduction */}
+              <CarouselItem>
+                <div className="p-8 space-y-6">
                   <div className="text-center space-y-3">
                     <h2 className="text-3xl font-bold text-foreground">
                       Welcome to echo)))location
@@ -100,36 +100,11 @@ export const WelcomeModal = ({ open, onOpenChange, onClassicMode }: WelcomeModal
                     </p>
                   </div>
                 </div>
+              </CarouselItem>
 
-                {/* Navigation footer */}
-                <div className="flex flex-col items-center gap-3 pt-4">
-                  <div className="flex items-center justify-center gap-6">
-                    {currentSlide > 0 && (
-                      <CarouselPrevious className="!static !transform-none" />
-                    )}
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-primary"></div>
-                      <div className="w-2 h-2 rounded-full bg-muted"></div>
-                      <div className="w-2 h-2 rounded-full bg-muted"></div>
-                    </div>
-                    {currentSlide < 2 && (
-                      <CarouselNext className="!static !transform-none" />
-                    )}
-                  </div>
-                  <button
-                    onClick={() => handleClose()}
-                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    Skip for now
-                  </button>
-                </div>
-              </div>
-            </CarouselItem>
-
-            {/* Slide 2: How It Works */}
-            <CarouselItem>
-              <div className="p-8 space-y-6 min-h-[500px] flex flex-col">
-                <div className="flex-1 space-y-6">
+              {/* Slide 2: How It Works */}
+              <CarouselItem>
+                <div className="p-8 space-y-6">
                   <div className="text-center space-y-2">
                     <h2 className="text-2xl font-bold text-foreground">
                       How Echolocation Works
@@ -188,36 +163,11 @@ export const WelcomeModal = ({ open, onOpenChange, onClassicMode }: WelcomeModal
                     </div>
                   </div>
                 </div>
+              </CarouselItem>
 
-                {/* Navigation footer */}
-                <div className="flex flex-col items-center gap-3 pt-4">
-                  <div className="flex items-center justify-center gap-6">
-                    {currentSlide > 0 && (
-                      <CarouselPrevious className="!static !transform-none" />
-                    )}
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-muted"></div>
-                      <div className="w-2 h-2 rounded-full bg-primary"></div>
-                      <div className="w-2 h-2 rounded-full bg-muted"></div>
-                    </div>
-                    {currentSlide < 2 && (
-                      <CarouselNext className="!static !transform-none" />
-                    )}
-                  </div>
-                  <button
-                    onClick={() => handleClose()}
-                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    Skip for now
-                  </button>
-                </div>
-              </div>
-            </CarouselItem>
-
-            {/* Slide 3: Setup & Get Started */}
-            <CarouselItem>
-              <div className="p-8 space-y-6 min-h-[500px] flex flex-col">
-                <div className="flex-1 space-y-6">
+              {/* Slide 3: Setup & Get Started */}
+              <CarouselItem>
+                <div className="p-8 space-y-6">
                   <div className="text-center space-y-2">
                     <h2 className="text-2xl font-bold text-foreground">
                       Ready to Begin?
@@ -307,33 +257,40 @@ export const WelcomeModal = ({ open, onOpenChange, onClassicMode }: WelcomeModal
                     </label>
                   </div>
                 </div>
+              </CarouselItem>
+            </CarouselContent>
+          </Carousel>
 
-                {/* Navigation footer */}
-                <div className="flex flex-col items-center gap-3 pt-4">
-                  <div className="flex items-center justify-center gap-6">
-                    {currentSlide > 0 && (
-                      <CarouselPrevious className="!static !transform-none" />
-                    )}
-                    <div className="flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-muted"></div>
-                      <div className="w-2 h-2 rounded-full bg-muted"></div>
-                      <div className="w-2 h-2 rounded-full bg-primary"></div>
-                    </div>
-                    {currentSlide < 2 && (
-                      <CarouselNext className="!static !transform-none" />
-                    )}
-                  </div>
-                  <button
-                    onClick={() => handleClose()}
-                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    Skip for now
-                  </button>
-                </div>
+          {/* Single unified navigation footer */}
+          <div className="flex flex-col items-center gap-3 p-6 border-t border-border">
+            <div className="flex items-center justify-center gap-6">
+              <CarouselPrevious 
+                className="!static !transform-none disabled:opacity-0"
+                disabled={currentSlide === 0}
+              />
+              <div className="flex items-center gap-2">
+                {[0, 1, 2].map((index) => (
+                  <div 
+                    key={index}
+                    className={`w-2 h-2 rounded-full transition-colors ${
+                      currentSlide === index ? 'bg-primary' : 'bg-muted'
+                    }`}
+                  />
+                ))}
               </div>
-            </CarouselItem>
-          </CarouselContent>
-        </Carousel>
+              <CarouselNext 
+                className="!static !transform-none disabled:opacity-0"
+                disabled={currentSlide === 2}
+              />
+            </div>
+            <button
+              onClick={() => handleClose()}
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Skip for now
+            </button>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
