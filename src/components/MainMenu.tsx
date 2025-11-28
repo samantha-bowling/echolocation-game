@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { isTutorialCompleted } from '@/lib/game/tutorial';
 import { ClassicModeDialog } from '@/components/ClassicModeDialog';
+import { WelcomeModal } from '@/components/WelcomeModal';
 import { isCheatActive } from '@/lib/game/cheats';
 import { cn } from '@/lib/utils';
 import { useTheme } from 'next-themes';
@@ -16,6 +17,7 @@ export function MainMenu() {
   } | null>(null);
   const [tutorialCompleted, setTutorialCompleted] = useState(true);
   const [showClassicDialog, setShowClassicDialog] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
   const [whiskersActive, setWhiskersActive] = useState(false);
   const [showWhiskers, setShowWhiskers] = useState(false);
   const [renderedLines, setRenderedLines] = useState(0);
@@ -26,6 +28,13 @@ export function MainMenu() {
   useEffect(() => {
     // Check tutorial status
     setTutorialCompleted(isTutorialCompleted());
+
+    // Check if welcome modal should be shown (first-time users only)
+    const welcomeShown = localStorage.getItem('echo_welcome_shown');
+    const welcomeDismissed = localStorage.getItem('echo_welcome_dismissed');
+    if (!welcomeShown && !welcomeDismissed) {
+      setShowWelcome(true);
+    }
 
     // Check localStorage for existing save (temporary until Supabase is connected)
     const savedProgress = localStorage.getItem('echo_classic_progress');
@@ -241,6 +250,13 @@ export function MainMenu() {
         {/* Footer */}
         
       </div>
+
+      {/* Welcome Modal */}
+      <WelcomeModal
+        open={showWelcome}
+        onOpenChange={setShowWelcome}
+        onClassicMode={() => setShowClassicDialog(true)}
+      />
 
       {/* Classic Mode Dialog */}
       <ClassicModeDialog
