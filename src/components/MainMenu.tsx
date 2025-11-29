@@ -4,9 +4,12 @@ import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import { isTutorialCompleted } from '@/lib/game/tutorial';
 import { ClassicModeDialog } from '@/components/ClassicModeDialog';
+import { WelcomeModal } from '@/components/WelcomeModal';
 import { isCheatActive } from '@/lib/game/cheats';
 import { cn } from '@/lib/utils';
 import { useTheme } from 'next-themes';
+
+const WELCOME_SEEN_KEY = 'echo_welcome_seen';
 export function MainMenu() {
   const { resolvedTheme } = useTheme();
   const [hasSave, setHasSave] = useState(false);
@@ -19,9 +22,17 @@ export function MainMenu() {
   const [whiskersActive, setWhiskersActive] = useState(false);
   const [showWhiskers, setShowWhiskers] = useState(false);
   const [renderedLines, setRenderedLines] = useState(0);
+  const [showWelcome, setShowWelcome] = useState(() => {
+    return localStorage.getItem(WELCOME_SEEN_KEY) !== 'true';
+  });
 
   const handleNewRun = () => {
     localStorage.setItem('echo_reset_classic', 'true');
+  };
+
+  const handleWelcomeComplete = () => {
+    localStorage.setItem(WELCOME_SEEN_KEY, 'true');
+    setShowWelcome(false);
   };
   useEffect(() => {
     // Check tutorial status
@@ -241,6 +252,13 @@ export function MainMenu() {
         {/* Footer */}
         
       </div>
+
+      {/* Welcome Modal */}
+      <WelcomeModal
+        open={showWelcome}
+        onOpenChange={setShowWelcome}
+        onComplete={handleWelcomeComplete}
+      />
 
       {/* Classic Mode Dialog */}
       <ClassicModeDialog
