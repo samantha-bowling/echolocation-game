@@ -36,7 +36,7 @@ export interface GameCanvasProps {
   chapter?: number; // Classic mode chapter (undefined for Custom/Tutorial)
 }
 
-export function GameCanvas({
+export const GameCanvas = memo(function GameCanvas({
   arenaSize,
   target,
   pingHistory,
