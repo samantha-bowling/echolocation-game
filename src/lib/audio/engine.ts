@@ -405,8 +405,24 @@ export class AudioEngine {
         echoOsc.start(echoStart);
         echoGain.gain.exponentialRampToValueAtTime(0.01, echoStart + echoDuration);
         echoOsc.stop(echoStart + echoDuration);
+        
+        // Cleanup echo nodes after they finish
+        echoOsc.onended = () => {
+          echoOsc.disconnect();
+          echoGain.disconnect();
+          echoPanner.disconnect();
+        };
       }
     }
+    
+    // Cleanup main nodes after they finish
+    oscillator.onended = () => {
+      oscillator.disconnect();
+      gainNode.disconnect();
+      panner.disconnect();
+      if (filterNode) filterNode.disconnect();
+      if (noiseSource) noiseSource.disconnect();
+    };
   }
 
   /**
@@ -532,7 +548,21 @@ export class AudioEngine {
       echoOsc.start(echoStart);
       echoGain.gain.exponentialRampToValueAtTime(0.01, echoStart + echoDuration);
       echoOsc.stop(echoStart + echoDuration);
+      
+      // Cleanup echo nodes
+      echoOsc.onended = () => {
+        echoOsc.disconnect();
+        echoGain.disconnect();
+        if (echoFilter) echoFilter.disconnect();
+      };
     }
+    
+    // Cleanup main nodes
+    oscillator.onended = () => {
+      oscillator.disconnect();
+      gainNode.disconnect();
+      if (filterNode) filterNode.disconnect();
+    };
   }
 
   /**
@@ -557,6 +587,11 @@ export class AudioEngine {
     
     oscillator.start(now);
     oscillator.stop(now + 0.4);
+    
+    oscillator.onended = () => {
+      oscillator.disconnect();
+      gainNode.disconnect();
+    };
   }
 
   /**
@@ -581,6 +616,11 @@ export class AudioEngine {
     
     oscillator.start(now);
     oscillator.stop(now + 0.3);
+    
+    oscillator.onended = () => {
+      oscillator.disconnect();
+      gainNode.disconnect();
+    };
   }
 
   cleanup() {

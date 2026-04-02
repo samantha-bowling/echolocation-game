@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, memo } from 'react';
 import { Position, Target, getTargetCenter, PhantomTarget } from '@/lib/game/coords';
 import { Hint } from '@/lib/game/hints';
 import { GamePhase } from '@/hooks/useGamePhase';
@@ -36,7 +36,7 @@ export interface GameCanvasProps {
   chapter?: number; // Classic mode chapter (undefined for Custom/Tutorial)
 }
 
-export function GameCanvas({
+export const GameCanvas = memo(function GameCanvas({
   arenaSize,
   target,
   pingHistory,
@@ -285,62 +285,76 @@ export function GameCanvas({
           />
         ))}
 
-        {/* Ping History */}
+        {/* Consolidated SVG overlay for all connecting lines */}
+        {showPingLocations && pingHistory.length > 1 && (
+          <svg
+            className="absolute inset-0 pointer-events-none"
+            style={{ width: '100%', height: '100%' }}
+          >
+            {pingHistory.slice(0, -1).map((ping, i) => (
+              <line
+                key={i}
+                x1={ping.position.x}
+                y1={ping.position.y}
+                x2={pingHistory[i + 1].position.x}
+                y2={pingHistory[i + 1].position.y}
+                stroke="hsl(var(--primary))"
+                strokeWidth="1"
+                strokeOpacity="0.3"
+                strokeDasharray="4 4"
+              />
+            ))}
+            {/* Guess-to-target line */}
+            {(gameState === 'summary' || gameState === 'round-transition') && finalGuess && (
+              <line
+                x1={finalGuess.x}
+                y1={finalGuess.y}
+                x2={targetCenter.x}
+                y2={targetCenter.y}
+                stroke="hsl(var(--accent))"
+                strokeWidth="2"
+                strokeDasharray="6 3"
+              />
+            )}
+          </svg>
+        )}
+
+        {/* Ping History markers */}
         {showPingLocations && pingHistory.map((ping, i) => {
           const isReplayable = onPingReplay && (replaysRemaining === undefined || replaysRemaining === -1 || replaysRemaining > 0);
           const hasBeenReplayed = ping.isReplayed;
           
           return (
-            <div key={i}>
-              {/* Ping marker */}
-              <div
-                onClick={(e) => {
-                  if (isReplayable && gamePhase === 'pinging') {
-                    e.stopPropagation();
-                    onPingReplay(i);
-                  }
-                }}
-                className={cn(
-                  "absolute rounded-full transition-all flex items-center justify-center text-xs font-bold",
-                  isMobile ? "w-8 h-8" : "w-6 h-6",
-                  isReplayable && gamePhase === 'pinging'
-                    ? "cursor-pointer hover:scale-125 hover:border-2 hover:border-accent bg-primary/40"
-                    : "bg-primary",
-                  hasBeenReplayed && "ring-2 ring-accent ring-offset-1 ring-offset-background"
-                )}
-                style={{
-                  left: ping.position.x - (isMobile ? 16 : 12),
-                  top: ping.position.y - (isMobile ? 16 : 12),
-                  opacity: 0.6 - (i / pingHistory.length) * 0.3,
-                  animation: hasBeenReplayed ? 'pulse 1s ease-in-out' : 'none',
-                }}
-                title={isReplayable ? 'Click to replay ping' : undefined}
-              >
-                {isReplayable && gamePhase === 'pinging' ? (
-                  <Volume2 className="w-3 h-3 text-primary-foreground" />
-                ) : (
-                  <span className="text-primary-foreground">{i + 1}</span>
-                )}
-                <div className="absolute inset-0 rounded-full bg-primary/30 animate-ping-fade" />
-              </div>
-              {/* Connecting line to next ping */}
-              {i < pingHistory.length - 1 && (
-                <svg
-                  className="absolute inset-0 pointer-events-none"
-                  style={{ width: '100%', height: '100%' }}
-                >
-                  <line
-                    x1={ping.position.x}
-                    y1={ping.position.y}
-                    x2={pingHistory[i + 1].position.x}
-                    y2={pingHistory[i + 1].position.y}
-                    stroke="hsl(var(--primary))"
-                    strokeWidth="1"
-                    strokeOpacity="0.3"
-                    strokeDasharray="4 4"
-                  />
-                </svg>
+            <div
+              key={i}
+              onClick={(e) => {
+                if (isReplayable && gamePhase === 'pinging') {
+                  e.stopPropagation();
+                  onPingReplay(i);
+                }
+              }}
+              className={cn(
+                "absolute rounded-full transition-all flex items-center justify-center text-xs font-bold",
+                isMobile ? "w-8 h-8" : "w-6 h-6",
+                isReplayable && gamePhase === 'pinging'
+                  ? "cursor-pointer hover:scale-125 hover:border-2 hover:border-accent bg-primary/40"
+                  : "bg-primary",
+                hasBeenReplayed && "ring-2 ring-accent ring-offset-1 ring-offset-background"
               )}
+              style={{
+                left: ping.position.x - (isMobile ? 16 : 12),
+                top: ping.position.y - (isMobile ? 16 : 12),
+                opacity: 0.6 - (i / pingHistory.length) * 0.3,
+                animation: hasBeenReplayed ? 'pulse 1s ease-in-out' : 'none',
+              }}
+              title={isReplayable ? 'Click to replay ping' : undefined}
+            >
+              {isReplayable && gamePhase === 'pinging' ? (
+                <Volume2 className="w-3 h-3 text-primary-foreground" />
+              ) : (
+                <span className="text-primary-foreground">{i + 1}</span>
+              )}
+              <div className="absolute inset-0 rounded-full bg-primary/30 animate-ping-fade" />
             </div>
           );
         })}
@@ -367,10 +381,9 @@ export function GameCanvas({
           </div>
         )}
 
-        {/* Show target after guess is confirmed (for debugging/reveal) */}
+        {/* Show target after guess is confirmed */}
         {(gameState === 'summary' || gameState === 'round-transition') && (
           <>
-            {/* Real Target circle */}
             <div
               className="absolute rounded-full border-2 border-accent bg-accent/20"
               style={{
@@ -380,7 +393,6 @@ export function GameCanvas({
                 height: target.size,
               }}
             />
-            {/* REAL label */}
             <div
               className="absolute text-xs font-semibold text-accent px-2 py-1 bg-accent/80 rounded"
               style={{
@@ -390,26 +402,9 @@ export function GameCanvas({
             >
               REAL
             </div>
-            {/* Line from guess to target */}
-            {finalGuess && (
-              <svg
-                className="absolute inset-0 pointer-events-none"
-                style={{ width: '100%', height: '100%' }}
-              >
-                <line
-                  x1={finalGuess.x}
-                  y1={finalGuess.y}
-                  x2={targetCenter.x}
-                  y2={targetCenter.y}
-                  stroke="hsl(var(--accent))"
-                  strokeWidth="2"
-                  strokeDasharray="6 3"
-                />
-              </svg>
-            )}
           </>
         )}
       </div>
     </div>
   );
-}
+});
