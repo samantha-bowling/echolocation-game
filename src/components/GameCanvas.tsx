@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, memo } from 'react';
 import { Position, Target, getTargetCenter, PhantomTarget } from '@/lib/game/coords';
 import { Hint } from '@/lib/game/hints';
 import { GamePhase } from '@/hooks/useGamePhase';
