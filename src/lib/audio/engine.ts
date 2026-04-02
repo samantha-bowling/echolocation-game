@@ -587,6 +587,11 @@ export class AudioEngine {
     
     oscillator.start(now);
     oscillator.stop(now + 0.4);
+    
+    oscillator.onended = () => {
+      oscillator.disconnect();
+      gainNode.disconnect();
+    };
   }
 
   /**
@@ -611,6 +616,11 @@ export class AudioEngine {
     
     oscillator.start(now);
     oscillator.stop(now + 0.3);
+    
+    oscillator.onended = () => {
+      oscillator.disconnect();
+      gainNode.disconnect();
+    };
   }
 
   cleanup() {

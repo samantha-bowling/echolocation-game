@@ -407,4 +407,4 @@ export const GameCanvas = memo(function GameCanvas({
       </div>
     </div>
   );
-}
+});
