@@ -115,7 +115,8 @@ const App = () => {
                 v7_relativeSplatPath: true,
               }}
             >
-              <ImportHandler />
+            <ImportHandler />
+              <Suspense fallback={<div className="min-h-screen bg-background" />}>
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/tutorial" element={<Tutorial />} />
