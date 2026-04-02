@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,16 +7,18 @@ import { BrowserRouter, Routes, Route, useLocation, useNavigate } from "react-ro
 import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import Tutorial from "./pages/Tutorial";
-import ChapterSelect from "./pages/ChapterSelect";
-import { ClassicGame } from "./components/ClassicGame";
-import { CustomMode } from "./components/CustomMode";
-import { CustomGame } from "./components/CustomGame";
-import { CustomStats } from "./components/CustomStats";
-import { ClassicStats } from "./components/ClassicStats";
-import { Settings } from "./components/Settings";
-import { Credits } from "./components/Credits";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+
+// Lazy-loaded route components for code splitting
+const Tutorial = lazy(() => import("./pages/Tutorial"));
+const ChapterSelect = lazy(() => import("./pages/ChapterSelect"));
+const ClassicGame = lazy(() => import("./components/ClassicGame").then(m => ({ default: m.ClassicGame })));
+const CustomMode = lazy(() => import("./components/CustomMode").then(m => ({ default: m.CustomMode })));
+const CustomGame = lazy(() => import("./components/CustomGame").then(m => ({ default: m.CustomGame })));
+const CustomStats = lazy(() => import("./components/CustomStats").then(m => ({ default: m.CustomStats })));
+const ClassicStats = lazy(() => import("./components/ClassicStats").then(m => ({ default: m.ClassicStats })));
+const Settings = lazy(() => import("./components/Settings").then(m => ({ default: m.Settings })));
+const Credits = lazy(() => import("./components/Credits").then(m => ({ default: m.Credits })));
 import { migrateToIndexedDB } from "./lib/game/migrateToIndexedDB";
 import { importFromShareURL } from "./lib/game/exportImport";
 import { createSaveSlot, autoGenerateSlotName } from "./lib/game/saveSlotManager";
